@@ -92,7 +92,7 @@ vector<array<int, 2>> createAdjList(vector<int>& arr) {
     return adjList;
 }
 
-
+// only adjList as input. *
 array<unordered_set<int>, 2> createPartition(vector<int>& arr, vector<array<int, 2>>& adjList) {
     
     unordered_set<int> leftSet, rightSet;
