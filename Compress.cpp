@@ -118,7 +118,6 @@ array<unordered_set<int>, 2> createPartition(vector<int>& arr, vector<array<int,
         }
 
 
-
         if (leftSetFreq >= rightSetFreq) {
             rightSet.insert(c);
         } else {
