@@ -2,52 +2,20 @@
 #include "RecompressionDefinitions.hpp"
 #include "radix_sort.h"
 #include "io.h"
+#include "utilities.hpp"
 using namespace std;
 
-void printRecompressionRLSLP(const unique_ptr<RecompressionRLSLP> & recompression_rlslp) {
 
-	cout << "RECOMPRESSION PRINTING STARTED..." << endl;
+vector<int> expandSLG(const unique_ptr<SLG> & slg) {
+	vector<int> result;
 
-	if(!(recompression_rlslp->nonterm).size()) {
-		cout << "RecompressionRLSLP is Empty!!" << endl;
-		return;
-	}
+	vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
-	int i = 0;
+	expandSLG(slg_nonterm_vec.size() - 1, slg_nonterm_vec, result);
 
-	for(const RLSLPNonterm & rlslp_nonterm : recompression_rlslp->nonterm) {
-		cout << i << " --> ";
-		cout << rlslp_nonterm.type << ' ' << rlslp_nonterm.first << ' ' << rlslp_nonterm.second << endl;
-		i++;
-	}
+	cout << result << endl;
 
-	cout << "RECOMPRESSION PRINTING ENDED!" << endl << endl;
-
-	return;
-}
-
-void printSLG(const unique_ptr<SLG> & slg) {
-	cout << "SLG PRINTING STARTED..." << endl;
-
-	if(!(slg->nonterm).size()) {
-		cout << "SLG is Empty!!" << endl;
-		return;
-	}
-
-	int i = 0;
-
-	for(const SLGNonterm & slg_nonterm : slg->nonterm) {
-		cout << i << " --> ";
-		for(int x : slg_nonterm.rhs) {
-			cout << x << ' ';
-		}
-		cout << endl;
-		i++;
-	}
-
-	cout << "SLG PRINTING ENDED!" << endl << endl;
-
-	return;
+	return result;
 }
 
 
@@ -82,6 +50,7 @@ vector<pair<int, int>> combineFrequenciesInRange(vector<pair<int, int>>& vec, in
     return result;
 }
 
+int counts;
 // Block Compression
 unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp, map<pair<int, int>, int> & m) {
 
@@ -99,11 +68,20 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 	// 'i' --> represents the variable.
 	for(int i=0; i<slg_nonterm_vec.size(); i++) {
 
+		// if(k==2) {
+		// 	cout << i << endl;
+		// }
+
 		// Take the current production rule.
 		SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
 		// Take the RHS of the production.
 		vector<int> rhs = slg_nonterm.rhs;
+
+		if(rhs.empty()) {
+			new_slg_nonterm_vec.push_back(SLGNonterm());
+			continue;
+		}
 
 		// Create the expansion of RHS.
 		vector<pair<int, int>> rhs_expansion;
@@ -190,7 +168,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 			vector<pair<int, int>> cap_compressed_slg_nonterm_vec = combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer);
 
 			// There are no pairs presents for the cap.
-			if(cap_compressed_slg_nonterm_vec.size() == 0) {
+			if(cap_compressed_slg_nonterm_vec.empty()) {
 				// Cap is empty; set Cap
 				new_slg_nonterm_vec.push_back(SLGNonterm());
 			}
@@ -206,7 +184,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 					if(p.second >= 2) {
 						if(m.find(p) == m.end()) {
 							m[p] = recompression_rlslp->nonterm.size();
-							recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', p.first, p.second));
+							recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(p.first), p.second));
 						}
 						
 						//  ** Negative **
@@ -235,28 +213,34 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 	// This always holds true.
 	if(start_var_LR.second != -1) {
 		if(start_var_LR.second >= 2) {
+			cout << start_var_LR.first << ' ' << start_var_LR.second << endl;
 			if(m.find(start_var_LR) == m.end()) {
 				m[start_var_LR] = recompression_rlslp->nonterm.size();
-				recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', start_var_LR.first, start_var_LR.second));
+				recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(start_var_LR.first), start_var_LR.second));
 			}
 
-			new_start_rhs.push_back(m[start_var_LR]);
+			new_start_rhs.push_back(-m[start_var_LR]);
 		}
 		else {
 			new_start_rhs.push_back(start_var_LR.first);
 		}
 	}
 
-	new_start_rhs.push_back(start_var);
+	if(new_slg_nonterm_vec[start_var].rhs.empty() == false) {
+		new_start_rhs.push_back(start_var);
+	}
+
 
 	if(start_var_RR.second != -1) {
 		if(start_var_RR.second >= 2) {
+
+			cout << start_var_RR.first << ' ' << start_var_RR.second << endl;
 			if(m.find(start_var_RR) == m.end()) {
 				m[start_var_RR] = recompression_rlslp->nonterm.size();
-				recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', start_var_RR.first, start_var_LR.second));
+				recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(start_var_RR.first), start_var_RR.second));
 			}
 
-			new_start_rhs.push_back(m[start_var_RR]);
+			new_start_rhs.push_back(-m[start_var_RR]);
 		}
 		else {
 			new_start_rhs.push_back(start_var_RR.first);
@@ -296,9 +280,13 @@ pair<int, int> computeAdjListHelper(int var, unique_ptr<SLG> & slg, vector<array
 	}
 	else if(rhs.size() == 1) {
 		// Hopefully this should be always true when there is only 1 character to right
-		assert(rhs[0] < 0);
+		// assert(rhs[0] < 0);
 
-		return dp[var] = {rhs[0], rhs[0]};
+		if(rhs[0] < 0) {
+			return dp[var] = {rhs[0], rhs[0]};
+		}
+
+		// return dp[var] = {rhs[0], rhs[0]};
 	}
 	
 	vector<pair<int, int>> lms_rms_list;
@@ -387,7 +375,11 @@ void computeVOcc(unique_ptr<SLG> & slg) {
 		// Enumerate each character of RHS
 		// Frequency calculation for reverse of the graph.
 		for(int & var : rhs) {
-			var_freq[var]++;
+
+			// Only Non-Terminals
+			if(var >= 0) {
+				var_freq[var]++;
+			}
 		}
 
 		// Construct Edges.
@@ -439,6 +431,12 @@ void sortAdjList(vector<array<int, 4>> & adjList) {
 
 // only adjList as input. *
 array<unordered_set<int>, 2> createPartition(vector<array<int, 4>> & adjList) {
+
+	// // Make Positive
+	// for(array<int, 4> & a : adjList) {
+	// 	a[0] = -a[0];
+	// 	a[1] = -a[1];
+	// }
     
     unordered_set<int> leftSet, rightSet;
     int currentIndex = 0;
@@ -446,8 +444,8 @@ array<unordered_set<int>, 2> createPartition(vector<array<int, 4>> & adjList) {
 
     int c = adjList[currentIndex][0];
 
-    for(int i=1;i<=c-1;i++) {
-    	leftSet.insert(i);
+    for(int i=1;i<=abs(c)-1;i++) {
+    	leftSet.insert(-i);
     }
 
     while(currentIndex < n) {
@@ -471,8 +469,8 @@ array<unordered_set<int>, 2> createPartition(vector<array<int, 4>> & adjList) {
 
         if(currentIndex < n) {
         	
-        	for(int i=c+1; i<=adjList[currentIndex][0]-1;i++) {
-        		leftSet.insert(i);
+        	for(int i=abs(c)+1; i<=abs(adjList[currentIndex][0])-1;i++) {
+        		leftSet.insert(-i);
         	}
         	c = adjList[currentIndex][0];
         }
@@ -508,16 +506,28 @@ array<unordered_set<int>, 2> createPartition(vector<array<int, 4>> & adjList) {
         swap(leftSet, rightSet);
     }
 
+ //    // Revert to Negative
+	// for(array<int, 4> & a : adjList) {
+	// 	a[0] = -a[0];
+	// 	a[1] = -a[1];
+	// }
+
+	
+
     return { rightSet, leftSet };
 }
 
 // Pair-Wise Compression
 unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp,  map<pair<int, int>, int> & m) {
 	
+
+	
+
 	// Compute vOcc - Sample Passed
 	computeVOcc(slg);
 
-	
+
+
 
 
 	// Compute AdjList
@@ -526,14 +536,19 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
 	sortAdjList(adjList);
 
-	cout << adjList << endl;
+	if(counts == 8) {
+		cout << "OK" << endl;
+		cout << adjList << endl;
+	}
 
+	if(adjList.empty()) {
+		expandRLSLP(recompression_rlslp);
+		exit(0);
 
+	}
 	
 
-
-
-	
+	// cout << adjList << endl;
 
 	// Create Partition.
 
@@ -544,13 +559,9 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 	left_set = arr[0];
 	right_set = arr[1];
 
-	cout << "Left set : " << left_set << endl;
-	cout << "Right set : " << right_set << endl;
+	// cout << "Left set : " << left_set << endl;
+	// cout << "Right set : " << right_set << endl;
 
-
-	return make_unique<SLG>();
-
-	
 
 
 
@@ -568,20 +579,28 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 	// 'i' --> represents the variable.
 	for(int i=0; i<slg_nonterm_vec.size(); i++) {
 
+
 		SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
+
+
 
 		vector<int> & rhs = slg_nonterm.rhs;
 
+		// cout << i << ' ' << rhs << endl;
+
+
 		// Probably only terminal!
-		if(rhs.size() >= 2) {
+		if((int)rhs.size() >= 2) {
 
 			vector<int> rhs_expansion;
 
 			// Expanding RHS.
 			for(int j=0; j<rhs.size(); j++) {
 
+
 				// RHS Terminal
 				if(rhs[j] < 0) {
+
 					rhs_expansion.push_back(rhs[j]);
 
 					if(j==0) {
@@ -606,6 +625,7 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 							slg_nonterm.RB = 0;
 						}
 					}
+
 				}
 
 				// RHS Non-Terminal
@@ -613,6 +633,7 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
 					if(j==0) {
 						slg_nonterm.LB = slg_nonterm_vec[rhs[j]].LB;
+
 					}
 					else if(j == rhs.size() - 1) {
 						slg_nonterm.RB = slg_nonterm_vec[rhs[j]].RB;
@@ -628,6 +649,8 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 						rhs_expansion.push_back(rhs[j]);
 					}
 
+
+
 					// RB --> not equal to 0.
 					// If j is last element, we set it to RB in slg_nonterm but not in to the expansion
 					if((j != rhs.size() - 1) and slg_nonterm_vec[rhs[j]].RB) {
@@ -635,56 +658,93 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 					}
 				}
 
-				// To handle last character/corner case
-				rhs_expansion.push_back(rhs_expansion.back());
+		
 
-				vector<int> cap_rhs;
+				
 
-				for(int j=0; j<rhs_expansion.size()-1; j++) {
-					if(rhs_expansion[j] < 0 && rhs_expansion[j+1] < 0) {
-						if(left_set.find(rhs_expansion[j]) != left_set.end() && right_set.find(rhs_expansion[j+1]) != right_set.end()) {
-							if(m.find({rhs_expansion[j], rhs_expansion[j+1]}) == m.end()) {
-								m[{rhs_expansion[j], rhs_expansion[j+1]}] = recompression_rlslp->nonterm.size();
-								recompression_rlslp->nonterm.push_back(RLSLPNonterm('1', rhs_expansion[j], rhs_expansion[j+1]));
-							}
 
-							cap_rhs.push_back(-m[{rhs_expansion[j], rhs_expansion[j+1]}]);
-							j++;
+			}
+
+			// To handle last character/corner case
+			// if(rhs_expansion.size()>=2)
+			rhs_expansion.push_back(rhs_expansion.back());
+
+
+
+
+			vector<int> cap_rhs;
+
+			for(int j=0; j<(int)rhs_expansion.size()-1; j++) {
+				if(rhs_expansion[j] < 0 && rhs_expansion[j+1] < 0) {
+					if(left_set.find(rhs_expansion[j]) != left_set.end() && right_set.find(rhs_expansion[j+1]) != right_set.end()) {
+						if(m.find({rhs_expansion[j], rhs_expansion[j+1]}) == m.end()) {
+							m[{rhs_expansion[j], rhs_expansion[j+1]}] = recompression_rlslp->nonterm.size();
+							recompression_rlslp->nonterm.push_back(RLSLPNonterm('1', abs(rhs_expansion[j]), abs(rhs_expansion[j+1])));
 						}
-						else {
-							cap_rhs.push_back(rhs_expansion[j]);
-						}
-					}
-					else if(rhs_expansion[j] >= 0) {
-						cap_rhs.push_back(rhs_expansion[j]);
+
+						cap_rhs.push_back(-m[{rhs_expansion[j], rhs_expansion[j+1]}]);
+						j++;
 					}
 					else {
 						cap_rhs.push_back(rhs_expansion[j]);
 					}
 				}
+				else if(rhs_expansion[j] >= 0) {
+					cap_rhs.push_back(rhs_expansion[j]);
+				}
+				else {
+					cap_rhs.push_back(rhs_expansion[j]);
+				}
+			}
+
+
+			new_slg_nonterm_vec.push_back(SLGNonterm(cap_rhs));
+
+
+
+			
+		}
+		else if((int)rhs.size() == 1) {
+
+			// Terminal;
+			// A --> a
+			// B --> b
+			if(rhs[0] < 0) {
+				if(left_set.find(rhs[0]) != left_set.end()) {
+					slg_nonterm.LB = 0;
+					new_slg_nonterm_vec.push_back(SLGNonterm());
+					slg_nonterm.RB = rhs[0];
+				}
+				else if(right_set.find(rhs[0]) != right_set.end()) {
+					slg_nonterm.LB = rhs[0];
+					new_slg_nonterm_vec.push_back(SLGNonterm());
+					slg_nonterm.RB = 0;
+				}
+				else {
+					cout << "Error: Not Found in Left and Right." << endl;
+				}
+			}
+			else {
+
+				// A --> B (LB(B) . B^ . RB(B))
+				// LB(A) = LB(B)
+				// RB(A) = RB(B)
+				// A^ = B^ (only if B^ is not empty)
+				vector<int> cap_rhs;
+
+				slg_nonterm.LB = slg_nonterm_vec[rhs[0]].LB;
+
+				if(new_slg_nonterm_vec[rhs[0]].rhs.empty() == false) {
+					cap_rhs.push_back(rhs[0]);
+				}
+
+				slg_nonterm.RB = slg_nonterm_vec[rhs[0]].RB;
 
 				new_slg_nonterm_vec.push_back(SLGNonterm(cap_rhs));
 			}
+			
 		}
-		else if(rhs.size() == 1) {
-
-			// Terminal;
-
-			if(left_set.find(rhs[0]) != left_set.end()) {
-				slg_nonterm.LB = 0;
-				new_slg_nonterm_vec.push_back(SLGNonterm());
-				slg_nonterm.RB = rhs[0];
-			}
-			else if(right_set.find(rhs[0]) != right_set.end()) {
-				slg_nonterm.LB = rhs[0];
-				new_slg_nonterm_vec.push_back(SLGNonterm());
-				slg_nonterm.RB = 0;
-			}
-			else {
-				cout << "Error: Not Found in Left and Right." << endl;
-			}
-		}
-		// Size 0. ** doubt ** are these required? 
+		// Size 0
 		else {
 			new_slg_nonterm_vec.push_back(SLGNonterm());
 		}
@@ -692,13 +752,34 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
 	}
 
+	int start_var = slg_nonterm_vec.size()-1;
+
+	int start_var_LB = slg_nonterm_vec[start_var].LB;
+	int start_var_RB = slg_nonterm_vec[start_var].RB;
+
+
+	vector<int> new_start_rhs;
+
+	if(start_var_LB != 0) {
+		new_start_rhs.push_back(start_var_LB);
+	}
+
+	if(new_slg_nonterm_vec[start_var].rhs.empty() == false) {
+		new_start_rhs.push_back(start_var);
+	}
+	
+
+
+
+	if(start_var_RB != 0) {
+		new_start_rhs.push_back(start_var_RB);
+	}
+
+	new_slg_nonterm_vec.push_back(SLGNonterm(new_start_rhs));
+
 	return make_unique<SLG>(new_slg_nonterm_vec);
-
-
-
-
-
 }
+
 unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
 
 	unique_ptr<SLG> slg = make_unique<SLG>();
@@ -708,13 +789,22 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
 	map<pair<int, int>, int> m;
 
 	// Initiate RLSLP
-	for(int i=0; i<s->nonterm.size(); i++) {
-		char type = s->nonterm[i].type;
-		int first = s->nonterm[i].first;
-		int second = s->nonterm[i].second;
+	// for(int i=0; i<s->nonterm.size(); i++) {
+	// 	char type = s->nonterm[i].type;
+	// 	int first = s->nonterm[i].first;
+	// 	int second = s->nonterm[i].second;
 
-		recompression_rlslp->nonterm.push_back(RLSLPNonterm(type, first, second));
+	// 	recompression_rlslp->nonterm.push_back(RLSLPNonterm(type, first, second));
+	// }
+
+
+	for(int i=0; i<4; i++) {
+		recompression_rlslp->nonterm.push_back(RLSLPNonterm());
 	}
+
+
+
+
 
 	// Compute S0 from S
 	for(int i=0; i<s->nonterm.size(); i++) {
@@ -734,19 +824,36 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
 		slg->nonterm.push_back(SLGNonterm(rhs));
 	}
 
-	printRecompressionRLSLP(recompression_rlslp);
-	printSLG(slg);
-
-	unique_ptr<SLG> new_slg = BComp(slg, recompression_rlslp, m);
-
-	printRecompressionRLSLP(recompression_rlslp);
-	printSLG(new_slg);
-
-	unique_ptr<SLG> new_slg_pcomp = PComp(new_slg, recompression_rlslp, m);
+	expandSLG(slg);
 
 
+	int i = 0;
+	counts = 1;
 
+	// printSLG(slg);
 
+	while(++i) {
+		if(i&1) {
+			slg = BComp(slg, recompression_rlslp, m);
+
+			// cout << i << ' ' << "BComp" << endl;
+		}
+		else {
+			slg = PComp(slg, recompression_rlslp, m);
+			// cout << i << ' ' << "PComp" << endl;
+		}
+
+		// printSLG(slg);
+		// printRecompressionRLSLP(recompression_rlslp);
+
+		counts++;
+
+		if(i >= 13) {
+			break;
+		}
+	}
+
+	
 
 	return recompression_rlslp;
 }
@@ -761,12 +868,11 @@ int main() {
 	nonterm.push_back(SLPNonterm('0', -1, 1));
 	nonterm.push_back(SLPNonterm('0', -2, 1));
 	nonterm.push_back(SLPNonterm('0', -3, 1));
-	nonterm.push_back(SLPNonterm('1', 2, 1));
-	nonterm.push_back(SLPNonterm('1', 3, 0));
+	nonterm.push_back(SLPNonterm('1', 0, 1));
+	nonterm.push_back(SLPNonterm('1', 2, 3));
 	nonterm.push_back(SLPNonterm('1', 4, 2));
-	nonterm.push_back(SLPNonterm('1', 5, 4));
-	nonterm.push_back(SLPNonterm('1', 6, 5));
-
+	nonterm.push_back(SLPNonterm('1', 4, 5));
+	nonterm.push_back(SLPNonterm('1', 3, 6));
 
 	unique_ptr<InputSLP> inputSLP = make_unique<InputSLP>(nonterm);
 
