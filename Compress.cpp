@@ -39,6 +39,7 @@ vector<int> BComp(vector<int> arr, vector<NonTerminal>& grammar) {
 
     radixSort(tuples);
 
+
     int maxElement = *max_element(arr.begin(), arr.end());
     int freshCharacter = maxElement + 1;
     tuples.push_back(tuples.back());
@@ -69,6 +70,8 @@ vector<int> BComp(vector<int> arr, vector<NonTerminal>& grammar) {
         }
     }
 
+
+
     tuples.pop_back();
 
     vector<int> res;
@@ -77,6 +80,7 @@ vector<int> BComp(vector<int> arr, vector<NonTerminal>& grammar) {
             res.push_back(x);
         }
     }
+
 
     return res;
 }
@@ -94,7 +98,7 @@ vector<array<int, 2>> createAdjList(vector<int>& arr) {
 
 // only adjList as input. *
 array<unordered_set<int>, 2> createPartition(vector<int>& arr, vector<array<int, 2>>& adjList) {
-    
+
     unordered_set<int> leftSet, rightSet;
     int currentIndex = 0;
     size_t n = adjList.size();
@@ -102,7 +106,7 @@ array<unordered_set<int>, 2> createPartition(vector<int>& arr, vector<array<int,
     int c = adjList[currentIndex][0];
 
     for(int i=1;i<=c-1;i++) {
-    	leftSet.insert(i);
+        leftSet.insert(i);
     }
 
     while(currentIndex < n) {
@@ -125,13 +129,13 @@ array<unordered_set<int>, 2> createPartition(vector<int>& arr, vector<array<int,
         }
 
         if(currentIndex < n) {
-        	
-        	for(int i=c+1; i<=adjList[currentIndex][0]-1;i++) {
-        		leftSet.insert(i);
-        	}
-        	c = adjList[currentIndex][0];
+
+            for(int i=c+1; i<=adjList[currentIndex][0]-1;i++) {
+                leftSet.insert(i);
+            }
+            c = adjList[currentIndex][0];
         }
-        
+
     }
 
     int LRPairsCount = 0;
@@ -284,175 +288,188 @@ void initialize_nodes(int node, const int& i, int left, int right, stack<Node>& 
 
 
 Node getLeftMostChild(Node v, vector<NonTerminal> & grammar) {
-	char type = grammar[v.var].type;
+    char type = grammar[v.var].type;
 
-	const NonTerminal& nt = grammar[v.var];
+    const NonTerminal& nt = grammar[v.var];
 
     int left = v.l;
     int right = v.r - 1;
 
-	if(type == '1') {
-		const NonTerminal& left_nt = grammar[nt.first];
-    	const NonTerminal& right_nt = grammar[nt.second];
-		return Node(nt.first, left, left + left_nt.explen);
-	}
-	else if(type == '2') {
-		const NonTerminal& child_nt = grammar[nt.first];
-    	int child_explen = child_nt.explen;
-		return Node(nt.first, left, left + child_explen);
-	}
+    if(type == '1') {
+        const NonTerminal& left_nt = grammar[nt.first];
+        const NonTerminal& right_nt = grammar[nt.second];
+        return Node(nt.first, left, left + left_nt.explen);
+    }
+    else if(type == '2') {
+        const NonTerminal& child_nt = grammar[nt.first];
+        int child_explen = child_nt.explen;
+        return Node(nt.first, left, left + child_explen);
+    }
 
-	return Node();
+    return Node();
 }
 
 
 int getChildCount(Node parent, vector<NonTerminal> & grammar) {
 
-	NonTerminal & nt = grammar[parent.var];
+    NonTerminal & nt = grammar[parent.var];
 
-	if(nt.type == '0') {
-		return 1;
-	}
-	else if(nt.type == '1') {
-		return 2;
-	}
-	else {
-		return nt.second;
-	}
+    if(nt.type == '0') {
+        return 1;
+    }
+    else if(nt.type == '1') {
+        return 2;
+    }
+    else {
+        return nt.second;
+    }
 }
 
 int getChildIndex(Node parent, Node v, vector<NonTerminal> & grammar) {
-	NonTerminal & nt = grammar[parent.var];
+    NonTerminal & nt = grammar[parent.var];
 
-	if(nt.type == '0') {
-		return 1;
-	}
-	else if(nt.type == '1') {
-		if(parent.l == v.l) {
-			return 1;
-		}
-		else {
-			return 2;
-		}
-	}
-	else {
-		return (v.l - parent.l)/(v.r - v.l) + 1;
-	}
+    if(nt.type == '0') {
+        return 1;
+    }
+    else if(nt.type == '1') {
+        if(parent.l == v.l) {
+            return 1;
+        }
+        else {
+            return 2;
+        }
+    }
+    else {
+        return (v.l - parent.l)/(v.r - v.l) + 1;
+    }
 
 }
 
 Node getKthSibling(Node parent, Node v, int k, vector<NonTerminal> &grammar ) {
-	NonTerminal & nt = grammar[parent.var];
+    NonTerminal & nt = grammar[parent.var];
 
-	int left = parent.l;
-	int right = parent.r;
+    int left = parent.l;
+    int right = parent.r;
 
-	// cout << "328: " << parent.var << ' ' << left << ' ' << right << ' ' << k << endl;
-	
+    // cout << "328: " << parent.var << ' ' << left << ' ' << right << ' ' << k << endl;
 
-	return Node(v.var, left + (k-1)*(v.r - v.l), left + (k-1)*(v.r - v.l) + (v.r - v.l));
+
+    return Node(v.var, left + (k-1)*(v.r - v.l), left + (k-1)*(v.r - v.l) + (v.r - v.l));
 }
 
 Node replaceWithHighestStartingAtPosition(Node v, stack<Node> &ancestors, vector<NonTerminal> & grammar) {
 
-	Node child = v;
-	while(ancestors.empty() == false and ancestors.top().r == v.r) {
-		child = ancestors.top();
-		ancestors.pop();
-	}
+    Node child = v;
+    while(ancestors.empty() == false and ancestors.top().r == v.r) {
+        child = ancestors.top();
+        ancestors.pop();
+    }
 
-	Node ancestor = ancestors.top();
+    Node ancestor = ancestors.top();
 
-	// cout << "sz: " << ' ' << ancestor.var << endl;
+    // cout << "sz: " << ' ' << ancestor.var << endl;
 
-	NonTerminal nt = grammar[ancestor.var];
+    NonTerminal nt = grammar[ancestor.var];
 
-	// cout << nt.type << endl;
+    // cout << nt.type << endl;
 
 
-	if(nt.type == '1') {
-		return Node(nt.second, child.r, ancestor.r);
-	}
-	else {
-		int childIndex = getChildIndex(ancestor, child, grammar);
+    if(nt.type == '1') {
+        return Node(nt.second, child.r, ancestor.r);
+    }
+    else {
+        int childIndex = getChildIndex(ancestor, child, grammar);
 
-		// cout << "353: " << childIndex << endl;
+        // cout << "353: " << childIndex << endl;
 
-		return getKthSibling(ancestor, child, childIndex + 1, grammar);
-	}
+        return getKthSibling(ancestor, child, childIndex + 1, grammar);
+    }
 
-	return Node();
+    return Node();
 
 }
 
 int LCE(Node v1, Node v2, int i, stack<Node> & v1_ancestors, stack<Node> & v2_ancestors, vector<NonTerminal> &grammar) {
 
-	int exp_len_v1 = v1.r - v1.l;
+    int exp_len_v1 = v1.r - v1.l;
 
-	int exp_len_v2 = v2.r - v2.l;
+    int exp_len_v2 = v2.r - v2.l;
 
-	// cout << exp_len_v1 << ' ' << exp_len_v2 << endl;
+    // cout << exp_len_v1 << ' ' << exp_len_v2 << endl;
 
-	// cout << "NEW" << endl;
-	// cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
-	// cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
-	// cout << "END" << endl;
+    // cout << "NEW" << endl;
+    // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
+    // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
+    // cout << "END" << endl;
 
-	if(exp_len_v1 == 1 and exp_len_v1 == exp_len_v2 and v1.var != v2.var) {
-		return v1.l - i;
-	}
-	else if(exp_len_v1 > exp_len_v2) {
-		v1_ancestors.push(v1);
-		v1 = getLeftMostChild(v1, grammar);
-		// cout << "374" << ' ' << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
-	}
-	else if(exp_len_v1 < exp_len_v2) {
-		v2_ancestors.push(v2);
-		v2 = getLeftMostChild(v2, grammar);
-	}
-	else if(v1.var != v2.var) {
-		v2_ancestors.push(v2);
-		v1_ancestors.push(v1);
-		v1 = getLeftMostChild(v1, grammar);
-		v2 = getLeftMostChild(v2, grammar);
-	}
-	else {
+    if(exp_len_v1 == 1 and exp_len_v1 == exp_len_v2 and v1.var != v2.var) {
+        return v1.l - i;
+    }
+    else if(exp_len_v1 > exp_len_v2) {
+        v1_ancestors.push(v1);
+        v1 = getLeftMostChild(v1, grammar);
+        // cout << "374" << ' ' << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
+    }
+    else if(exp_len_v1 < exp_len_v2) {
+        v2_ancestors.push(v2);
+        v2 = getLeftMostChild(v2, grammar);
+    }
+    else if(v1.var != v2.var) {
+        v2_ancestors.push(v2);
+        v1_ancestors.push(v1);
+        v1 = getLeftMostChild(v1, grammar);
+        v2 = getLeftMostChild(v2, grammar);
+    }
+    else {
 
-		Node v1_parent = v1_ancestors.top();
-		Node v2_parent = v2_ancestors.top();
+        Node v1_parent = v1_ancestors.top();
+        Node v2_parent = v2_ancestors.top();
 
-		int j1 = getChildIndex(v1_parent, v1, grammar);
-		int j2 = getChildIndex(v2_parent, v2, grammar);
-
-
-		int d1 = getChildCount(v1_parent, grammar);
-		int d2 = getChildCount(v2_parent, grammar);
-
-		int lambda = min(d1 - j1, d2 - j2);
-
-		// cout << "OK" << endl;
-
-		// cout << j1 << ' ' << d1 << endl;
-		// cout << j2 << ' ' << d2 << endl;
-
-		// cout << lambda << endl;
-
-		// cout << "OK END" << endl;
+        int j1 = getChildIndex(v1_parent, v1, grammar);
+        int j2 = getChildIndex(v2_parent, v2, grammar);
 
 
-		if(lambda <= 1) {
-			v1 = replaceWithHighestStartingAtPosition(v1, v1_ancestors, grammar);
-			v2 = replaceWithHighestStartingAtPosition(v2, v2_ancestors, grammar);
-		}
-		else {
-			v1 = getKthSibling(v1_parent, v1, j1 + lambda, grammar);
-			v2 = getKthSibling(v2_parent, v2, j2 + lambda, grammar);
-		}
+        int d1 = getChildCount(v1_parent, grammar);
+        int d2 = getChildCount(v2_parent, grammar);
+
+        int lambda = min(d1 - j1, d2 - j2);
+
+        // cout << "OK" << endl;
+
+        // cout << j1 << ' ' << d1 << endl;
+        // cout << j2 << ' ' << d2 << endl;
+
+        // cout << lambda << endl;
+
+        // cout << "OK END" << endl;
 
 
-	}
+        if(lambda <= 1) {
 
-	return LCE(v1, v2, i, v1_ancestors, v2_ancestors, grammar);;
+            // cout << v1.l << ' ' << v1.r << ' ' << v2.l << ' ' << v2.r << endl;
+
+
+            v1 = replaceWithHighestStartingAtPosition(v1, v1_ancestors, grammar);
+
+            if(v2.r >= grammar.back().explen) {
+                return v1.l - i;
+            }
+
+            v2 = replaceWithHighestStartingAtPosition(v2, v2_ancestors, grammar);
+
+            // if(v2.r >= grammar.back().explen) {
+            //     return v1.l - i;
+            // }
+        }
+        else {
+            v1 = getKthSibling(v1_parent, v1, j1 + lambda, grammar);
+            v2 = getKthSibling(v2_parent, v2, j2 + lambda, grammar);
+        }
+
+
+    }
+
+    return LCE(v1, v2, i, v1_ancestors, v2_ancestors, grammar);;
 }
 
 bool hasNumberInRange(const vector<int>& arr, int minRange, int maxRange) {
@@ -475,45 +492,44 @@ vector<int> generateRandomNumbers(int n, int minRange, int maxRange) {
     }
 
     if(!hasNumberInRange(numbers, minRange, maxRange)) {
-    	return generateRandomNumbers(n, minRange, maxRange);
+        return generateRandomNumbers(n, minRange, maxRange);
     }
 
     return numbers;
 }
 
 void solve() {
-	vector<int> arr;
+    vector<int> arr;
     vector<NonTerminal> grammar;
     grammar.push_back(NonTerminal('0', 0, 0, 0));
 
     int x = 61;
-    for(int i=96; i<=96+x-1; i++) {
-    	grammar.push_back(NonTerminal('0', i, 0, 1));
-    }
-    
-    arr = { 3, 1, 1, 1, 2, 3, 4, 2, 2, 2, 1, 2, 1, 2, 3, 4, 1, 1, 2, 3, 4, 2, 2, 2, 1, 2, 1, 2 ,3, 4, 4 };
+    // for(int i=96; i<=96+x-1; i++) {
+    // 	grammar.push_back(NonTerminal('0', i, 0, 1));
+    // }
 
+    // arr = { 3, 1, 1, 1, 2, 3, 4, 2, 2, 2, 1, 2, 1, 2, 3, 4, 1, 1, 2, 3, 4, 2, 2, 2, 1, 2, 1, 2 ,3, 4, 4 };
+
+    // for(int i=0; i<4; i++) {
+    //     grammar.push_back(NonTerminal('0', i+1, 0, 1));
+    // }
     arr = generateRandomNumbers(900, 1, 60);
 
-    // for(int i=0;i<200;i++) {
-    // 	int x;
+    for(int i=1; i<=60;i++) {
+        grammar.push_back(NonTerminal('0', i, 0, 1));
+    }
 
-    // 	cin >> x;
+    // cout << grammar.size() << endl;
+    // cout << *max_element(arr.begin(), arr.end()) << endl;
 
 
-
-    // 	arr.push_back(x);
-    // }
 
 
     vector<int> arrCopy = arr;
     int n = arr.size();
 
-    arr.push_back(*max_element(arr.begin(), arr.end()) + 1);
+    // arr.push_back(*max_element(arr.begin(), arr.end()) + 1);
 
-    // cout << arr << endl;
-
-    // cout << endl;
 
 
 
@@ -522,11 +538,22 @@ void solve() {
     while (arr.size() > 1) {
         if (count % 2 == 0) {
             arr = BComp(arr, grammar);
+
         } else {
             arr = PComp(arr, grammar);
         }
         count++;
     }
+
+    // for(int i=0; i<grammar.size(); i++) {
+    //     cout << i << " ---> " << grammar[i].type << ' ' << grammar[i].first << ' ' << grammar[i].second << endl;
+    // }
+
+
+    // int cf=-1;
+    // for(NonTerminal nonterminal : grammar) {
+    //     cout << (++cf) << " --> " << nonterminal.type << ' ' << nonterminal.first << ' ' << nonterminal.second << endl;
+    // }
 
 
     int explen = grammar.back().explen;
@@ -536,82 +563,58 @@ void solve() {
 
     vector<int> res;
 
-    for (int i = 0; i < n; i++) {
-        res.push_back(extract(grammar.size() - 1, i, 0, grammar.back().explen - 1, grammar) - 95);
-    }
-
-    // cout << res << endl;
-
-    // assert(arrCopy == res);
-
-    // cout << n << endl;
-
-    // cout << arrCopy[43] << ' ' << arrCopy[116] << endl;
-
-    // for(int i=43;i<=50;i++) {
-    // 	cout << arrCopy[i] << ' ';
-    // }
-
-    // cout << endl;
-
-
-    // for(int i=116; i<= 160; i++) {
-    // 	cout << arrCopy[i] << ' ';
-    // }
-
-    // cout << endl;
-
-
     for(int i=0; i<n; i++) {
-    	for(int j=i+1; j<n; j++) {
+        for(int j=i+1; j<n; j++) {
 
-    		// if(i!=7 or j!=11) continue;
+            // if(i!=7 or j!=11) continue;
 
-    		// cout << i << ' ' << j << endl;
-
-
-    		Node v1, v2;
-		    stack<Node> v1_ancestors, v2_ancestors;
-		    // v1_ancestors.push(Node(grammar.size()-1, 0, 33));
-		    // v2_ancestors.push(Node(grammar.size()-1, 0, 33));
-		    initialize_nodes(grammar.size() - 1, i, 0, grammar.back().explen - 1, v1_ancestors, grammar, v1);
-		    initialize_nodes(grammar.size() - 1, j, 0, grammar.back().explen - 1, v2_ancestors, grammar, v2);
+            // cout << i << ' ' << j << endl;
 
 
-		    // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
-		    // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
-
-		    int res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, grammar);
-
-		    int res2 = 0;
-
-		    int ii = i;
-		    int jj = j;
-
-		    while(jj < n && arrCopy[ii] == arrCopy[jj]) {
-		    	res2++;
-
-		    	jj++;
-		    	ii++;
-		    }
-
-		    // cout << i << ' ' << j << ' ' << res1 << ' ' << res2 << endl;
-		    // assert(res1==res2);
-
-		    if(res1 != res2) {
-		    	cout << "ERROR" << endl;
-		    	exit(0);
-		    }
+            Node v1, v2;
+            stack<Node> v1_ancestors, v2_ancestors;
+            // v1_ancestors.push(Node(grammar.size()-1, 0, 33));
+            // v2_ancestors.push(Node(grammar.size()-1, 0, 33));
+            initialize_nodes(grammar.size() - 1, i, 0, grammar.back().explen - 1, v1_ancestors, grammar, v1);
+            initialize_nodes(grammar.size() - 1, j, 0, grammar.back().explen - 1, v2_ancestors, grammar, v2);
 
 
-    	}
+            // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
+            // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
+
+            // cout << i << ' ' << j << endl;
+
+            int res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, grammar);
+
+            int res2 = 0;
+
+            int ii = i;
+            int jj = j;
+
+            while(jj < n && arrCopy[ii] == arrCopy[jj]) {
+                res2++;
+
+                jj++;
+                ii++;
+            }
+
+            // cout << i << ' ' << j << ' ' << res1 << ' ' << res2 << endl;
+            // assert(res1==res2);
+
+            if(res1 != res2) {
+                cout << "ERROR" << endl;
+                exit(0);
+            }
+
+
+        }
     }
 }
 int main(int argc, char* argv[]) {
     // registerGen(argc, argv, 1);
 
     for(int i=1; i<=10;i++) {
-    	solve();
+        solve();
     }
 
     return 0;
