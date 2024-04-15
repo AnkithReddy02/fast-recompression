@@ -792,12 +792,16 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
     // For 0.
     recompression_rlslp->nonterm.push_back(RLSLPNonterm());
 
+    cout << "OK" << endl;
+
 
     // Compute S0 from S and Initialize Recompression
     for(int i=0; i<s->nonterm.size(); i++) {
         char type = s->nonterm[i].type;
         int first = s->nonterm[i].first;
         int second = s->nonterm[i].second;
+
+
 
         vector<int> rhs;
 
@@ -810,6 +814,7 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
         }
 
         slg->nonterm.push_back(SLGNonterm(rhs));
+
     }
 
     vector<int> arr = expandSLG(slg);
@@ -876,10 +881,72 @@ int computeExplen(int i, vector<RLSLPNonterm> & rlslp_nonterm_vec) {
  
 
 
-
-int main() {
+unique_ptr<InputSLP> getSLP(int n) {
 
     vector<SLPNonterm> nonterm;
+
+    
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    srand(seed);
+
+
+
+    // Generate random number X < n/2
+    int num_terminals = rand() % ((int)((3*n)/4));
+
+    num_terminals++;
+
+    for(int i=1; i<=num_terminals; i++) {
+        nonterm.push_back(SLPNonterm('0', -i, 1));
+    }
+
+
+    for (int i = num_terminals; i < n; ++i) {
+        int num1 = rand() % i; // Generate first number less than i
+        int num2 = rand() % i; // Generate second number less than i
+
+
+        int bin1 = rand()%2;
+        int bin2 = rand()%2;
+
+        int num = (bin2 == 1 ? num2 : num1);
+
+        if(bin1 == 0)
+        nonterm.push_back(SLPNonterm('1', i-1, num));
+        else if(bin1 == 1) {
+            nonterm.push_back(SLPNonterm('1', num, i-1));
+        }
+    }
+
+    unique_ptr<InputSLP> slp = make_unique<InputSLP>(nonterm);
+
+    return slp;
+}
+
+
+void start_compression() {
+    vector<SLPNonterm> nonterm;
+
+    // nonterm.push_back(SLPNonterm('0', -1, 1));
+    // nonterm.push_back(SLPNonterm('0', -2, 1));
+    // nonterm.push_back(SLPNonterm('0', -3, 1));
+    // nonterm.push_back(SLPNonterm('0', -4, 1));
+    // nonterm.push_back(SLPNonterm('1', 3, 0));
+    // nonterm.push_back(SLPNonterm('1', 4, 1));
+    // nonterm.push_back(SLPNonterm('1', 5, 3));
+    // nonterm.push_back(SLPNonterm('1', 6, 3));
+    // nonterm.push_back(SLPNonterm('1', 6, 7));
+    // nonterm.push_back(SLPNonterm('1', 4, 8));
+    // nonterm.push_back(SLPNonterm('1', 9, 6));
+    // nonterm.push_back(SLPNonterm('1', 10, 0));
+    // nonterm.push_back(SLPNonterm('1', 2, 11));
+    // nonterm.push_back(SLPNonterm('1', 12, 10));
+    // nonterm.push_back(SLPNonterm('1', 2, 13));
+    // nonterm.push_back(SLPNonterm('1', 14, 13));
+    // nonterm.push_back(SLPNonterm('1', 15, 13));
+    // nonterm.push_back(SLPNonterm('1', 16, 7));
+    // nonterm.push_back(SLPNonterm('1', 17, 17));
+    // nonterm.push_back(SLPNonterm('1', 1, 18));
 
     // nonterm.push_back(SLPNonterm('0', -1, 1));
     // nonterm.push_back(SLPNonterm('0', -2, 1));
@@ -892,24 +959,36 @@ int main() {
     // nonterm.push_back(SLPNonterm('1', 6, 5));
     // nonterm.push_back(SLPNonterm('1', 8, 7));
 
-    nonterm.push_back(SLPNonterm('0', -1, 1));
-    nonterm.push_back(SLPNonterm('0', -2, 1));
-    nonterm.push_back(SLPNonterm('0', -3, 1));
-    nonterm.push_back(SLPNonterm('1', 2, 1));
-    nonterm.push_back(SLPNonterm('1', 3, 0));
-    nonterm.push_back(SLPNonterm('1', 4, 2));
-    nonterm.push_back(SLPNonterm('1', 5, 4));
-    nonterm.push_back(SLPNonterm('1', 6, 5));
+    // nonterm.push_back(SLPNonterm('0', -1, 1));
+    // nonterm.push_back(SLPNonterm('0', -2, 1));
+    // nonterm.push_back(SLPNonterm('0', -3, 1));
+    // nonterm.push_back(SLPNonterm('1', 2, 1));
+    // nonterm.push_back(SLPNonterm('1', 3, 0));
+    // nonterm.push_back(SLPNonterm('1', 4, 2));
+    // nonterm.push_back(SLPNonterm('1', 5, 4));
+    // nonterm.push_back(SLPNonterm('1', 6, 5));
 
-    unique_ptr<InputSLP> inputSLP = make_unique<InputSLP>(nonterm);
+    // unique_ptr<InputSLP> inputSLP = make_unique<InputSLP>(nonterm);
+
+    unique_ptr<InputSLP> inputSLP = getSLP(30);
+
+    int i = -1;
+    for(SLPNonterm & slp_nonterm : inputSLP->nonterm) {
+        cout << (++i) << ' ' << slp_nonterm.type << ' ' << slp_nonterm.first << ' ' << slp_nonterm.second << endl;
+    }
+
 
     unique_ptr<RecompressionRLSLP> recompression_rlslp = recompression_on_slp(inputSLP);
 
+    // cout << "OK" << endl;
+
     vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
 
-    for(int i=rlslp_nonterm_vec.size(); i>=1; i--) {
+    for(int i=rlslp_nonterm_vec.size()-1; i>=1; i--) {
         computeExplen(i, rlslp_nonterm_vec);
     }
+
+    // cout << "OK" << endl;
 
     printRecompressionRLSLP(recompression_rlslp);
 
@@ -962,13 +1041,17 @@ int main() {
 
             if(res1 != res2) {
                 cout << "ERROR" << endl;
-                exit(0);
+                exit(1);
             }
-
-            cout << i << ' ' << j << ' ' << res1 << endl;
 
 
         }
     }
+}
+int main() {
+    int n = 10;
 
+    while(n--) {
+        start_compression();
+    }
 }
