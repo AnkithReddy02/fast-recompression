@@ -10,9 +10,10 @@ struct RLSLPNonterm {
     int second;
     int explen;
 
-    RLSLPNonterm(char type, int first, int second) : type(type), first(first), second(second) {}
+    RLSLPNonterm(char type, int first, int second) : type(type), first(first), second(second), explen(0) {}
     RLSLPNonterm() : type('0'), first(0), second(0), explen(0) {
     }
+    RLSLPNonterm(char type, int first, int second, int explen) : type(type), first(first), second(second), explen(explen) {}
 };
 
 class RecompressionRLSLP {
@@ -75,6 +76,22 @@ public:
 
     }
     InputSLP(const vector<SLPNonterm>& nonterm) : nonterm(nonterm) {
+
+    }
+};
+
+struct Node {
+    
+    // Variable/Non-Terminal
+    int var;
+    // [l, r)
+    int l;
+    int r;
+
+    Node() {
+        
+    }
+    Node(int var, int l, int r) : var(var), l(l), r(r) {
 
     }
 };

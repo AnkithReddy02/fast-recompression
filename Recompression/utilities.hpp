@@ -14,7 +14,7 @@ void printRecompressionRLSLP(const unique_ptr<RecompressionRLSLP> & recompressio
 
     for(const RLSLPNonterm & rlslp_nonterm : recompression_rlslp->nonterm) {
         cout << i << " --> ";
-        cout << rlslp_nonterm.type << ' ' << rlslp_nonterm.first << ' ' << rlslp_nonterm.second << endl;
+        cout << rlslp_nonterm.type << ' ' << rlslp_nonterm.first << ' ' << rlslp_nonterm.second <<  ' ' << rlslp_nonterm.explen << endl;
         i++;
     }
 
@@ -69,13 +69,14 @@ void expandRLSLP(int var, const vector<RLSLPNonterm> & rlslp_nonterm_vec, vector
     }
     return;
 }
-void expandRLSLP(const unique_ptr<RecompressionRLSLP> & recompression_rlslp) {
+vector<int> expandRLSLP(const unique_ptr<RecompressionRLSLP> & recompression_rlslp) {
 
     vector<int> result;
     vector<RLSLPNonterm> rlslp_nonterm_vec = recompression_rlslp->nonterm;
     expandRLSLP(rlslp_nonterm_vec.size()-1, rlslp_nonterm_vec, result);
 
-    cout << result << endl;
+
+    return result;
 }
 
 void expandSLG(int var, vector<SLGNonterm> & slg_nonterm_vec, vector<int> & result) {
@@ -100,7 +101,6 @@ vector<int> expandSLG(const unique_ptr<SLG> & slg) {
 
     expandSLG(slg_nonterm_vec.size() - 1, slg_nonterm_vec, result);
 
-    cout << result << endl;
 
     return result;
 }
