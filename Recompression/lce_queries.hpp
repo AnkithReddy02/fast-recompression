@@ -2,7 +2,7 @@
 #define LCE_QUERIES_H
 
 #include<bits/stdc++.h>
-#include "RecompressionDefinitions.hpp"
+#include "recompression_definitions.hpp"
 using namespace std;
 
 void initialize_nodes(int node, const int& i, int left, int right, stack<Node>& ancestors, vector<RLSLPNonterm>& grammar, Node& v) {

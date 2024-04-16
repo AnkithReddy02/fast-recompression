@@ -1,5 +1,5 @@
 #include<bits/stdc++.h>
-#include "RecompressionDefinitions.hpp"
+#include "recompression_definitions.hpp"
 #include "../radix_sort.h"
 #include "../io.h"
 #include "utilities.hpp"
