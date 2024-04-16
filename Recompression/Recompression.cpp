@@ -4,6 +4,7 @@
 #include "../io.h"
 #include "utilities.hpp"
 #include "lce_queries.hpp"
+#include "hash_pair.hpp"
 using namespace std;
 
 
@@ -40,7 +41,7 @@ vector<pair<int, int>> combineFrequenciesInRange(vector<pair<int, int>>& vec, in
 
 int counts;
 // Block Compression
-unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp, map<pair<int, int>, int> & m) {
+unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp, unordered_map<pair<int, int>, int, hash_pair> & m) {
 
     // Current slg non-term list
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
@@ -201,7 +202,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     // This always holds true.
     if(start_var_LR.second != -1) {
         if(start_var_LR.second >= 2) {
-            cout << start_var_LR.first << ' ' << start_var_LR.second << endl;
+            // cout << start_var_LR.first << ' ' << start_var_LR.second << endl;
             if(m.find(start_var_LR) == m.end()) {
                 m[start_var_LR] = recompression_rlslp->nonterm.size();
                 recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(start_var_LR.first), start_var_LR.second));
@@ -222,7 +223,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     if(start_var_RR.second != -1) {
         if(start_var_RR.second >= 2) {
 
-            cout << start_var_RR.first << ' ' << start_var_RR.second << endl;
+            // cout << start_var_RR.first << ' ' << start_var_RR.second << endl;
             if(m.find(start_var_RR) == m.end()) {
                 m[start_var_RR] = recompression_rlslp->nonterm.size();
                 recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(start_var_RR.first), start_var_RR.second));
@@ -506,7 +507,7 @@ array<unordered_set<int>, 2> createPartition(vector<array<int, 4>> & adjList) {
 }
 
 // Pair-Wise Compression
-unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp,  map<pair<int, int>, int> & m) {
+unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp,  unordered_map<pair<int, int>, int, hash_pair> & m) {
     
 
     
@@ -524,11 +525,11 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
     sortAdjList(adjList);
 
-    if(counts == 8) {
-        cout << "OK1" << endl;
-        cout << adjList << endl;
-        cout << "OK2" << endl;
-    }
+    // if(counts == 8) {
+    //     cout << "OK1" << endl;
+    //     cout << adjList << endl;
+    //     cout << "OK2" << endl;
+    // }
 
     // if(adjList.empty()) {
     //     if(counts == 8) {
@@ -691,10 +692,6 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
 
             new_slg_nonterm_vec.push_back(SLGNonterm(cap_rhs));
-
-
-
-            
         }
         else if((int)rhs.size() == 1) {
 
@@ -778,7 +775,7 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
 
     unique_ptr<RecompressionRLSLP> recompression_rlslp = make_unique<RecompressionRLSLP>();
 
-    map<pair<int, int>, int> m;
+    unordered_map<pair<int, int>, int, hash_pair> m;
 
     // Initiate RLSLP
     // for(int i=0; i<s->nonterm.size(); i++) {
@@ -792,7 +789,7 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
     // For 0.
     recompression_rlslp->nonterm.push_back(RLSLPNonterm());
 
-    cout << "OK" << endl;
+    // cout << "OK" << endl;
 
 
     // Compute S0 from S and Initialize Recompression
@@ -817,9 +814,9 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
 
     }
 
-    vector<int> arr = expandSLG(slg);
+    vector<int> arr1 = expandSLG(slg);
 
-    cout << arr << endl;
+    // cout << arr << endl;
 
 
     int i = 0;
@@ -849,6 +846,14 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
 
         counts++;
     }
+
+    vector<int> arr2 = expandRLSLP(recompression_rlslp);
+
+    if(arr1 != arr2) {
+        cout << "SLG and RLSLP expansion didn't match!" << endl;
+        exit(1);
+    }
+
 
     
 
@@ -881,7 +886,7 @@ int computeExplen(int i, vector<RLSLPNonterm> & rlslp_nonterm_vec) {
  
 
 
-unique_ptr<InputSLP> getSLP(int n) {
+unique_ptr<InputSLP> getSLP(int grammar_size) {
 
     vector<SLPNonterm> nonterm;
 
@@ -892,7 +897,7 @@ unique_ptr<InputSLP> getSLP(int n) {
 
 
     // Generate random number X < n/2
-    int num_terminals = rand() % ((int)((3*n)/4));
+    int num_terminals = rand() % ((int)((3*grammar_size)/4));
 
     num_terminals++;
 
@@ -901,7 +906,7 @@ unique_ptr<InputSLP> getSLP(int n) {
     }
 
 
-    for (int i = num_terminals; i < n; ++i) {
+    for (int i = num_terminals; i < grammar_size; ++i) {
         int num1 = rand() % i; // Generate first number less than i
         int num2 = rand() % i; // Generate second number less than i
 
@@ -970,12 +975,12 @@ void start_compression() {
 
     // unique_ptr<InputSLP> inputSLP = make_unique<InputSLP>(nonterm);
 
-    unique_ptr<InputSLP> inputSLP = getSLP(30);
+    unique_ptr<InputSLP> inputSLP = getSLP(50);
 
     int i = -1;
-    for(SLPNonterm & slp_nonterm : inputSLP->nonterm) {
-        cout << (++i) << ' ' << slp_nonterm.type << ' ' << slp_nonterm.first << ' ' << slp_nonterm.second << endl;
-    }
+    // for(SLPNonterm & slp_nonterm : inputSLP->nonterm) {
+    //     cout << (++i) << ' ' << slp_nonterm.type << ' ' << slp_nonterm.first << ' ' << slp_nonterm.second << endl;
+    // }
 
 
     unique_ptr<RecompressionRLSLP> recompression_rlslp = recompression_on_slp(inputSLP);
@@ -990,19 +995,21 @@ void start_compression() {
 
     // cout << "OK" << endl;
 
-    printRecompressionRLSLP(recompression_rlslp);
+    // printRecompressionRLSLP(recompression_rlslp);
 
     vector<int> arr = expandRLSLP(recompression_rlslp);
 
-    cout << arr << endl;
+    // cout << arr << endl;
 
 
-    int n = rlslp_nonterm_vec.back().explen;
+    int text_size = rlslp_nonterm_vec.back().explen;
+
+    cout << "Text Size : " << text_size << endl;
 
     // TEST
 
-    for(int i=0; i<n; i++) {
-        for(int j=i+1; j<n; j++) {
+    for(int i=0; i<text_size; i++) {
+        for(int j=i+1; j<text_size; j++) {
 
             // if(i!=7 or j!=11) continue;
 
@@ -1029,7 +1036,7 @@ void start_compression() {
             int ii = i;
             int jj = j;
 
-            while(jj < n && arr[ii] == arr[jj]) {
+            while(jj < text_size && arr[ii] == arr[jj]) {
                 res2++;
 
                 jj++;
@@ -1049,9 +1056,21 @@ void start_compression() {
     }
 }
 int main() {
+
+    // cout << sizeof(long) << endl;
     int n = 10;
 
     while(n--) {
+
+        auto start_time = std::chrono::high_resolution_clock::now();
+
         start_compression();
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+
+        // Output the duration
+        std::cout << "Time taken: " << duration_seconds << " seconds" << std::endl;
     }
 }
