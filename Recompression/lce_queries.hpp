@@ -1,11 +1,15 @@
 #ifndef LCE_QUERIES_H
 #define LCE_QUERIES_H
 
-#include<bits/stdc++.h>
+#include <vector>
+#include <stack>
+#include <iostream>
+#include <algorithm>
 #include "recompression_definitions.hpp"
+
 using namespace std;
 
-void initialize_nodes(int node, const int& i, int left, int right, stack<Node>& ancestors, vector<RLSLPNonterm>& grammar, Node& v) {
+void initialize_nodes(int node, const int& i, int left, int right, stack<Node>& ancestors, const vector<RLSLPNonterm>& grammar, Node& v) {
     if (left > right || i < left || i > right)
         return;
 
@@ -40,7 +44,7 @@ void initialize_nodes(int node, const int& i, int left, int right, stack<Node>& 
     return;
 }
 
-Node getLeftMostChild(Node v, vector<RLSLPNonterm> & grammar) {
+Node getLeftMostChild(Node v, const vector<RLSLPNonterm> & grammar) {
     char type = grammar[v.var].type;
 
     const RLSLPNonterm& nt = grammar[v.var];
@@ -63,97 +67,71 @@ Node getLeftMostChild(Node v, vector<RLSLPNonterm> & grammar) {
 }
 
 
-int getChildCount(Node parent, vector<RLSLPNonterm> & grammar) {
-
-    RLSLPNonterm & nt = grammar[parent.var];
-
-    if(nt.type == '0') {
-        return 1;
-    }
-    else if(nt.type == '1') {
-        return 2;
-    }
-    else {
-        return nt.second;
+int getChildCount(const Node &parent, const vector<RLSLPNonterm> &grammar) {
+    const RLSLPNonterm &nt = grammar[parent.var];
+    switch (nt.type) {
+        case '0': return 1;
+        case '1': return 2;
+        default: return nt.second;
     }
 }
 
-int getChildIndex(Node parent, Node v, vector<RLSLPNonterm> & grammar) {
-    RLSLPNonterm & nt = grammar[parent.var];
 
-    if(nt.type == '0') {
-        return 1;
-    }
-    else if(nt.type == '1') {
-        if(parent.l == v.l) {
+int getChildIndex(const Node &parent, const Node &v, const vector<RLSLPNonterm> &grammar) {
+    const RLSLPNonterm &nt = grammar[parent.var];
+
+    switch (nt.type) {
+        case '0': 
             return 1;
-        }
-        else {
-            return 2;
-        }
-    }
-    else {
-        return (v.l - parent.l)/(v.r - v.l) + 1;
-    }
 
+        case '1': 
+            return (parent.l == v.l) ? 1 : 2;
+
+        default:
+            int span = v.r - v.l;
+            return (v.l - parent.l) / span + 1;
+    }
 }
 
-Node getKthSibling(Node parent, Node v, int k, vector<RLSLPNonterm> &grammar ) {
-    RLSLPNonterm & nt = grammar[parent.var];
+Node getKthSibling(const Node &parent, const Node &v, int k) {
+    int segmentLength = v.r - v.l;
+    int newLeft = parent.l + (k - 1) * segmentLength;
+    int newRight = newLeft + segmentLength;
 
-    int left = parent.l;
-    int right = parent.r;
-
-    // cout << "328: " << parent.var << ' ' << left << ' ' << right << ' ' << k << endl;
-
-
-    return Node(v.var, left + (k-1)*(v.r - v.l), left + (k-1)*(v.r - v.l) + (v.r - v.l));
+    return Node(v.var, newLeft, newRight);
 }
 
-Node replaceWithHighestStartingAtPosition(Node v, stack<Node> &ancestors, vector<RLSLPNonterm> & grammar) {
 
+Node replaceWithHighestStartingAtPosition(const Node &v, stack<Node> &ancestors, const vector<RLSLPNonterm> &grammar) {
     Node child = v;
-    while(ancestors.empty() == false and ancestors.top().r == v.r) {
+    while (!ancestors.empty() && ancestors.top().r == v.r) {
         child = ancestors.top();
         ancestors.pop();
     }
 
-    Node ancestor = ancestors.top();
-
-    // cout << "sz: " << ' ' << ancestor.var << endl;
-
-    RLSLPNonterm nt = grammar[ancestor.var];
-
-    // cout << nt.type << endl;
-
-
-    if(nt.type == '1') {
-        return Node(nt.second, child.r, ancestor.r);
+    if (ancestors.empty()) {
+        cout << "ANCESTORS is EMPTY -- Exiting" << endl;
+        exit(1);
+        return Node(); // Or some other appropriate action
     }
-    else {
+
+    Node ancestor = ancestors.top();
+    const RLSLPNonterm &nt = grammar[ancestor.var];
+
+    if (nt.type == '1') {
+        return Node(nt.second, child.r, ancestor.r);
+    } else {
         int childIndex = getChildIndex(ancestor, child, grammar);
-
-        // cout << "353: " << childIndex << endl;
-
-        return getKthSibling(ancestor, child, childIndex + 1, grammar);
+        return getKthSibling(ancestor, child, childIndex + 1);
     }
 
     return Node();
-
 }
 
-int LCE(Node v1, Node v2, int i, stack<Node> & v1_ancestors, stack<Node> & v2_ancestors, vector<RLSLPNonterm> &grammar) {
 
+int LCE(Node &v1, Node &v2, int i, stack<Node> & v1_ancestors, stack<Node> & v2_ancestors, const vector<RLSLPNonterm> &grammar) {
     int exp_len_v1 = v1.r - v1.l;
-
     int exp_len_v2 = v2.r - v2.l;
-
-    // cout << exp_len_v1 << ' ' << exp_len_v2 << endl;
-
-    // cout << "NEW" << endl;
-    // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
-    // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
-    // cout << "END" << endl;
 
     if(exp_len_v1 == 1 and exp_len_v1 == exp_len_v2 and v1.var != v2.var) {
         return v1.l - i;
@@ -161,7 +139,6 @@ int LCE(Node v1, Node v2, int i, stack<Node> & v1_ancestors, stack<Node> & v2_an
     else if(exp_len_v1 > exp_len_v2) {
         v1_ancestors.push(v1);
         v1 = getLeftMostChild(v1, grammar);
-        // cout << "374" << ' ' << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
     }
     else if(exp_len_v1 < exp_len_v2) {
         v2_ancestors.push(v2);
@@ -187,21 +164,7 @@ int LCE(Node v1, Node v2, int i, stack<Node> & v1_ancestors, stack<Node> & v2_an
 
         int lambda = min(d1 - j1, d2 - j2);
 
-        // cout << "OK" << endl;
-
-        // cout << j1 << ' ' << d1 << endl;
-        // cout << j2 << ' ' << d2 << endl;
-
-        // cout << lambda << endl;
-
-        // cout << "OK END" << endl;
-
-
         if(lambda <= 1) {
-
-            // cout << v1.l << ' ' << v1.r << ' ' << v2.l << ' ' << v2.r << endl;
-
-
             v1 = replaceWithHighestStartingAtPosition(v1, v1_ancestors, grammar);
 
             if(v2.r >= grammar.back().explen) {
@@ -209,17 +172,11 @@ int LCE(Node v1, Node v2, int i, stack<Node> & v1_ancestors, stack<Node> & v2_an
             }
 
             v2 = replaceWithHighestStartingAtPosition(v2, v2_ancestors, grammar);
-
-            // if(v2.r >= grammar.back().explen) {
-            //     return v1.l - i;
-            // }
         }
         else {
-            v1 = getKthSibling(v1_parent, v1, j1 + lambda, grammar);
-            v2 = getKthSibling(v2_parent, v2, j2 + lambda, grammar);
+            v1 = getKthSibling(v1_parent, v1, j1 + lambda);
+            v2 = getKthSibling(v2_parent, v2, j2 + lambda);
         }
-
-
     }
 
     return LCE(v1, v2, i, v1_ancestors, v2_ancestors, grammar);;

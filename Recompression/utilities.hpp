@@ -79,15 +79,13 @@ vector<int> expandRLSLP(const unique_ptr<RecompressionRLSLP> & recompression_rls
     return result;
 }
 
-void expandSLG(int var, vector<SLGNonterm> & slg_nonterm_vec, vector<int> & result) {
-
+void expandSLG(int var, const vector<SLGNonterm> & slg_nonterm_vec, vector<int> & result) {
     if(var < 0) {
         result.push_back(abs(var));
-
         return;
     }
 
-    vector<int> & rhs = slg_nonterm_vec[var].rhs;
+    const vector<int> & rhs = slg_nonterm_vec[var].rhs;
 
     for(int rhs_var : rhs) {
         expandSLG(rhs_var, slg_nonterm_vec, result);
@@ -97,12 +95,10 @@ void expandSLG(int var, vector<SLGNonterm> & slg_nonterm_vec, vector<int> & resu
 vector<int> expandSLG(const unique_ptr<SLG> & slg) {
     vector<int> result;
 
-    vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
+    const vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
     expandSLG(slg_nonterm_vec.size() - 1, slg_nonterm_vec, result);
 
-
     return result;
 }
-
 #endif
