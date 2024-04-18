@@ -78,6 +78,50 @@ public:
     InputSLP(const vector<SLPNonterm>& nonterm) : nonterm(nonterm) {
 
     }
+
+    // https://stackoverflow.com/a/2974659
+    void read_from_file(const string & file_name) {
+        ifstream file;
+
+        file.open(file_name, ios::binary);
+
+        if(!file) {
+            cout << "Error in opening file!" << endl;
+            return;
+        }
+
+        int num_terminals;
+
+        file.read(reinterpret_cast<char*>(&num_terminals), sizeof(int));
+
+        char terminal;
+
+        for(int i=1; i<=num_terminals; i++) {
+            file.read(reinterpret_cast<char*>(&terminal), sizeof(terminal));
+            nonterm.push_back(SLPNonterm('0', -i, 1));
+        }
+
+        int non_terminal1, non_terminal2;
+
+        while(true) {
+            if(file.read(reinterpret_cast<char*>(&non_terminal1), sizeof(int)) && file.read(reinterpret_cast<char*>(&non_terminal2), sizeof(int))) {
+                nonterm.push_back(SLPNonterm('1', non_terminal1, non_terminal2));
+            }
+            else {
+                if(file.eof()) {
+                    cout << "Reached end of the file!" << endl;
+                }
+                else {
+                    cout << "Error in Reading File!!" << endl;
+                }
+                break;
+            }
+        }
+
+        file.close();
+
+        return;
+    }
 };
 
 struct Node {
