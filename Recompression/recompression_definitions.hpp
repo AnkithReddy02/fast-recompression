@@ -86,26 +86,35 @@ public:
         file.open(file_name, ios::binary);
 
         if(!file) {
-            cout << "Error in opening file!" << endl;
+            cout << "Error : Unable to open the file!" << endl;
             return;
         }
 
-        int num_terminals;
+        
+        // Move the file pointer to the end.
+        file.seekg(0, ios::end);
+        // Get the file size
+        size_t file_size = file.tellg();
+        // Move back the file pointer to the beginning.
+        file.seekg(0, ios::beg);
 
-        file.read(reinterpret_cast<char*>(&num_terminals), sizeof(int));
-
-        char terminal;
-
-        for(int i=1; i<=num_terminals; i++) {
-            file.read(reinterpret_cast<char*>(&terminal), sizeof(terminal));
-            nonterm.push_back(SLPNonterm('0', -i, 1));
+        if(file_size % 4) {
+            cout << "Error : File size is not a multiple of 4!" << endl;
+            return;
         }
 
-        int non_terminal1, non_terminal2;
+        int first, second;
 
         while(true) {
-            if(file.read(reinterpret_cast<char*>(&non_terminal1), sizeof(int)) && file.read(reinterpret_cast<char*>(&non_terminal2), sizeof(int))) {
-                nonterm.push_back(SLPNonterm('1', non_terminal1, non_terminal2));
+            if(file.read(reinterpret_cast<char*>(&first), sizeof(int)) && file.read(reinterpret_cast<char*>(&second), sizeof(int))) {
+                // Type '0'
+                if(first == 0) {
+                    nonterm.push_back(SLPNonterm('0', second, 0));
+                }
+                // Type '1'. X -> YZ in binary file is encoded as (Y + 1)(Z + 1).
+                else {
+                    nonterm.push_back(SLPNonterm('1', first-1, second-1));
+                }
             }
             else {
                 if(file.eof()) {
@@ -119,6 +128,8 @@ public:
         }
 
         file.close();
+
+        order_slp();
 
         return;
     }
