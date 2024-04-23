@@ -804,8 +804,11 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
         vector<int> rhs;
 
         if(type == '0') {
-            rhs = {first};
-            recompression_rlslp->nonterm.push_back(RLSLPNonterm());
+            // For type '0', in SLG, terminals start from -1.
+            // Initially, -1 = recompression_rlslp->nonterm size.
+            rhs = {-(int)(recompression_rlslp->nonterm).size()};
+            // Here first is the ASCII values of the character.
+            recompression_rlslp->nonterm.push_back(RLSLPNonterm('0', first, second));
         }
         else {
             rhs = {first, second};
@@ -886,9 +889,6 @@ int computeExplen(const int i, vector<RLSLPNonterm>& rlslp_nonterm_vec) {
     return 0; 
 }
 
- 
-
-
 unique_ptr<InputSLP> getSLP(int grammar_size) {
 
     vector<SLPNonterm> nonterm;
@@ -930,7 +930,6 @@ unique_ptr<InputSLP> getSLP(int grammar_size) {
 
     return slp;
 }
-
 
 void start_compression(int grammar_size) {
     vector<SLPNonterm> nonterm;
@@ -1058,6 +1057,7 @@ void start_compression(int grammar_size) {
     //     }
     // }
 }
+
 int main() {
 
     // cout << sizeof(long) << endl;
