@@ -707,6 +707,10 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                     slg_nonterm.RB = 0;
                 }
                 else {
+                    // Non-reachable Non-Terminals.
+                    // A --> a
+                    // 'a' is not found in adjacency list so push empty.
+                    new_slg_nonterm_vec.push_back(SLGNonterm());
                     cout << "Error: Not Found in Left and Right." << endl;
                 }
             }
