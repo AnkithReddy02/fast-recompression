@@ -122,6 +122,75 @@ public:
 
         return;
     }
+
+private:
+
+    /*
+        Orders the slp in the increasing order of non-terminals
+        First, the non-terminals of type '0' are stored.
+        Then the non-terminals of type '1' are stored.
+        The START non-terminal is always at the last(or top).
+
+        Space : O(|G|)
+        Time  : O(|G|)
+    */
+    void order_slp() {
+        assert(nonterm.size() > 0);
+
+        vector<SLPNonterm> ordered_nonterm;
+
+        // Kind of visited array but stores the newly assigned nonterminal. 
+        int dp[nonterm.size()];
+        fill(dp, dp + nonterm.size(), -1);
+
+        queue<int> q;
+
+        // Initialize the queue with the START non-terminal.
+        q.push(nonterm.size()-1);
+
+        // Assign.
+        int nonterminal = nonterm.size()-1;
+        int terminal = 1;
+
+        dp[nonterm.size()-1] = nonterminal--;
+
+        while(!q.empty()) {
+            int sz = q.size();
+
+            while(sz--) {
+                int node = q.front();
+                q.pop();
+
+                char type = nonterm[node].type;
+                int first = nonterm[node].first;
+                int second = nonterm[node].second;
+
+                // Explore Neighbors.
+                if(type == '1') {
+                    if(dp[first] == -1) {
+                        q.push(first);
+                        dp[first] = nonterminal--;
+                    }
+
+                    if(dp[second] == -1) {
+                        q.push(second);
+                        dp[second] = nonterminal--;
+                    }
+
+                    ordered_nonterm.push_back(SLPNonterm('1', dp[first], dp[second]));
+                }
+                else {
+                    ordered_nonterm.push_back(SLPNonterm('1', -(terminal++), second));
+                }
+            }
+        }
+
+        // Reverse the order as the Starting Non-Terminal 'S' is pushed first.
+        reverse(ordered_nonterm.begin(), ordered_nonterm.end());
+
+        // Reassign the nonterm.
+        nonterm = ordered_nonterm;
+    }
 };
 
 struct Node {
