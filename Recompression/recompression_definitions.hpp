@@ -161,7 +161,6 @@ private:
 
         // Assign.
         int nonterminal = nonterm.size()-1;
-        int terminal = 1;
 
         dp[nonterm.size()-1] = nonterminal--;
 
@@ -191,7 +190,7 @@ private:
                     ordered_nonterm.push_back(SLPNonterm('1', dp[first], dp[second]));
                 }
                 else {
-                    ordered_nonterm.push_back(SLPNonterm('1', -(terminal++), second));
+                    ordered_nonterm.push_back(SLPNonterm('1', first, second));
                 }
             }
         }
