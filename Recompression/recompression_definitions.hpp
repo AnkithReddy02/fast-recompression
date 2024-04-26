@@ -66,6 +66,10 @@ struct SLPNonterm {
     SLPNonterm(char type, int first, int second) : type(type), first(first), second(second) {
 
     }
+
+    SLPNonterm() : type('0'), first(0), second(0) {
+
+    }
 };
 
 class InputSLP {
@@ -81,58 +85,58 @@ public:
 
     // https://stackoverflow.com/a/2974659
     void read_from_file(const string & file_name) {
-        ifstream file;
+        ifstream file(file_name, ios::binary);
 
-        file.open(file_name, ios::binary);
-
-        if(!file) {
-            cout << "Error : Unable to open the file!" << endl;
+        if (!file.is_open()) {
+            cout << "Error: Unable to open the file!" << endl;
             return;
         }
 
-        
         // Move the file pointer to the end.
         file.seekg(0, ios::end);
-        // Get the file size
+        // Get the file size.
         size_t file_size = file.tellg();
         // Move back the file pointer to the beginning.
         file.seekg(0, ios::beg);
 
-        if(file_size % 4) {
-            cout << "Error : File size is not a multiple of 4!" << endl;
-            return;
-        }
+        cout << "File size: " << file_size << endl;
+
+        // if (file_size % 4) {
+        //     cout << "Error: File size is not a multiple of 4!" << endl;
+        //     return;
+        // }
 
         int first, second;
+        char c;
 
-        while(true) {
-            if(file.read(reinterpret_cast<char*>(&first), sizeof(int)) && file.read(reinterpret_cast<char*>(&second), sizeof(int))) {
-                // Type '0'
-                if(first == 0) {
-                    nonterm.push_back(SLPNonterm('0', second, 0));
-                }
-                // Type '1'. X -> YZ in binary file is encoded as (Y + 1)(Z + 1).
-                else {
-                    nonterm.push_back(SLPNonterm('1', first-1, second-1));
-                }
+        while (file.read(reinterpret_cast<char*>(&first), sizeof(int))) {
+            if (first == 0) {
+                // Read a 1-byte integer for second.
+                file.read(reinterpret_cast<char*>(&c), sizeof(char));
+                nonterm.push_back(SLPNonterm('0', c, 0));
+
+                cout << c << ' ' << 0 << endl;
+            } else {
+                // Read a 4-byte integer for second.
+                file.read(reinterpret_cast<char*>(&second), sizeof(int));
+                nonterm.push_back(SLPNonterm('1', first - 1, second - 1));
+
+                cout << first-1 << ' ' << second-1 << endl;
             }
-            else {
-                if(file.eof()) {
-                    cout << "Reached end of the file!" << endl;
-                }
-                else {
-                    cout << "Error in Reading File!!" << endl;
-                }
-                break;
-            }
+        }
+
+        if (file.eof()) {
+            cout << "Reached end of the file!" << endl;
+        } else {
+            cout << "Error in reading file!" << endl;
         }
 
         file.close();
 
         order_slp();
-
-        return;
+        
     }
+
 
 private:
 
@@ -148,7 +152,7 @@ private:
     void order_slp() {
         assert(nonterm.size() > 0);
 
-        vector<SLPNonterm> ordered_nonterm;
+        vector<SLPNonterm> ordered_nonterm(nonterm.size());
 
         // Kind of visited array but stores the newly assigned nonterminal. 
         int dp[nonterm.size()];
@@ -159,10 +163,24 @@ private:
         // Initialize the queue with the START non-terminal.
         q.push(nonterm.size()-1);
 
-        // Assign.
-        int nonterminal = nonterm.size()-1;
+        // First Assign Terminals.
+        int nonterminal_begin = 0;
 
-        dp[nonterm.size()-1] = nonterminal--;
+        for(int i=0; i<nonterm.size(); i++) {
+            if(nonterm[i].type == '0') {
+                ordered_nonterm[nonterminal_begin] = nonterm[i];
+                dp[i] = nonterminal_begin++;
+            }
+        }
+
+        // Pointer of ordered nonterm to reassign SLPNonterm from back. Dry run.
+        int ordered_nonterm_ptr = ordered_nonterm.size()-1;
+
+        // Assign.
+        int nonterminal_end = nonterm.size()-1;
+
+        // Assign the start Non-Terminal.
+        dp[nonterm.size()-1] = nonterminal_end--;
 
         while(!q.empty()) {
             int sz = q.size();
@@ -178,25 +196,27 @@ private:
                 // Explore Neighbors.
                 if(type == '1') {
                     if(dp[first] == -1) {
+                        // Push to queue only if it is not explored!
                         q.push(first);
-                        dp[first] = nonterminal--;
+                        // Assign Neighbor.
+                        dp[first] = nonterminal_end--;
                     }
 
                     if(dp[second] == -1) {
                         q.push(second);
-                        dp[second] = nonterminal--;
+                        // ASsign Neighbor.
+                        dp[second] = nonterminal_end--;
                     }
 
-                    ordered_nonterm.push_back(SLPNonterm('1', dp[first], dp[second]));
+                    // Add the current Non-Terminal RHS to the end of ordered_nonterm.
+                    ordered_nonterm[ordered_nonterm_ptr--] = SLPNonterm('1', dp[first], dp[second]);
                 }
+                // 'else' never executes! -- Terminals are explored initially.
                 else {
-                    ordered_nonterm.push_back(SLPNonterm('1', first, second));
+                    ordered_nonterm[ordered_nonterm_ptr--] = SLPNonterm('1', first, second);
                 }
             }
         }
-
-        // Reverse the order as the Starting Non-Terminal 'S' is pushed first.
-        reverse(ordered_nonterm.begin(), ordered_nonterm.end());
 
         // Reassign the nonterm.
         nonterm = ordered_nonterm;
