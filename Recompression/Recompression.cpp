@@ -461,9 +461,9 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
         int rightSetFreq = 0;
         while (currentIndex < n && adjList[currentIndex][0] == c) {
             if (leftSet.find(adjList[currentIndex][1]) != leftSet.end()) {
-                leftSetFreq++;
+                leftSetFreq += adjList[currentIndex][3];
             } else {
-                rightSetFreq++;
+                rightSetFreq += adjList[currentIndex][3];
             }
             currentIndex++;
         }
