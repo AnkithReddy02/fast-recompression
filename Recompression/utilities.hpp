@@ -49,7 +49,7 @@ void printSLG(const unique_ptr<SLG> & slg) {
 
 void expandRLSLP(int var, const vector<RLSLPNonterm> & rlslp_nonterm_vec, vector<int> & result) {
     if(rlslp_nonterm_vec[var].type == '0') {
-        result.push_back(var);
+        result.push_back(rlslp_nonterm_vec[var].first);
         return;
     }
 
