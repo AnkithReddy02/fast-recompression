@@ -1235,14 +1235,14 @@ int main(int argc, char *argv[]) {
     string input_file(argv[1]);
     
 
-    ofstream outfile("output.txt");
-    if (!outfile.is_open()) {
-        cerr << "Error: Unable to open output file." << endl;
-        return 1;
-    }
+    // ofstream outfile("output.txt");
+    // if (!outfile.is_open()) {
+    //     cerr << "Error: Unable to open output file." << endl;
+    //     return 1;
+    // }
 
-    streambuf* console = cout.rdbuf(); 
-    cout.rdbuf(outfile.rdbuf());
+    // streambuf* console = cout.rdbuf(); 
+    // cout.rdbuf(outfile.rdbuf());
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1255,5 +1255,5 @@ int main(int argc, char *argv[]) {
     // Output the duration
     cout << "Total Time taken: " << duration_seconds << " seconds" << endl;
 
-    outfile.close();
+    // outfile.close();
 }
