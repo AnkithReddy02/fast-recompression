@@ -103,6 +103,10 @@ public:
 
         unsigned char buffer[10]; // Buffer to hold 10 bytes (5 bytes read two times)
 
+        nonterm.resize(file_size/10);
+
+        int i = 0;
+
         while (file.read(reinterpret_cast<char*>(buffer), sizeof(buffer))) {
             // Process the first 5-byte integer
             uint64_t value1 = 0;
@@ -117,9 +121,9 @@ public:
             }
 
             if (value1 == 0) {
-                nonterm.push_back(SLPNonterm('0', value2, 0));
+                nonterm[i++] = SLPNonterm('0', value2, 0);
             } else {
-                nonterm.push_back(SLPNonterm('1', value1 - 1, value2 - 1));
+                nonterm[i++] = SLPNonterm('1', value1 - 1, value2 - 1);
             }
         }
 
@@ -150,7 +154,7 @@ private:
 
         const int grammar_size = nonterm.size();
         vector<vector<int>> graph(grammar_size, vector<int>());
-        vector<int> inorder(grammar_size, 0);
+        vector<uint8_t> inorder(grammar_size, 0);
         vector<int> old_new_map(grammar_size, 0);
 
         queue<int> q;
@@ -185,6 +189,9 @@ private:
             }
         }
 
+        graph.clear();
+        inorder.clear();
+
         vector<SLPNonterm> ordered_nonterm(grammar_size);
 
         for(int i=0; i<nonterm.size(); i++) {
@@ -201,7 +208,7 @@ private:
             }
         }
         
-        nonterm = ordered_nonterm;
+        nonterm = move(ordered_nonterm);
 
         return;
     }

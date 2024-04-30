@@ -89,7 +89,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
         const vector<int> &rhs = slg_nonterm.rhs;
 
         if(rhs.empty()) {
-            new_slg_nonterm_vec.push_back(SLGNonterm());
+            new_slg_nonterm_vec.emplace_back();
             continue;
         }
 
@@ -102,7 +102,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
             // Single Terminal
             if(rhs_symbol < 0) {
-                rhs_expansion.push_back({rhs_symbol, 1});
+                rhs_expansion.emplace_back(rhs_symbol, 1);
                 continue;
             }
 
@@ -150,7 +150,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
         // Case 1 : Everything is consumed by lr_pointer
         if(lr_pointer == rhs_expansion.size()) {
             // Cap is empty; set Cap
-            new_slg_nonterm_vec.push_back(SLGNonterm());
+            new_slg_nonterm_vec.emplace_back();
             // RR is empty; set RR
             slg_nonterm.RR = {-1, -1};
         }
@@ -182,7 +182,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
             // There are no pairs presents for the cap.
             if(cap_compressed_slg_nonterm_vec.empty()) {
                 // Cap is empty; set Cap
-                new_slg_nonterm_vec.push_back(SLGNonterm());
+                new_slg_nonterm_vec.emplace_back();
             }
             else {
 
@@ -208,7 +208,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                     
                 }
 
-                new_slg_nonterm_vec.push_back(SLGNonterm(cap_rhs));
+                new_slg_nonterm_vec.emplace_back(cap_rhs);
             }
         }
     }
@@ -724,6 +724,9 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     // Create Partition.
     const array<unordered_set<int>,2> arr = createPartition(adjList);
 
+    adjList.clear();  // Clear immediately
+    vector<array<int, 4>>().swap(adjList);  // Ensure memory is released
+
     const unordered_set<int> &left_set = arr[0], &right_set = arr[1];
 
     // Current slg non-term list
@@ -1103,15 +1106,11 @@ vector<pair<int, int>> get_random_queries(int text_size) {
     return pairs;
 }
 void start_compression(string input_file) {
-    vector<SLPNonterm> nonterm;
-
     unique_ptr<InputSLP> inputSLP = make_unique<InputSLP>();
     inputSLP->read_from_file(input_file);
 
     int j = 0;
-    cout << inputSLP->nonterm.size() << endl;
-
-    // unique_ptr<InputSLP> inputSLP = getSLP(grammar_size);
+    cout << "Number of Non-Terminals : " << inputSLP->nonterm.size() << endl;
 
     int i = -1;
 
@@ -1238,16 +1237,6 @@ int main(int argc, char *argv[]) {
     }
 
     string input_file(argv[1]);
-    
-
-    // ofstream outfile("output.txt");
-    // if (!outfile.is_open()) {
-    //     cerr << "Error: Unable to open output file." << endl;
-    //     return 1;
-    // }
-
-    // streambuf* console = cout.rdbuf(); 
-    // cout.rdbuf(outfile.rdbuf());
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1260,5 +1249,5 @@ int main(int argc, char *argv[]) {
     // Output the duration
     cout << "Total Time taken: " << duration_seconds << " seconds" << endl;
 
-    // outfile.close();
+    return 0;
 }
