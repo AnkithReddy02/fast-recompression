@@ -1097,36 +1097,18 @@ vector<pair<int, int>> get_random_queries(int text_size) {
 
     return pairs;
 }
-void start_compression(int grammar_size) {
+void start_compression(string input_file) {
     vector<SLPNonterm> nonterm;
 
-    
-
     unique_ptr<InputSLP> inputSLP = make_unique<InputSLP>();
-    string file_name = "/Users/ankithreddy/Documents/Longest-Common-Extension/Recompression/einstein.en.txt.lz77.prune_slp";
-    // string file_name = "sample_input_file.bin";
-    inputSLP->read_from_file(file_name);
+    inputSLP->read_from_file(input_file);
 
     int j = 0;
-    // for(SLPNonterm & slpnonterm : inputSLP->nonterm) {
-    //     cout << slpnonterm.type << ' ' << slpnonterm.first << ' ' << slpnonterm.second << endl;
-
-    //     if(j==300) break;
-
-    //     j++;
-    // }
-
     cout << inputSLP->nonterm.size() << endl;
 
     // unique_ptr<InputSLP> inputSLP = getSLP(grammar_size);
 
     int i = -1;
-    // for(SLPNonterm & slp_nonterm : inputSLP->nonterm) {
-    //     cout << (++i) << ' ' << slp_nonterm.type << ' ' << slp_nonterm.first << ' ' << slp_nonterm.second << endl;
-    // }
-
-    
-
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1243,8 +1225,14 @@ void start_compression(int grammar_size) {
     // cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 
+    if(argc < 2) {
+        cout << "Please provided the Input SLP file!" << endl;
+        exit(1);
+    }
+
+    string input_file(argv[1]);
     
 
     ofstream outfile("output.txt");
@@ -1256,25 +1244,16 @@ int main() {
     streambuf* console = cout.rdbuf(); 
     cout.rdbuf(outfile.rdbuf());
 
-    int n = 1;
+    auto start_time = std::chrono::high_resolution_clock::now();
 
-    while(n--) {
+    start_compression(input_file);
 
-        auto start_time = std::chrono::high_resolution_clock::now();
+    auto end_time = std::chrono::high_resolution_clock::now();
 
-        start_compression(200);
+    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
 
-        auto end_time = std::chrono::high_resolution_clock::now();
-
-        auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-
-        // Output the duration
-        cout << "Total Time taken: " << duration_seconds << " seconds" << endl;
-    }
-
-    struct rusage r_usage;
-    getrusage(RUSAGE_SELF, &r_usage);
-    std::cout << "Peak RAM usage: " << r_usage.ru_maxrss << " kilobytes\n";
+    // Output the duration
+    cout << "Total Time taken: " << duration_seconds << " seconds" << endl;
 
     outfile.close();
 }
