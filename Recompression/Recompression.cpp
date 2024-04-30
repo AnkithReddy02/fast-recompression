@@ -67,7 +67,6 @@ vector<pair<int, int>> combineFrequenciesInRange(const vector<pair<int, int>>& v
     return result;
 }
 
-int counts;
 // Block Compression
 unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp, unordered_map<pair<int, int>, int, hash_pair> & m) {
 
@@ -446,93 +445,6 @@ void sortAdjList(vector<array<int, 4>> & adjList) {
     }
 }
 
-// only adjList as input. *
-// array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjList) {
-
-//     // // Make Positive
-//     // for(array<int, 4> & a : adjList) {
-//     //  a[0] = -a[0];
-//     //  a[1] = -a[1];
-//     // }
-    
-//     unordered_set<int> leftSet, rightSet;
-//     int currentIndex = 0;
-//     size_t n = adjList.size();
-
-//     int c = adjList[currentIndex][0];
-
-//     for(int i=1;i<=abs(c)-1;i++) {
-//         leftSet.insert(-i);
-//     }
-
-//     while(currentIndex < n) {
-//         int leftSetFreq = 0;
-//         int rightSetFreq = 0;
-//         while (currentIndex < n && adjList[currentIndex][0] == c) {
-//             if (leftSet.find(adjList[currentIndex][1]) != leftSet.end()) {
-//                 leftSetFreq += adjList[currentIndex][3];
-//             } else {
-//                 rightSetFreq += adjList[currentIndex][3];
-//             }
-//             currentIndex++;
-//         }
-
-
-//         if (leftSetFreq >= rightSetFreq) {
-//             rightSet.insert(c);
-//         } else {
-//             leftSet.insert(c);
-//         }
-
-//         if(currentIndex < n) {
-//             for(int i=abs(c)+1; i<=abs(adjList[currentIndex][0])-1;i++) {
-//                 leftSet.insert(-i);
-//             }
-//             c = adjList[currentIndex][0];
-//         }
-        
-//     }
-    
-//     int LRPairsCount = 0;
-//     int RLPairsCount = 0;
-
-//     /*
-//         for (int i = 0; i < arr.size() - 1; i++) {
-
-
-//             LRPairsCount += (leftSet.find(arr[i]) != leftSet.end()) && (rightSet.find(arr[i + 1]) != rightSet.end());
-//             RLPairsCount += (rightSet.find(arr[i]) != rightSet.end()) && (leftSet.find(arr[i + 1]) != leftSet.end());
-//         }
-//     */
-
-//     for(const array<int, 4> & arr : adjList) {
-//         int f = arr[0];
-//         int s = arr[1];
-
-//         if(arr[2] == 1) {
-//             swap(f, s);
-//         }
-
-//         LRPairsCount += (leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end());
-//         RLPairsCount += (rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end());
-
-//     }
-
-//     if (RLPairsCount < LRPairsCount) {
-//         swap(leftSet, rightSet);
-//     }
-
-//  //    // Revert to Negative
-//     // for(array<int, 4> & a : adjList) {
-//     //  a[0] = -a[0];
-//     //  a[1] = -a[1];
-//     // }
-
-    
-
-//     return { rightSet, leftSet };
-// }
-
 void createPartition(const vector<array<int, 4>> & adjList, array<unordered_set<int>, 2> &partition_set) {
 
     // // Make Positive
@@ -618,6 +530,7 @@ void createPartition(const vector<array<int, 4>> & adjList, array<unordered_set<
 
     return;
 }
+
 array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjList) {
 
     // // Make Positive
@@ -700,107 +613,6 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
 
     return { rightSet, leftSet };
 }
-
-// void createPartition(const vector<array<int, 4>> & adjList, vector<int> &partition_set) {
-
-//     // // Make Positive
-//     // for(array<int, 4> & a : adjList) {
-//     //  a[0] = -a[0];
-//     //  a[1] = -a[1];
-//     // }
-
-//     if(adjList.empty()) return;
-    
-//     int max_element = abs(adjList.back()[0]);
-
-//     int currentIndex = 0;
-//     size_t n = adjList.size();
-
-//     int c = adjList[currentIndex][0];
-
-//     for(int i=1;i<=abs(c)-1;i++) {
-//         // leftSet.insert(-i);
-//         partition_set[i] = 1;
-//     }
-
-//     while(currentIndex < n) {
-//         int leftSetFreq = 0;
-//         int rightSetFreq = 0;
-//         while (currentIndex < n && adjList[currentIndex][0] == c) {
-//             if (partition_set[abs(adjList[currentIndex][1])]) {
-//                 leftSetFreq++;
-//             } else {
-//                 rightSetFreq++;
-//             }
-//             currentIndex++;
-//         }
-
-
-//         if (leftSetFreq >= rightSetFreq) {
-//             partition_set[abs(c)] = 2;
-//         } else {
-//             partition_set[abs(c)] = 1;
-//         }
-
-//         if(currentIndex < n) {
-//             for(int i=abs(c)+1; i<=abs(adjList[currentIndex][0])-1;i++) {
-//                 // leftSet.insert(-i);
-//                 partition_set[i] = 1;
-//             }
-//             c = adjList[currentIndex][0];
-//         }
-        
-//     }
-    
-//     int LRPairsCount = 0;
-//     int RLPairsCount = 0;
-
-//     /*
-//         for (int i = 0; i < arr.size() - 1; i++) {
-
-
-//             LRPairsCount += (leftSet.find(arr[i]) != leftSet.end()) && (rightSet.find(arr[i + 1]) != rightSet.end());
-//             RLPairsCount += (rightSet.find(arr[i]) != rightSet.end()) && (leftSet.find(arr[i + 1]) != leftSet.end());
-//         }
-//     */
-
-//     for(const array<int, 4> & arr : adjList) {
-//         int f = abs(arr[0]);
-//         int s = abs(arr[1]);
-
-//         if(arr[2] == 1) {
-//             swap(f, s);
-//         }
-
-//         // LRPairsCount += (leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end());
-//         LRPairsCount += (partition_set[f] == 1) && (partition_set[s] == 2);
-//         // RLPairsCount += (rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end());
-//         RLPairsCount += (partition_set[f] == 2) && (partition_set[s] == 1);
-//     }
-
-//     if (RLPairsCount < LRPairsCount) {
-//        for(int &x : partition_set) {
-//             assert(x > 0);
-//             if(x==1) {
-//                 x = 2;
-//             }
-//             else{
-//                 x = 1;
-//             }
-            
-//        }
-//     }
-
-//  //    // Revert to Negative
-//     // for(array<int, 4> & a : adjList) {
-//     //  a[0] = -a[0];
-//     //  a[1] = -a[1];
-//     // }
-
-    
-
-//     return;
-// }
 
 // Pair-Wise Compression
 unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp,  unordered_map<pair<int, int>, int, hash_pair> & m) {
@@ -1073,7 +885,6 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
 
 
     int i = 0;
-    counts = 1;
 
     // printSLG(slg);
 
@@ -1096,8 +907,6 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
 
         // printSLG(slg);
         // printRecompressionRLSLP(recompression_rlslp);
-
-        counts++;
     }
 
     cout << "Runs: " << i << endl;
@@ -1198,6 +1007,7 @@ vector<pair<int, int>> get_random_queries(int text_size) {
 
     return pairs;
 }
+
 void start_compression(string input_file) {
     unique_ptr<InputSLP> inputSLP = make_unique<InputSLP>();
     inputSLP->read_from_file(input_file);
