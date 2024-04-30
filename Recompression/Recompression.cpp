@@ -86,7 +86,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     // 'i' --> represents the variable.
     for(SLGNonterm & slg_nonterm : slg_nonterm_vec) {
         // Take the RHS of the production.
-        const vector<int> &rhs = slg_nonterm.rhs;
+        vector<int> &rhs = slg_nonterm.rhs;
 
         if(rhs.empty()) {
             new_slg_nonterm_vec.emplace_back();
@@ -95,7 +95,6 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
         // Create the expansion of RHS.
         vector<pair<int, int>> rhs_expansion;
-        rhs_expansion.reserve(3 * rhs.size());
 
         // Compute the Expansion.
         for(const int &rhs_symbol: rhs) {
@@ -121,6 +120,9 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                 rhs_expansion.push_back(slg_nonterm_vec[rhs_symbol].RR);
             }
         }
+
+        rhs.clear();
+        vector<int>().swap(rhs);
 
         // Compute LR
         int lr_pointer = 1;
@@ -178,6 +180,9 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
             // Compress Cap(middle part)
             vector<pair<int, int>> cap_compressed_slg_nonterm_vec;
             combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer, cap_compressed_slg_nonterm_vec);
+
+            rhs_expansion.clear();
+            vector<pair<int, int>>().swap(rhs_expansion);
 
             // There are no pairs presents for the cap.
             if(cap_compressed_slg_nonterm_vec.empty()) {
@@ -292,7 +297,6 @@ pair<int, int> computeAdjListHelper(int var, unique_ptr<SLG> & slg, vector<array
     }
     
     vector<pair<int, int>> lms_rms_list;
-    lms_rms_list.reserve(rhs.size());
 
     for(const int &rhs_symbol : rhs) {
         pair<int, int> lms_rms = computeAdjListHelper(rhs_symbol, slg, adjList, dp);
@@ -338,7 +342,7 @@ vector<array<int, 4>> computeAdjList(unique_ptr<SLG> & slg) {
     return adjList;
 }
 
-int computeVOccHelper(const vector<vector<pair<int,int>>> & graph, int u, vector<int> & dp) {
+int computeVOccHelper(vector<vector<pair<int,int>>> & graph, int u, vector<int> & dp) {
 
     // Base Case : Target is Reached / Target is Same as the current node.
     if(u == graph.size()-1) {
@@ -358,6 +362,10 @@ int computeVOccHelper(const vector<vector<pair<int,int>>> & graph, int u, vector
 
         num_paths += weight * computeVOccHelper(graph, v, dp);
     }
+
+    // u is explored.
+    graph[u].clear();
+    vector<pair<int, int>>().swap(graph[u]);
 
     return dp[u] = num_paths;
 }
@@ -800,7 +808,6 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     computeVOcc(slg);
 
     // Compute AdjList
-    // ** doubt ** --> I hope just call to the largest varaible/number would suffice.
     vector<array<int, 4>> adjList;
     computeAdjList(slg, adjList);
 
@@ -903,18 +910,11 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                         rhs_expansion.push_back(slg_nonterm_vec[rhs[j]].RB);
                     }
                 }
-
-        
-
-                
-
-
             }
 
             // To handle last character/corner case
             // if(rhs_expansion.size()>=2)
             rhs_expansion.push_back(rhs_expansion.back());
-
 
 
 
@@ -991,6 +991,13 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
             
         }
     }
+
+    arr[0].clear();
+    arr[1].clear();
+    unordered_set<int>().swap(arr[0]);
+    unordered_set<int>().swap(arr[1]);
+
+
 
     int start_var = slg_nonterm_vec.size()-1;
 
