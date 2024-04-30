@@ -525,6 +525,91 @@ void sortAdjList(vector<array<int, 4>> & adjList) {
 //     return { rightSet, leftSet };
 // }
 
+void createPartition(const vector<array<int, 4>> & adjList, array<unordered_set<int>, 2> &partition_set) {
+
+    // // Make Positive
+    // for(array<int, 4> & a : adjList) {
+    //  a[0] = -a[0];
+    //  a[1] = -a[1];
+    // }
+    
+    unordered_set<int>& leftSet = partition_set[0];
+    unordered_set<int>& rightSet = partition_set[1];
+    int currentIndex = 0;
+    size_t n = adjList.size();
+
+    int c = adjList[currentIndex][0];
+
+    while(currentIndex < n) {
+        int leftSetFreq = 0;
+        int rightSetFreq = 0;
+        while (currentIndex < n && adjList[currentIndex][0] == c) {
+            if(rightSet.find(adjList[currentIndex][1]) == rightSet.end()) {
+                leftSet.insert(adjList[currentIndex][1]);
+            }
+
+            if (leftSet.find(adjList[currentIndex][1]) != leftSet.end()) {
+                leftSetFreq += adjList[currentIndex][3];
+            } else {
+                rightSetFreq += adjList[currentIndex][3];
+            }
+            currentIndex++;
+        }
+
+
+        if (leftSetFreq >= rightSetFreq) {
+            rightSet.insert(c);
+        } else {
+            leftSet.insert(c);
+        }
+
+        if(currentIndex < n) {
+            c = adjList[currentIndex][0];
+        }
+        
+    }
+    
+    int LRPairsCount = 0;
+    int RLPairsCount = 0;
+
+    /*
+        for (int i = 0; i < arr.size() - 1; i++) {
+
+
+            LRPairsCount += (leftSet.find(arr[i]) != leftSet.end()) && (rightSet.find(arr[i + 1]) != rightSet.end());
+            RLPairsCount += (rightSet.find(arr[i]) != rightSet.end()) && (leftSet.find(arr[i + 1]) != leftSet.end());
+        }
+    */
+
+    for(const array<int, 4> & arr : adjList) {
+        int f = arr[0];
+        int s = arr[1];
+
+        if(arr[2] == 1) {
+            swap(f, s);
+        }
+
+        LRPairsCount += (leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end());
+        RLPairsCount += (rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end());
+
+    }
+
+    if (RLPairsCount < LRPairsCount) {
+        swap(leftSet, rightSet);
+    }
+
+    swap(rightSet, leftSet);
+
+ //    // Revert to Negative
+    // for(array<int, 4> & a : adjList) {
+    //  a[0] = -a[0];
+    //  a[1] = -a[1];
+    // }
+
+    
+
+    return;
+}
 array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjList) {
 
     // // Make Positive
@@ -722,7 +807,8 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     sortAdjList(adjList);
 
     // Create Partition.
-    const array<unordered_set<int>,2> arr = createPartition(adjList);
+    array<unordered_set<int>,2> arr;
+    createPartition(adjList, arr);
 
     adjList.clear();  // Clear immediately
     vector<array<int, 4>>().swap(adjList);  // Ensure memory is released
