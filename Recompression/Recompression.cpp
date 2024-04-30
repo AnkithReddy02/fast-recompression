@@ -338,7 +338,6 @@ vector<array<int, 4>> computeAdjList(unique_ptr<SLG> & slg) {
     return adjList;
 }
 
-
 int computeVOccHelper(const vector<vector<pair<int,int>>> & graph, int u, vector<int> & dp) {
 
     // Base Case : Target is Reached / Target is Same as the current node.
