@@ -1042,6 +1042,100 @@ vector<pair<int, int>> get_random_queries(int text_size) {
     return pairs;
 }
 
+
+void test(int text_size, unique_ptr<RecompressionRLSLP> &recompression_rlslp, vector<RLSLPNonterm> & rlslp_nonterm_vec) {
+
+    vector<int> arr = expandRLSLP(recompression_rlslp);
+
+    ifstream file("einstein.en.txt");
+
+    if (!file.is_open()) {
+        cerr << "Error opening file!" << endl;
+        exit(1);
+    }
+
+    vector<int> text;
+
+    char ch;
+    while (file.get(ch)) {
+        text.push_back(static_cast<unsigned char>(ch));
+    }
+
+    // Close the file
+    file.close();
+
+    assert(text.size()==arr.size());
+
+    cout << "Text Size Matched!" << endl;
+
+    for(int i=0; i<text.size(); i++) {
+        if(text[i] != arr[i]) {
+            cout << "Text didn't match : " << i << ' ' << text[i] << ' ' << arr[i] << endl;
+            exit(1);
+        }
+    }
+
+    cout << "Text Matched!" << endl;
+
+    vector<pair<int, int>> random_queries = get_random_queries(text_size);
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    for(auto x : random_queries) {
+
+        int i = x.first;
+        int j = x.second;
+        // if(i!=7 or j!=11) continue;
+
+        // cout << i << ' ' << j << endl;
+
+    
+        Node v1, v2;
+        stack<Node> v1_ancestors, v2_ancestors;
+        // v1_ancestors.push(Node(grammar.size()-1, 0, 33));
+        // v2_ancestors.push(Node(grammar.size()-1, 0, 33));
+        initialize_nodes(rlslp_nonterm_vec.size() - 1, i, 0, rlslp_nonterm_vec.back().explen - 1, v1_ancestors, rlslp_nonterm_vec, v1);
+        initialize_nodes(rlslp_nonterm_vec.size() - 1, j, 0, rlslp_nonterm_vec.back().explen - 1, v2_ancestors, rlslp_nonterm_vec, v2);
+
+
+        // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
+        // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
+
+        // cout << i << ' ' << j << endl;
+
+        int res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, rlslp_nonterm_vec);
+
+        int res2 = 0;
+
+        int ii = i;
+        int jj = j;
+
+        while(jj < text_size && arr[ii] == arr[jj]) {
+            res2++;
+
+            jj++;
+            ii++;
+        }
+
+        // cout << i << ' ' << j << ' ' << res1 << ' ' << res2 << endl;
+        // assert(res1==res2);
+
+        if(res1 != res2) {
+            cout << "ERROR" << endl;
+            exit(1);
+        }
+
+
+    }
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+
+    // Output the duration
+    cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
+}
+
 void start_compression(string input_file) {
     unique_ptr<InputSLP> inputSLP = make_unique<InputSLP>();
     inputSLP->read_from_file(input_file);
@@ -1068,102 +1162,13 @@ void start_compression(string input_file) {
     // Output the duration
     cout << "Time taken for Construction: " << duration_seconds << " seconds" << endl;
 
-    // // cout << "OK" << endl;
-
     // // printRecompressionRLSLP(recompression_rlslp);
-
-    // vector<int> arr = expandRLSLP(recompression_rlslp);
-
-    // ifstream file("einstein.en.txt");
-
-    // if (!file.is_open()) {
-    //     cerr << "Error opening file!" << endl;
-    //     exit(1);
-    // }
-
-    // vector<int> text;
-
-    // char ch;
-    // while (file.get(ch)) {
-    //     text.push_back(static_cast<unsigned char>(ch));
-    // }
-
-    // // Close the file
-    // file.close();
-
-    // assert(text.size()==arr.size());
-
-    // for(int i=0; i<text.size(); i++) {
-    //     if(text[i] != arr[i]) {
-    //         cout << "Text didn't match : " << i << ' ' << text[i] << ' ' << arr[i] << endl;
-    //         break;
-    //     }
-    // }
-
-
     int text_size = rlslp_nonterm_vec.back().explen;
 
     cout << "Text Size : " << text_size << endl;
 
     // TEST
-
-    // vector<pair<int, int>> random_queries = get_random_queries(text_size);
-
-    // start_time = std::chrono::high_resolution_clock::now();
-
-    // for(auto x : random_queries) {
-
-    //     int i = x.first;
-    //     int j = x.second;
-    //     // if(i!=7 or j!=11) continue;
-
-    //     // cout << i << ' ' << j << endl;
-
-    
-    //     Node v1, v2;
-    //     stack<Node> v1_ancestors, v2_ancestors;
-    //     // v1_ancestors.push(Node(grammar.size()-1, 0, 33));
-    //     // v2_ancestors.push(Node(grammar.size()-1, 0, 33));
-    //     initialize_nodes(rlslp_nonterm_vec.size() - 1, i, 0, rlslp_nonterm_vec.back().explen - 1, v1_ancestors, rlslp_nonterm_vec, v1);
-    //     initialize_nodes(rlslp_nonterm_vec.size() - 1, j, 0, rlslp_nonterm_vec.back().explen - 1, v2_ancestors, rlslp_nonterm_vec, v2);
-
-
-    //     // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
-    //     // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
-
-    //     // cout << i << ' ' << j << endl;
-
-    //     int res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, rlslp_nonterm_vec);
-
-    //     int res2 = 0;
-
-    //     int ii = i;
-    //     int jj = j;
-
-    //     while(jj < text_size && arr[ii] == arr[jj]) {
-    //         res2++;
-
-    //         jj++;
-    //         ii++;
-    //     }
-
-    //     // cout << i << ' ' << j << ' ' << res1 << ' ' << res2 << endl;
-    //     // assert(res1==res2);
-
-    //     if(res1 != res2) {
-    //         cout << "ERROR" << endl;
-    //         exit(1);
-    //     }
-
-
-    // }
-
-    // end_time = std::chrono::high_resolution_clock::now();
-
-    // duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-
-    // // Output the duration
-    // cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
+    // test(text_size, recompression_rlslp, rlslp_nonterm_vec);
 }
 
 int main(int argc, char *argv[]) {
