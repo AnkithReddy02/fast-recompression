@@ -67,6 +67,73 @@ vector<pair<int, int>> combineFrequenciesInRange(const vector<pair<int, int>>& v
     return result;
 }
 
+void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_pointer, const int &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, unordered_map<pair<int, int>, int, hash_pair> &m, unique_ptr<RecompressionRLSLP> &recompression_rlslp) {
+    // Check if vector is empty
+    if (vec.empty() || lr_pointer > rr_pointer) {
+        new_slg_nonterm_vec.emplace_back();
+        return;
+    }
+
+    vector<int> cap_rhs;
+
+    // Iterate through the vector within the specified range
+    int currNum = vec[lr_pointer].first;
+    int currFreq = vec[lr_pointer].second;
+
+    for (size_t i = lr_pointer + 1; i <= rr_pointer && i < vec.size(); ++i) {
+        // Check if the current and previous elements have the same number
+        if (vec[i].first == currNum) {
+            // Merge frequencies
+            currFreq += vec[i].second;
+        } else {
+            
+            {
+                const pair<int, int> p = {currNum, currFreq};
+
+                // Frequency is >=2 so merge and push to rlslp
+                // Merged variable is terminal for a new_slg, so it is marked negative
+                if(p.second >= 2) {
+                    if(m.find(p) == m.end()) {
+                        m[p] = recompression_rlslp->nonterm.size();
+                        recompression_rlslp->nonterm.emplace_back('2', abs(p.first), p.second);
+                    }
+                    
+                    //  ** Negative **
+                    cap_rhs.push_back(-m[p]);
+                }
+                else {
+                    cap_rhs.push_back(p.first);
+                }
+            }
+
+            // Move to the next number
+            currNum = vec[i].first;
+            currFreq = vec[i].second;
+        }
+    }
+
+    const pair<int, int> p = {currNum, currFreq};
+
+    // Frequency is >=2 so merge and push to rlslp
+    // Merged variable is terminal for a new_slg, so it is marked negative
+    if(p.second >= 2) {
+        if(m.find(p) == m.end()) {
+            m[p] = recompression_rlslp->nonterm.size();
+            recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(p.first), p.second));
+        }
+        
+        //  ** Negative **
+        cap_rhs.push_back(-m[p]);
+    }
+    else {
+        cap_rhs.push_back(p.first);
+    }
+
+    new_slg_nonterm_vec.emplace_back(cap_rhs);
+
+    return;
+}
+
 // Block Compression
 unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp, unordered_map<pair<int, int>, int, hash_pair> & m) {
 
@@ -177,43 +244,10 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
             slg_nonterm.RR = RR;
 
             // Compress Cap(middle part)
-            vector<pair<int, int>> cap_compressed_slg_nonterm_vec;
-            combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer, cap_compressed_slg_nonterm_vec);
+            combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer, new_slg_nonterm_vec, m, recompression_rlslp);
 
             rhs_expansion.clear();
             vector<pair<int, int>>().swap(rhs_expansion);
-
-            // There are no pairs presents for the cap.
-            if(cap_compressed_slg_nonterm_vec.empty()) {
-                // Cap is empty; set Cap
-                new_slg_nonterm_vec.emplace_back();
-            }
-            else {
-
-                // RHS of new variable CAP.
-                vector<int> cap_rhs;
-
-                for(const pair<int, int> & p : cap_compressed_slg_nonterm_vec) {
-
-                    // Frequency is >=2 so merge and push to rlslp
-                    // Merged variable is terminal for a new_slg, so it is marked negative
-                    if(p.second >= 2) {
-                        if(m.find(p) == m.end()) {
-                            m[p] = recompression_rlslp->nonterm.size();
-                            recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(p.first), p.second));
-                        }
-                        
-                        //  ** Negative **
-                        cap_rhs.push_back(-m[p]);
-                    }
-                    else {
-                        cap_rhs.push_back(p.first);
-                    }
-                    
-                }
-
-                new_slg_nonterm_vec.emplace_back(cap_rhs);
-            }
         }
     }
 
