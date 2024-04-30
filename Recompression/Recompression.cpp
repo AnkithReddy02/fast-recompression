@@ -438,6 +438,92 @@ void sortAdjList(vector<array<int, 4>> & adjList) {
 }
 
 // only adjList as input. *
+// array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjList) {
+
+//     // // Make Positive
+//     // for(array<int, 4> & a : adjList) {
+//     //  a[0] = -a[0];
+//     //  a[1] = -a[1];
+//     // }
+    
+//     unordered_set<int> leftSet, rightSet;
+//     int currentIndex = 0;
+//     size_t n = adjList.size();
+
+//     int c = adjList[currentIndex][0];
+
+//     for(int i=1;i<=abs(c)-1;i++) {
+//         leftSet.insert(-i);
+//     }
+
+//     while(currentIndex < n) {
+//         int leftSetFreq = 0;
+//         int rightSetFreq = 0;
+//         while (currentIndex < n && adjList[currentIndex][0] == c) {
+//             if (leftSet.find(adjList[currentIndex][1]) != leftSet.end()) {
+//                 leftSetFreq += adjList[currentIndex][3];
+//             } else {
+//                 rightSetFreq += adjList[currentIndex][3];
+//             }
+//             currentIndex++;
+//         }
+
+
+//         if (leftSetFreq >= rightSetFreq) {
+//             rightSet.insert(c);
+//         } else {
+//             leftSet.insert(c);
+//         }
+
+//         if(currentIndex < n) {
+//             for(int i=abs(c)+1; i<=abs(adjList[currentIndex][0])-1;i++) {
+//                 leftSet.insert(-i);
+//             }
+//             c = adjList[currentIndex][0];
+//         }
+        
+//     }
+    
+//     int LRPairsCount = 0;
+//     int RLPairsCount = 0;
+
+//     /*
+//         for (int i = 0; i < arr.size() - 1; i++) {
+
+
+//             LRPairsCount += (leftSet.find(arr[i]) != leftSet.end()) && (rightSet.find(arr[i + 1]) != rightSet.end());
+//             RLPairsCount += (rightSet.find(arr[i]) != rightSet.end()) && (leftSet.find(arr[i + 1]) != leftSet.end());
+//         }
+//     */
+
+//     for(const array<int, 4> & arr : adjList) {
+//         int f = arr[0];
+//         int s = arr[1];
+
+//         if(arr[2] == 1) {
+//             swap(f, s);
+//         }
+
+//         LRPairsCount += (leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end());
+//         RLPairsCount += (rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end());
+
+//     }
+
+//     if (RLPairsCount < LRPairsCount) {
+//         swap(leftSet, rightSet);
+//     }
+
+//  //    // Revert to Negative
+//     // for(array<int, 4> & a : adjList) {
+//     //  a[0] = -a[0];
+//     //  a[1] = -a[1];
+//     // }
+
+    
+
+//     return { rightSet, leftSet };
+// }
+
 array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjList) {
 
     // // Make Positive
@@ -452,14 +538,14 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
 
     int c = adjList[currentIndex][0];
 
-    for(int i=1;i<=abs(c)-1;i++) {
-        leftSet.insert(-i);
-    }
-
     while(currentIndex < n) {
         int leftSetFreq = 0;
         int rightSetFreq = 0;
         while (currentIndex < n && adjList[currentIndex][0] == c) {
+            if(rightSet.find(adjList[currentIndex][1]) == rightSet.end()) {
+                leftSet.insert(adjList[currentIndex][1]);
+            }
+
             if (leftSet.find(adjList[currentIndex][1]) != leftSet.end()) {
                 leftSetFreq += adjList[currentIndex][3];
             } else {
@@ -476,9 +562,6 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
         }
 
         if(currentIndex < n) {
-            for(int i=abs(c)+1; i<=abs(adjList[currentIndex][0])-1;i++) {
-                leftSet.insert(-i);
-            }
             c = adjList[currentIndex][0];
         }
         
@@ -916,6 +999,8 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
         counts++;
     }
 
+    cout << "Runs: " << i << endl;
+
     // vector<int> arr2 = expandRLSLP(recompression_rlslp);
 
     // if(arr1 != arr2) {
@@ -1040,6 +1125,8 @@ void start_compression(int grammar_size) {
     //     cout << (++i) << ' ' << slp_nonterm.type << ' ' << slp_nonterm.first << ' ' << slp_nonterm.second << endl;
     // }
 
+    
+
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1158,7 +1245,9 @@ void start_compression(int grammar_size) {
 
 int main() {
 
-     ofstream outfile("output.txt");
+    
+
+    ofstream outfile("output.txt");
     if (!outfile.is_open()) {
         cerr << "Error: Unable to open output file." << endl;
         return 1;
@@ -1182,6 +1271,10 @@ int main() {
         // Output the duration
         cout << "Total Time taken: " << duration_seconds << " seconds" << endl;
     }
+
+    struct rusage r_usage;
+    getrusage(RUSAGE_SELF, &r_usage);
+    std::cout << "Peak RAM usage: " << r_usage.ru_maxrss << " kilobytes\n";
 
     outfile.close();
 }
