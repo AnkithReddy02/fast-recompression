@@ -255,6 +255,8 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
     new_slg_nonterm_vec.push_back(SLGNonterm(new_start_rhs));
 
+    slg.reset();
+
     return make_unique<SLG>(new_slg_nonterm_vec);
 }
 
@@ -924,6 +926,8 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
     new_slg_nonterm_vec.push_back(SLGNonterm(new_start_rhs));
 
+    slg.reset();
+
     return make_unique<SLG>(new_slg_nonterm_vec);
 }
 
@@ -965,6 +969,8 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
         slg->nonterm.push_back(SLGNonterm(rhs));
 
     }
+
+    s.reset();
 
     // vector<int> arr1 = expandSLG(slg);
 
