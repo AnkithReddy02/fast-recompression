@@ -597,8 +597,8 @@ void createPartition(const vector<array<int, 4>> & adjList, array<unordered_set<
             swap(f, s);
         }
 
-        LRPairsCount += (leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end());
-        RLPairsCount += (rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end());
+        LRPairsCount += ((leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end())) ? arr[3] : 0;
+        RLPairsCount += ((rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end())) ? arr[3] : 0;
 
     }
 
@@ -681,8 +681,8 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
             swap(f, s);
         }
 
-        LRPairsCount += (leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end());
-        RLPairsCount += (rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end());
+        LRPairsCount += ((leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end())) ? arr[3] : 0;
+        RLPairsCount += ((rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end())) ? arr[3] : 0;
 
     }
 
