@@ -119,7 +119,7 @@ void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_
     if(p.second >= 2) {
         if(m.find(p) == m.end()) {
             m[p] = recompression_rlslp->nonterm.size();
-            recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(p.first), p.second));
+            recompression_rlslp->nonterm.emplace_back('2', abs(p.first), p.second);
         }
         
         //  ** Negative **
@@ -128,7 +128,7 @@ void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_
     else {
         cap_rhs.push_back(p.first);
     }
-
+    cap_rhs.shrink_to_fit();
     new_slg_nonterm_vec.emplace_back(cap_rhs);
 
     return;
@@ -141,10 +141,10 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
     // // New SLG that needs to be created by applying BComp
-    // unique_ptr<SLG> new_slg = make_unique<SLG>();
+    unique_ptr<SLG> new_slg = make_unique<SLG>();
 
     // New SLG non-term list that new_slg needs.
-    vector<SLGNonterm> new_slg_nonterm_vec;
+    vector<SLGNonterm> &new_slg_nonterm_vec = new_slg->nonterm;
 
     const int &grammar_size = slg_nonterm_vec.size();
 
@@ -161,7 +161,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
         // Create the expansion of RHS.
         vector<pair<int, int>> rhs_expansion;
-
+     
         // Compute the Expansion.
         for(const int &rhs_symbol: rhs) {
 
@@ -265,7 +265,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
         if(start_var_LR.second >= 2) {
             if(m.find(start_var_LR) == m.end()) {
                 m[start_var_LR] = recompression_rlslp->nonterm.size();
-                recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(start_var_LR.first), start_var_LR.second));
+                recompression_rlslp->nonterm.emplace_back('2', abs(start_var_LR.first), start_var_LR.second);
             }
             new_start_rhs.push_back(-m[start_var_LR]);
         }
@@ -282,7 +282,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
         if(start_var_RR.second >= 2) {
             if(m.find(start_var_RR) == m.end()) {
                 m[start_var_RR] = recompression_rlslp->nonterm.size();
-                recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(start_var_RR.first), start_var_RR.second));
+                recompression_rlslp->nonterm.emplace_back('2', abs(start_var_RR.first), start_var_RR.second);
             }
             new_start_rhs.push_back(-m[start_var_RR]);
         }
@@ -291,11 +291,11 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
         }
     }
 
-    new_slg_nonterm_vec.push_back(SLGNonterm(new_start_rhs));
+    new_slg_nonterm_vec.emplace_back(new_start_rhs);
 
     slg.reset();
 
-    return make_unique<SLG>(new_slg_nonterm_vec);
+    return new_slg;
 }
 
 pair<int, int> computeAdjListHelper(int var, unique_ptr<SLG> & slg, vector<array<int, 4>> & adjList, vector<pair<int, int>> & dp) {
@@ -360,7 +360,6 @@ void computeAdjList(unique_ptr<SLG> & slg, vector<array<int, 4>> &adjList) {
     vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
 
     computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp);
-
     return;
 }
 
@@ -390,8 +389,8 @@ int computeVOccHelper(vector<vector<pair<int,int>>> & graph, int u, vector<int> 
     int num_paths = 0;
 
     for(const auto & edge : graph[u]) {
-        int v = edge.first;
-        int weight = edge.second;
+        const int &v = edge.first;
+        const int &weight = edge.second;
 
         num_paths += weight * computeVOccHelper(graph, v, dp);
     }
@@ -435,9 +434,9 @@ void computeVOcc(unique_ptr<SLG> & slg) {
         // Construct Edges.
         for(const auto & x : var_freq) {
             // edge from v to u, u <-- v
-            int u = i;
-            int v = x.first;
-            int weight = x.second;
+            const int &u = i;
+            const int &v = x.first;
+            const int &weight = x.second;
 
             // Weighted Edge from v to u , v --> u
             graph[v].emplace_back(u, weight);
@@ -649,8 +648,8 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
 }
 
 // Pair-Wise Compression
-unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp,  unordered_map<pair<int, int>, int, hash_pair> & m) {
-   // Compute vOcc
+unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp,  unordered_map<pair<int, int>, int, hash_pair> & m) { 
+    // Compute vOcc
     computeVOcc(slg);
 
     // Compute AdjList
@@ -669,7 +668,7 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     const unordered_set<int> &left_set = arr[0], &right_set = arr[1];
 
     // Current slg non-term list
-    vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
+    vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
 
     // New SLG that needs to be created by applying BComp
     // unique_ptr<SLG> new_slg = make_unique<SLG>();
@@ -686,7 +685,7 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
         const vector<int> & rhs = slg_nonterm.rhs;
 
         if(rhs.empty()) {
-            new_slg_nonterm_vec.push_back(SLGNonterm());
+            new_slg_nonterm_vec.emplace_back();
             continue;
         }
         if((int)rhs.size() >= 2) {
@@ -771,7 +770,7 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                     if(left_set.find(rhs_expansion[j]) != left_set.end() && right_set.find(rhs_expansion[j+1]) != right_set.end()) {
                         if(m.find({rhs_expansion[j], rhs_expansion[j+1]}) == m.end()) {
                             m[{rhs_expansion[j], rhs_expansion[j+1]}] = recompression_rlslp->nonterm.size();
-                            recompression_rlslp->nonterm.push_back(RLSLPNonterm('1', abs(rhs_expansion[j]), abs(rhs_expansion[j+1])));
+                            recompression_rlslp->nonterm.emplace_back('1', abs(rhs_expansion[j]), abs(rhs_expansion[j+1]));
                         }
 
                         cap_rhs.push_back(-m[{rhs_expansion[j], rhs_expansion[j+1]}]);
@@ -789,8 +788,8 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                 }
             }
 
-
-            new_slg_nonterm_vec.push_back(SLGNonterm(cap_rhs));
+	    cap_rhs.shrink_to_fit();
+            new_slg_nonterm_vec.emplace_back(cap_rhs);
         }
         else if((int)rhs.size() == 1) {
 
@@ -800,19 +799,19 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
             if(rhs[0] < 0) {
                 if(left_set.find(rhs[0]) != left_set.end()) {
                     slg_nonterm.LB = 0;
-                    new_slg_nonterm_vec.push_back(SLGNonterm());
+                    new_slg_nonterm_vec.emplace_back();
                     slg_nonterm.RB = rhs[0];
                 }
                 else if(right_set.find(rhs[0]) != right_set.end()) {
                     slg_nonterm.LB = rhs[0];
-                    new_slg_nonterm_vec.push_back(SLGNonterm());
+                    new_slg_nonterm_vec.emplace_back();
                     slg_nonterm.RB = 0;
                 }
                 else {
                     // Non-reachable Non-Terminals.
                     // A --> a
                     // 'a' is not found in adjacency list so push empty.
-                    new_slg_nonterm_vec.push_back(SLGNonterm());
+                    new_slg_nonterm_vec.emplace_back();
                     cout << "Error: Not Found in Left and Right." << endl;
                 }
             }
@@ -831,8 +830,8 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                 }
 
                 slg_nonterm.RB = slg_nonterm_vec[rhs[0]].RB;
-
-                new_slg_nonterm_vec.push_back(SLGNonterm(cap_rhs));
+		cap_rhs.shrink_to_fit();
+                new_slg_nonterm_vec.emplace_back(cap_rhs);
             }
             
         }
@@ -845,10 +844,10 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
 
 
-    int start_var = slg_nonterm_vec.size()-1;
+    const int &start_var = slg_nonterm_vec.size()-1;
 
-    int start_var_LB = slg_nonterm_vec[start_var].LB;
-    int start_var_RB = slg_nonterm_vec[start_var].RB;
+    const int &start_var_LB = slg_nonterm_vec[start_var].LB;
+    const int &start_var_RB = slg_nonterm_vec[start_var].RB;
 
 
     vector<int> new_start_rhs;
@@ -865,7 +864,7 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
         new_start_rhs.push_back(start_var_RB);
     }
 
-    new_slg_nonterm_vec.push_back(SLGNonterm(new_start_rhs));
+    new_slg_nonterm_vec.emplace_back(new_start_rhs);
 
     slg.reset();
 
@@ -881,16 +880,16 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
     unordered_map<pair<int, int>, int, hash_pair> m;
 
     // For 0.
-    recompression_rlslp->nonterm.push_back(RLSLPNonterm());
+    recompression_rlslp->nonterm.emplace_back();
 
     // cout << "OK" << endl;
 
 
     // Compute S0 from S and Initialize Recompression
     for(int i=0; i<s->nonterm.size(); i++) {
-        char type = s->nonterm[i].type;
-        int first = s->nonterm[i].first;
-        int second = s->nonterm[i].second;
+        const char &type = s->nonterm[i].type;
+        const int &first = s->nonterm[i].first;
+        const int &second = s->nonterm[i].second;
 
 
 
@@ -901,13 +900,13 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
             // Initially, -1 = recompression_rlslp->nonterm size.
             rhs = {-(int)(recompression_rlslp->nonterm).size()};
             // Here first is the ASCII values of the character.
-            recompression_rlslp->nonterm.push_back(RLSLPNonterm('0', first, second));
+            recompression_rlslp->nonterm.emplace_back('0', first, second);
         }
         else {
             rhs = {first, second};
         }
 
-        slg->nonterm.push_back(SLGNonterm(rhs));
+        slg->nonterm.emplace_back(rhs);
 
     }
 
