@@ -938,7 +938,8 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
             slg = PComp(slg, recompression_rlslp, m);
             // cout << i << ' ' << "PComp" << endl;
         }
-
+        
+        m.clear();
         // printSLG(slg);
         // printRecompressionRLSLP(recompression_rlslp);
     }
@@ -952,7 +953,7 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
     //     exit(1);
     // }
 
-
+    slg.reset();
     
 
     return recompression_rlslp;
