@@ -676,8 +676,6 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     // New SLG non-term list that new_slg needs.
     vector<SLGNonterm> new_slg_nonterm_vec;
 
-    vector<int> LB(slg_nonterm_vec.size(), 0), RB(slg_nonterm_vec.size(), 0);
-
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
     for(int i=0; i<slg_nonterm_vec.size(); i++) {
@@ -704,10 +702,10 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
                     if(j==0) {
                         if(left_set.find(rhs[j]) != left_set.end()) {
-                            LB[i] = 0;
+                            slg_nonterm.LB = 0;
                         }
                         else if(right_set.find(rhs[j]) != right_set.end()) {
-                            LB[i] = rhs[j];
+                            slg_nonterm.LB = rhs[j];
 
                             // Remove the pushed element
                             rhs_expansion.pop_back();
@@ -715,13 +713,13 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                     }
                     else if(j == rhs.size() - 1) {
                         if(left_set.find(rhs[j]) != left_set.end()) {
-                            RB[i] = rhs[j];
+                            slg_nonterm.RB = rhs[j];
 
                             // Remove the pushed element
                             rhs_expansion.pop_back();
                         }
                         else if(right_set.find(rhs[j]) != right_set.end()) {
-                            RB[i] = 0;
+                            slg_nonterm.RB = 0;
                         }
                     }
 
@@ -731,16 +729,16 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                 else {
 
                     if(j==0) {
-                        LB[i] = LB[rhs[j]];
+                        slg_nonterm.LB = slg_nonterm_vec[rhs[j]].LB;
 
                     }
                     else if(j == rhs.size() - 1) {
-                        RB[i] = RB[rhs[j]];
+                        slg_nonterm.RB = slg_nonterm_vec[rhs[j]].RB;
                     }
                     // LB --> not equal to 0
                     // If j == 0 we set it to LB in slg_nonterm but not in to the expansion.
-                    if((j != 0) and LB[rhs[j]]) {
-                        rhs_expansion.push_back(LB[rhs[j]]);
+                    if((j != 0) and slg_nonterm_vec[rhs[j]].LB) {
+                        rhs_expansion.push_back(slg_nonterm_vec[rhs[j]].LB);
                     }
 
                     // Check whether Cap is Empty in new_slg_nonterm_vec.
@@ -752,8 +750,8 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
                     // RB --> not equal to 0.
                     // If j is last element, we set it to RB in slg_nonterm but not in to the expansion
-                    if((j != rhs.size() - 1) and RB[rhs[j]]) {
-                        rhs_expansion.push_back(RB[rhs[j]]);
+                    if((j != rhs.size() - 1) and slg_nonterm_vec[rhs[j]].RB) {
+                        rhs_expansion.push_back(slg_nonterm_vec[rhs[j]].RB);
                     }
                 }
             }
@@ -799,14 +797,14 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
             // B --> b
             if(rhs[0] < 0) {
                 if(left_set.find(rhs[0]) != left_set.end()) {
-                    LB[i] = 0;
+                    slg_nonterm.LB = 0;
                     new_slg_nonterm_vec.emplace_back();
-                    RB[i] = rhs[0];
+                    slg_nonterm.RB = rhs[0];
                 }
                 else if(right_set.find(rhs[0]) != right_set.end()) {
-                    LB[i] = rhs[0];
+                    slg_nonterm.LB = rhs[0];
                     new_slg_nonterm_vec.emplace_back();
-                    RB[i] = 0;
+                    slg_nonterm.RB = 0;
                 }
                 else {
                     // Non-reachable Non-Terminals.
@@ -824,14 +822,14 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
                 // A^ = B^ (only if B^ is not empty)
                 vector<int> cap_rhs;
 
-                LB[i] = LB[rhs[0]];
+                slg_nonterm.LB = slg_nonterm_vec[rhs[0]].LB;
 
                 if(new_slg_nonterm_vec[rhs[0]].rhs.empty() == false) {
                     cap_rhs.push_back(rhs[0]);
                 }
 
-                RB[i] = RB[rhs[0]];
-		        cap_rhs.shrink_to_fit();
+                slg_nonterm.RB = slg_nonterm_vec[rhs[0]].RB;
+		cap_rhs.shrink_to_fit();
                 new_slg_nonterm_vec.emplace_back(cap_rhs);
             }
             
@@ -845,8 +843,8 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
     const int &start_var = slg_nonterm_vec.size()-1;
 
-    const int &start_var_LB = LB[start_var];
-    const int &start_var_RB = RB[start_var];
+    const int &start_var_LB = slg_nonterm_vec[start_var].LB;
+    const int &start_var_RB = slg_nonterm_vec[start_var].RB;
 
 
     vector<int> new_start_rhs;
@@ -1167,7 +1165,7 @@ void start_compression(string input_file) {
     cout << "Text Size : " << text_size << endl;
 
     // TEST
-    test(text_size, recompression_rlslp, rlslp_nonterm_vec);
+    // test(text_size, recompression_rlslp, rlslp_nonterm_vec);
 }
 
 int main(int argc, char *argv[]) {
