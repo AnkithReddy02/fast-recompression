@@ -141,10 +141,10 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
     // // New SLG that needs to be created by applying BComp
-    unique_ptr<SLG> new_slg = make_unique<SLG>();
+   // unique_ptr<SLG> new_slg = make_unique<SLG>();
 
     // New SLG non-term list that new_slg needs.
-    vector<SLGNonterm> &new_slg_nonterm_vec = new_slg->nonterm;
+    vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
 
     const int &grammar_size = slg_nonterm_vec.size();
 
@@ -187,8 +187,8 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
             }
         }
 
-        rhs.clear();
-        vector<int>().swap(rhs);
+        //rhs.clear();
+        //vector<int>().swap(rhs);
 
         // Compute LR
         int lr_pointer = 1;
@@ -246,8 +246,8 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
             // Compress Cap(middle part)
             combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer, new_slg_nonterm_vec, m, recompression_rlslp);
 
-            rhs_expansion.clear();
-            vector<pair<int, int>>().swap(rhs_expansion);
+            //rhs_expansion.clear();
+            //vector<pair<int, int>>().swap(rhs_expansion);
         }
     }
 
@@ -295,7 +295,7 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
     slg.reset();
 
-    return new_slg;
+    return make_unique<SLG>(new_slg_nonterm_vec);
 }
 
 pair<int, int> computeAdjListHelper(int var, unique_ptr<SLG> & slg, vector<array<int, 4>> & adjList, vector<pair<int, int>> & dp) {
@@ -350,10 +350,10 @@ pair<int, int> computeAdjListHelper(int var, unique_ptr<SLG> & slg, vector<array
         adjList.push_back({f, s, swapped ? 1 : 0, slg_nonterm.vOcc});
     }
 
-    slg_nonterm.LMS = lms_rms_list.front().first;
-    slg_nonterm.RMS = lms_rms_list.back().second;
+    //slg_nonterm.LMS = lms_rms_list.front().first;
+    //slg_nonterm.RMS = lms_rms_list.back().second;
 
-    return dp[var] = {slg_nonterm.LMS, slg_nonterm.RMS};
+    return dp[var] = {lms_rms_list.front().first, lms_rms_list.back().second};
 }
 
 void computeAdjList(unique_ptr<SLG> & slg, vector<array<int, 4>> &adjList) {
@@ -676,7 +676,6 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     // New SLG non-term list that new_slg needs.
     vector<SLGNonterm> new_slg_nonterm_vec;
 
-
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
     for(int i=0; i<slg_nonterm_vec.size(); i++) {
@@ -841,8 +840,6 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     arr[1].clear();
     unordered_set<int>().swap(arr[0]);
     unordered_set<int>().swap(arr[1]);
-
-
 
     const int &start_var = slg_nonterm_vec.size()-1;
 

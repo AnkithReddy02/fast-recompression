@@ -30,8 +30,8 @@ struct SLGNonterm {
     // rhs empty represents empty variable.
     vector<int> rhs;
     int vOcc;
-    int LMS;
-    int RMS;
+    //int LMS;
+    //int RMS;
 
     // 0 is empty
     int LB;
@@ -41,11 +41,11 @@ struct SLGNonterm {
     pair<int, int> LR;
     pair<int, int> RR;
 
-    SLGNonterm(const vector<int> &rhs) : vOcc(0), LMS(0), RMS(0), LB(0), RB(0), LR({-1, -1}), RR({-1, -1}), rhs(rhs) {
+    SLGNonterm(const vector<int> &rhs) : vOcc(0), LB(0), RB(0), LR({-1, -1}), RR({-1, -1}), rhs(rhs) {
 
     }
 
-    SLGNonterm() : vOcc(0), LMS(0), RMS(0), LB(0), RB(0), LR({-1, -1}), RR({-1, -1}) {
+    SLGNonterm() : vOcc(0), LB(0), RB(0), LR({-1, -1}), RR({-1, -1}) {
 
     }
 };
