@@ -1,7 +1,7 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-void printRecompressionRLSLP(const unique_ptr<RecompressionRLSLP> & recompression_rlslp) {
+void printRecompressionRLSLP(const RecompressionRLSLP *recompression_rlslp) {
 
     cout << "RECOMPRESSION PRINTING STARTED..." << endl;
 
@@ -23,7 +23,7 @@ void printRecompressionRLSLP(const unique_ptr<RecompressionRLSLP> & recompressio
     return;
 }
 
-void printSLG(const unique_ptr<SLG> & slg) {
+void printSLG(const SLG *slg) {
     cout << "SLG PRINTING STARTED..." << endl;
 
     if(!(slg->nonterm).size()) {
@@ -69,7 +69,7 @@ void expandRLSLP(int var, const vector<RLSLPNonterm> & rlslp_nonterm_vec, vector
     }
     return;
 }
-vector<int> expandRLSLP(const unique_ptr<RecompressionRLSLP> & recompression_rlslp) {
+vector<int> expandRLSLP(const RecompressionRLSLP *recompression_rlslp) {
 
     vector<int> result;
     vector<RLSLPNonterm> rlslp_nonterm_vec = recompression_rlslp->nonterm;
@@ -92,7 +92,7 @@ void expandSLG(int var, const vector<SLGNonterm> & slg_nonterm_vec, vector<int> 
     }
 }
 
-vector<int> expandSLG(const unique_ptr<SLG> & slg) {
+vector<int> expandSLG(const SLG *slg) {
     vector<int> result;
 
     const vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;

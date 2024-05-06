@@ -67,7 +67,7 @@ vector<pair<int, int>> combineFrequenciesInRange(const vector<pair<int, int>>& v
     return result;
 }
 
-void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_pointer, const int &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, unordered_map<pair<int, int>, int, hash_pair> &m, unique_ptr<RecompressionRLSLP> &recompression_rlslp) {
+void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_pointer, const int &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, unordered_map<pair<int, int>, int, hash_pair> &m, RecompressionRLSLP *recompression_rlslp) {
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer) {
         new_slg_nonterm_vec.emplace_back();
@@ -135,13 +135,13 @@ void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_
 }
 
 // Block Compression
-unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp, unordered_map<pair<int, int>, int, hash_pair> & m) {
+SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair<int, int>, int, hash_pair> & m) {
 
     // Current slg non-term list
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
     // // New SLG that needs to be created by applying BComp
-   // unique_ptr<SLG> new_slg = make_unique<SLG>();
+    // SLG *new_slg = new SLG();
 
     // New SLG non-term list that new_slg needs.
     vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
@@ -293,12 +293,13 @@ unique_ptr<SLG> BComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
     new_slg_nonterm_vec.emplace_back(new_start_rhs);
 
-    slg.reset();
+    delete slg;
 
-    return make_unique<SLG>(new_slg_nonterm_vec);
+    // return new_slg;
+    return new SLG(new_slg_nonterm_vec);
 }
 
-pair<int, int> computeAdjListHelper(int var, unique_ptr<SLG> & slg, vector<array<int, 4>> & adjList, vector<pair<int, int>> & dp) {
+pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<array<int, 4>> & adjList, vector<pair<int, int>> & dp) {
 
     if(var < 0) {
         return {var, var};
@@ -323,7 +324,6 @@ pair<int, int> computeAdjListHelper(int var, unique_ptr<SLG> & slg, vector<array
     else if(rhs.size() == 1 && rhs[0] < 0) {
         // Hopefully this should be always true when there is only 1 character to right
         // assert(rhs[0] < 0);
-
         return dp[var] = {rhs[0], rhs[0]};
 
         // return dp[var] = {rhs[0], rhs[0]};
@@ -356,14 +356,14 @@ pair<int, int> computeAdjListHelper(int var, unique_ptr<SLG> & slg, vector<array
     return dp[var] = {lms_rms_list.front().first, lms_rms_list.back().second};
 }
 
-void computeAdjList(unique_ptr<SLG> & slg, vector<array<int, 4>> &adjList) {
+void computeAdjList(SLG *slg, vector<array<int, 4>> &adjList) {
     vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
 
     computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp);
     return;
 }
 
-vector<array<int, 4>> computeAdjList(unique_ptr<SLG> & slg) {
+vector<array<int, 4>> computeAdjList(SLG *slg) {
 
     vector<array<int, 4>> adjList;
 
@@ -401,7 +401,7 @@ int computeVOccHelper(vector<vector<pair<int,int>>> & graph, int u, vector<int> 
 
     return dp[u] = num_paths;
 }
-void computeVOcc(unique_ptr<SLG> & slg) {
+void computeVOcc(SLG *slg) {
 
     // Here, any list size is slg_nonterm_vec.size()
 
@@ -648,7 +648,7 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
 }
 
 // Pair-Wise Compression
-unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & recompression_rlslp,  unordered_map<pair<int, int>, int, hash_pair> & m) { 
+SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pair<int, int>, int, hash_pair> & m) { 
     // Compute vOcc
     computeVOcc(slg);
 
@@ -671,10 +671,10 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
     vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
 
     // New SLG that needs to be created by applying BComp
-    // unique_ptr<SLG> new_slg = make_unique<SLG>();
+    // SLG *new_slg = new SLG();
 
     // New SLG non-term list that new_slg needs.
-    vector<SLGNonterm> new_slg_nonterm_vec;
+    vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
 
     vector<int> LB(slg_nonterm_vec.size(), 0), RB(slg_nonterm_vec.size(), 0);
 
@@ -865,16 +865,17 @@ unique_ptr<SLG> PComp(unique_ptr<SLG> & slg, unique_ptr<RecompressionRLSLP> & re
 
     new_slg_nonterm_vec.emplace_back(new_start_rhs);
 
-    slg.reset();
+    delete slg;
 
-    return make_unique<SLG>(new_slg_nonterm_vec);
+    // return new_slg;
+    return new SLG(new_slg_nonterm_vec);
 }
 
-unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
+RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
-    unique_ptr<SLG> slg = make_unique<SLG>();
+    SLG* slg = new SLG();
 
-    unique_ptr<RecompressionRLSLP> recompression_rlslp = make_unique<RecompressionRLSLP>();
+    RecompressionRLSLP* recompression_rlslp = new RecompressionRLSLP();
 
     unordered_map<pair<int, int>, int, hash_pair> m;
 
@@ -909,7 +910,7 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
 
     }
 
-    s.reset();
+    delete s;
 
     // vector<int> arr1 = expandSLG(slg);
 
@@ -951,7 +952,7 @@ unique_ptr<RecompressionRLSLP> recompression_on_slp(unique_ptr<InputSLP>& s) {
     //     exit(1);
     // }
 
-    slg.reset();
+    delete slg;
     
 
     return recompression_rlslp;
@@ -980,7 +981,7 @@ int computeExplen(const int i, vector<RLSLPNonterm>& rlslp_nonterm_vec) {
     return 0; 
 }
 
-unique_ptr<InputSLP> getSLP(int grammar_size) {
+InputSLP* getSLP(int grammar_size) {
 
     vector<SLPNonterm> nonterm;
     
@@ -1016,7 +1017,7 @@ unique_ptr<InputSLP> getSLP(int grammar_size) {
         }
     }
 
-    unique_ptr<InputSLP> slp = make_unique<InputSLP>(nonterm);
+    InputSLP* slp = new InputSLP(nonterm);
 
     return slp;
 }
@@ -1042,7 +1043,7 @@ vector<pair<int, int>> get_random_queries(int text_size) {
 }
 
 
-void test(int text_size, unique_ptr<RecompressionRLSLP> &recompression_rlslp, vector<RLSLPNonterm> & rlslp_nonterm_vec) {
+void test(int text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNonterm> & rlslp_nonterm_vec) {
 
     vector<int> arr = expandRLSLP(recompression_rlslp);
 
@@ -1136,7 +1137,7 @@ void test(int text_size, unique_ptr<RecompressionRLSLP> &recompression_rlslp, ve
 }
 
 void start_compression(string input_file) {
-    unique_ptr<InputSLP> inputSLP = make_unique<InputSLP>();
+    InputSLP *inputSLP = new InputSLP();
     inputSLP->read_from_file(input_file);
 
     int j = 0;
@@ -1146,7 +1147,7 @@ void start_compression(string input_file) {
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    unique_ptr<RecompressionRLSLP> recompression_rlslp = recompression_on_slp(inputSLP);
+    RecompressionRLSLP *recompression_rlslp = recompression_on_slp(inputSLP);
 
     vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
 
@@ -1192,3 +1193,4 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
