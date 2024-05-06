@@ -34,18 +34,18 @@ struct SLGNonterm {
     //int RMS;
 
     // 0 is empty
-    int LB;
-    int RB;
+    // int LB;
+    // int RB;
     
     // {-1, -1} is empty
     pair<int, int> LR;
     pair<int, int> RR;
 
-    SLGNonterm(const vector<int> &rhs) : vOcc(0), LB(0), RB(0), LR({-1, -1}), RR({-1, -1}), rhs(rhs) {
+    SLGNonterm(const vector<int> &rhs) : vOcc(0), LR({-1, -1}), RR({-1, -1}), rhs(rhs) {
 
     }
 
-    SLGNonterm() : vOcc(0), LB(0), RB(0), LR({-1, -1}), RR({-1, -1}) {
+    SLGNonterm() : vOcc(0), LR({-1, -1}), RR({-1, -1}) {
 
     }
 };
