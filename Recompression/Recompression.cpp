@@ -299,7 +299,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
     return new SLG(new_slg_nonterm_vec);
 }
 
-pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<array<int, 4>> & adjList, vector<pair<int, int>> & dp) {
+pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<array<int, 4>> & adjList, vector<pair<int, int>> & dp, vector<int> &vOcc) {
 
     if(var < 0) {
         return {var, var};
@@ -332,7 +332,7 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<array<int, 4>> & a
     vector<pair<int, int>> lms_rms_list;
 
     for(const int &rhs_symbol : rhs) {
-        pair<int, int> lms_rms = computeAdjListHelper(rhs_symbol, slg, adjList, dp);
+        pair<int, int> lms_rms = computeAdjListHelper(rhs_symbol, slg, adjList, dp, vOcc);
         lms_rms_list.push_back(lms_rms);
     }
 
@@ -347,7 +347,7 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<array<int, 4>> & a
             swap(f, s);
             swapped = true;
         }
-        adjList.push_back({f, s, swapped ? 1 : 0, slg_nonterm.vOcc});
+        adjList.push_back({f, s, swapped ? 1 : 0, vOcc[var]});
     }
 
     //slg_nonterm.LMS = lms_rms_list.front().first;
@@ -356,20 +356,20 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<array<int, 4>> & a
     return dp[var] = {lms_rms_list.front().first, lms_rms_list.back().second};
 }
 
-void computeAdjList(SLG *slg, vector<array<int, 4>> &adjList) {
+void computeAdjList(SLG *slg, vector<array<int, 4>> &adjList, vector<int> &vOcc) {
     vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
 
-    computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp);
+    computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp, vOcc);
     return;
 }
 
-vector<array<int, 4>> computeAdjList(SLG *slg) {
+vector<array<int, 4>> computeAdjList(SLG *slg, vector<int> &vOcc) {
 
     vector<array<int, 4>> adjList;
 
     vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
 
-    computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp);
+    computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp, vOcc);
 
     return adjList;
 }
@@ -401,7 +401,7 @@ int computeVOccHelper(vector<vector<pair<int,int>>> & graph, int u, vector<int> 
 
     return dp[u] = num_paths;
 }
-void computeVOcc(SLG *slg) {
+void computeVOcc(SLG *slg, vector<int> &dp) {
 
     // Here, any list size is slg_nonterm_vec.size()
 
@@ -444,16 +444,11 @@ void computeVOcc(SLG *slg) {
     }
 
     // Store VOcc.
-    vector<int> dp(slg_nonterm_vec.size(), -1);
+    dp.resize(slg_nonterm_vec.size(), -1);
 
     // Compute vOcc.
     for(int i = 0; i < slg_nonterm_vec.size(); i++) {
         computeVOccHelper(graph, i, dp);
-    }
-
-    // Update SLGNonterm.
-    for(int i=0; i<dp.size(); i++) {
-        slg_nonterm_vec[i].vOcc = dp[i];
     }
 
     return;
@@ -649,12 +644,13 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
 
 // Pair-Wise Compression
 SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pair<int, int>, int, hash_pair> & m) { 
+    vector<int> vOcc;
     // Compute vOcc
-    computeVOcc(slg);
+    computeVOcc(slg, vOcc);
 
     // Compute AdjList
     vector<array<int, 4>> adjList;
-    computeAdjList(slg, adjList);
+    computeAdjList(slg, adjList, vOcc);
 
     sortAdjList(adjList);
 
