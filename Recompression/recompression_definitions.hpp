@@ -9,7 +9,7 @@
 
 using namespace std;
 
-struct RLSLPNonterm {
+struct __attribute__((packed)) RLSLPNonterm {
     char type;
     int first;
     int second;
@@ -61,7 +61,7 @@ public:
     vector<SLGNonterm> nonterm;
 };
 
-struct SLPNonterm {
+struct  __attribute__((packed)) SLPNonterm {
     char type;
     int first;
     int second;
