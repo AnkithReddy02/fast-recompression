@@ -228,4 +228,15 @@ struct Node {
     }
 };
 
+struct __attribute__((packed)) AdjListElement {
+    int first;
+    int second;
+    bool swapped;
+    int vOcc;
+
+    AdjListElement() {}
+
+    AdjListElement(const int &first, const int &second, const bool &swapped, const int &vOcc) : first(first), second(second), swapped(swapped), vOcc(vOcc) {}
+};
+
 #endif

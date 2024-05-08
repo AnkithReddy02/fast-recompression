@@ -299,7 +299,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
     return new SLG(new_slg_nonterm_vec);
 }
 
-pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<array<int, 4>> & adjList, vector<pair<int, int>> & dp, vector<int> &vOcc) {
+pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<AdjListElement> & adjList, vector<pair<int, int>> & dp, vector<int> &vOcc) {
 
     if(var < 0) {
         return {var, var};
@@ -347,7 +347,7 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<array<int, 4>> & a
             swap(f, s);
             swapped = true;
         }
-        adjList.push_back({f, s, swapped ? 1 : 0, vOcc[var]});
+        adjList.push_back(AdjListElement(f, s, swapped, vOcc[var]));
     }
 
     //slg_nonterm.LMS = lms_rms_list.front().first;
@@ -356,16 +356,16 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<array<int, 4>> & a
     return dp[var] = {lms_rms_list.front().first, lms_rms_list.back().second};
 }
 
-void computeAdjList(SLG *slg, vector<array<int, 4>> &adjList, vector<int> &vOcc) {
+void computeAdjList(SLG *slg, vector<AdjListElement> &adjList, vector<int> &vOcc) {
     vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
 
     computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp, vOcc);
     return;
 }
 
-vector<array<int, 4>> computeAdjList(SLG *slg, vector<int> &vOcc) {
+vector<AdjListElement> computeAdjList(SLG *slg, vector<int> &vOcc) {
 
-    vector<array<int, 4>> adjList;
+    vector<AdjListElement> adjList;
 
     vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
 
@@ -454,12 +454,17 @@ void computeVOcc(SLG *slg, vector<int> &dp) {
     return;
 }
 
-void sortAdjList(vector<array<int, 4>> & adjList) {
+void sortAdjList(vector<AdjListElement> & adjList) {
 
     // Make Positive
-    for(array<int, 4> & a : adjList) {
-        a[0] = -a[0];
-        a[1] = -a[1];
+    // for(array<int, 4> & a : adjList) {
+    //     a[0] = -a[0];
+    //     a[1] = -a[1];
+    // }
+
+    for(AdjListElement & a : adjList) {
+        a.first = -a.first;
+        a.second = -a.second;
     }
 
     // Sort It.
@@ -467,13 +472,13 @@ void sortAdjList(vector<array<int, 4>> & adjList) {
 
 
     // Revert to Negative
-    for(array<int, 4> & a : adjList) {
-        a[0] = -a[0];
-        a[1] = -a[1];
+    for(AdjListElement & a : adjList) {
+        a.first = -a.first;
+        a.second = -a.second;
     }
 }
 
-void createPartition(const vector<array<int, 4>> & adjList, array<unordered_set<int>, 2> &partition_set) {
+void createPartition(const vector<AdjListElement> & adjList, array<unordered_set<int>, 2> &partition_set) {
 
     // // Make Positive
     // for(array<int, 4> & a : adjList) {
@@ -486,20 +491,20 @@ void createPartition(const vector<array<int, 4>> & adjList, array<unordered_set<
     int currentIndex = 0;
     size_t n = adjList.size();
 
-    int c = adjList[currentIndex][0];
+    int c = adjList[currentIndex].first;
 
     while(currentIndex < n) {
         int leftSetFreq = 0;
         int rightSetFreq = 0;
-        while (currentIndex < n && adjList[currentIndex][0] == c) {
-            if(rightSet.find(adjList[currentIndex][1]) == rightSet.end()) {
-                leftSet.insert(adjList[currentIndex][1]);
+        while (currentIndex < n && adjList[currentIndex].first == c) {
+            if(rightSet.find(adjList[currentIndex].second) == rightSet.end()) {
+                leftSet.insert(adjList[currentIndex].second);
             }
 
-            if (leftSet.find(adjList[currentIndex][1]) != leftSet.end()) {
-                leftSetFreq += adjList[currentIndex][3];
+            if (leftSet.find(adjList[currentIndex].second) != leftSet.end()) {
+                leftSetFreq += adjList[currentIndex].vOcc;
             } else {
-                rightSetFreq += adjList[currentIndex][3];
+                rightSetFreq += adjList[currentIndex].vOcc;
             }
             currentIndex++;
         }
@@ -512,7 +517,7 @@ void createPartition(const vector<array<int, 4>> & adjList, array<unordered_set<
         }
 
         if(currentIndex < n) {
-            c = adjList[currentIndex][0];
+            c = adjList[currentIndex].first;
         }
         
     }
@@ -529,16 +534,16 @@ void createPartition(const vector<array<int, 4>> & adjList, array<unordered_set<
         }
     */
 
-    for(const array<int, 4> & arr : adjList) {
-        int f = arr[0];
-        int s = arr[1];
+    for(const AdjListElement & arr : adjList) {
+        int f = arr.first;
+        int s = arr.second;
 
-        if(arr[2] == 1) {
+        if(arr.swapped == true) {
             swap(f, s);
         }
 
-        LRPairsCount += ((leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end())) ? arr[3] : 0;
-        RLPairsCount += ((rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end())) ? arr[3] : 0;
+        LRPairsCount += ((leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end())) ? arr.vOcc : 0;
+        RLPairsCount += ((rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end())) ? arr.vOcc : 0;
 
     }
 
@@ -649,7 +654,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
     computeVOcc(slg, vOcc);
 
     // Compute AdjList
-    vector<array<int, 4>> adjList;
+    vector<AdjListElement> adjList;
     computeAdjList(slg, adjList, vOcc);
 
     sortAdjList(adjList);
@@ -659,7 +664,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
     createPartition(adjList, arr);
 
     adjList.clear();  // Clear immediately
-    vector<array<int, 4>>().swap(adjList);  // Ensure memory is released
+    vector<AdjListElement>().swap(adjList);  // Ensure memory is released
 
     const unordered_set<int> &left_set = arr[0], &right_set = arr[1];
 
@@ -1164,7 +1169,7 @@ void start_compression(string input_file) {
     cout << "Text Size : " << text_size << endl;
 
     // TEST
-    // test(text_size, recompression_rlslp, rlslp_nonterm_vec);
+    // (text_size, recompression_rlslp, rlslp_nonterm_vec);
 }
 
 int main(int argc, char *argv[]) {
