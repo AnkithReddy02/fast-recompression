@@ -651,6 +651,78 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
     return { rightSet, leftSet };
 }
 
+// UNORDERED_MAP USAGE
+pair<int, int> computeAdjListHelper(int var, SLG *slg, unordered_map<pair<int, int>, int, hash_pair> &m0, unordered_map<pair<int, int>, int, hash_pair> &m1, vector<pair<int, int>> & dp, vector<int> &vOcc) {
+
+    if(var < 0) {
+        return {var, var};
+    }
+
+    if(dp[var].first != 1 && dp[var].second != 1) {
+        return dp[var];
+    }
+
+    /*
+        1. Modifying LMS and RMS
+        2. Access rhs
+    */
+    SLGNonterm &slg_nonterm = slg->nonterm[var];
+
+    const vector<int> &rhs = slg_nonterm.rhs;
+
+    // 
+    if(rhs.empty()) {
+        return {0, 0};
+    }
+    else if(rhs.size() == 1 && rhs[0] < 0) {
+        // Hopefully this should be always true when there is only 1 character to right
+        // assert(rhs[0] < 0);
+        return dp[var] = {rhs[0], rhs[0]};
+
+        // return dp[var] = {rhs[0], rhs[0]};
+    }
+    
+    vector<pair<int, int>> lms_rms_list;
+
+    for(const int &rhs_symbol : rhs) {
+        pair<int, int> lms_rms = computeAdjListHelper(rhs_symbol, slg, m0, m1, dp, vOcc);
+        lms_rms_list.push_back(lms_rms);
+    }
+
+    for(int i = 0; i < lms_rms_list.size() - 1; i++) {
+
+        int f = lms_rms_list[i].second;
+        int s = lms_rms_list[i+1].first;
+
+        bool swapped = false;
+
+        if(abs(f) < abs(s)) {
+            swap(f, s);
+            swapped = true;
+        }
+
+        if(swapped) {
+            m1[{f, s}] += vOcc[var];
+        }
+        else {
+            m0[{f, s}] += vOcc[var];
+        }
+        // adjList.push_back(AdjListElement(f, s, swapped, vOcc[var]));
+    }
+
+    //slg_nonterm.LMS = lms_rms_list.front().first;
+    //slg_nonterm.RMS = lms_rms_list.back().second;
+
+    return dp[var] = {lms_rms_list.front().first, lms_rms_list.back().second};
+}
+
+void computeAdjList(SLG *slg, unordered_map<pair<int, int>, int, hash_pair> &m0, unordered_map<pair<int, int>, int, hash_pair> &m1, vector<int> &vOcc) {
+    vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
+
+    computeAdjListHelper(slg->nonterm.size()-1, slg, m0, m1, dp, vOcc);
+    return;
+}
+
 // Pair-Wise Compression
 SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pair<int, int>, int, hash_pair> & m) { 
     vector<int> vOcc;
@@ -658,8 +730,24 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
     computeVOcc(slg, vOcc);
 
     // Compute AdjList
-    vector<AdjListElement> adjList;
-    computeAdjList(slg, adjList, vOcc);
+    unordered_map<pair<int, int>, int, hash_pair> m0;
+    unordered_map<pair<int, int>, int, hash_pair> m1;
+    computeAdjList(slg, m0, m1, vOcc);
+    // Avoid resizing.
+    vector<AdjListElement> adjList(m0.size() + m1.size());
+
+    int index = 0;
+    for(auto & x : m0) {
+        adjList[index++] = AdjListElement(x.first.first, x.first.second, false, x.second);
+    }
+
+    m0.clear();
+
+    for(auto & x : m1) {
+        adjList[index++] = AdjListElement(x.first.first, x.first.second, true, x.second);
+    }
+
+    m1.clear();
 
     sortAdjList(adjList);
 
