@@ -148,9 +148,13 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
 
     const int &grammar_size = slg_nonterm_vec.size();
 
+    vector<pair<int, int>> LR_vec(grammar_size, make_pair(-1, -1));
+    vector<pair<int, int>> RR_vec(grammar_size, make_pair(-1, -1));
+
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
-    for(SLGNonterm & slg_nonterm : slg_nonterm_vec) {
+    for(int i = 0; i < grammar_size; i++) {
+        SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
         // Take the RHS of the production.
         vector<int> &rhs = slg_nonterm.rhs;
 
@@ -172,8 +176,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
             }
 
             // **LR** of a current variable(rhs_symbol) in current RHS is **not empty**.
-            if(slg_nonterm_vec[rhs_symbol].LR.second != -1) {
-                rhs_expansion.push_back(slg_nonterm_vec[rhs_symbol].LR);
+            if(LR_vec[rhs_symbol].second != -1) {
+                rhs_expansion.push_back(LR_vec[rhs_symbol]);
             }
 
             // Cap is not empty --> in new SLG the variable(rhs_symbol) RHS is not empty --> then Cap is not empty.
@@ -182,8 +186,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
             }
 
             // **RR** of a current variable(rhs_symbol) in current RHS is **not empty**.
-            if(slg_nonterm_vec[rhs_symbol].RR.second != -1) {
-                rhs_expansion.push_back(slg_nonterm_vec[rhs_symbol].RR);
+            if(RR_vec[rhs_symbol].second != -1) {
+                rhs_expansion.push_back(RR_vec[rhs_symbol]);
             }
         }
 
@@ -207,7 +211,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
         }
 
         // set LR
-        slg_nonterm.LR = LR;
+        LR_vec[i] = LR;
 
 
         // Compute RR
@@ -220,7 +224,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
             // Cap is empty; set Cap
             new_slg_nonterm_vec.emplace_back();
             // RR is empty; set RR
-            slg_nonterm.RR = {-1, -1};
+            RR_vec[i] = {-1, -1};
         }
         // Case 2 : There is room for RR
         else {
@@ -241,7 +245,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
             }
 
             // set RR
-            slg_nonterm.RR = RR;
+            RR_vec[i] = RR;
 
             // Compress Cap(middle part)
             combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer, new_slg_nonterm_vec, m, recompression_rlslp);
@@ -255,8 +259,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
 
     const int &start_var = slg_nonterm_vec.size()-1;
 
-    const pair<int, int> &start_var_LR = slg_nonterm_vec[start_var].LR;
-    const pair<int, int> &start_var_RR = slg_nonterm_vec[start_var].RR;
+    const pair<int, int> &start_var_LR = LR_vec[start_var];
+    const pair<int, int> &start_var_RR = RR_vec[start_var];
 
     vector<int> new_start_rhs;
 
@@ -1169,7 +1173,7 @@ void start_compression(string input_file) {
     cout << "Text Size : " << text_size << endl;
 
     // TEST
-    // (text_size, recompression_rlslp, rlslp_nonterm_vec);
+    // test(text_size, recompression_rlslp, rlslp_nonterm_vec);
 }
 
 int main(int argc, char *argv[]) {

@@ -37,14 +37,14 @@ struct SLGNonterm {
     // int RB;
     
     // {-1, -1} is empty
-    pair<int, int> LR;
-    pair<int, int> RR;
+    // pair<int, int> LR;
+    // pair<int, int> RR;
 
-    SLGNonterm(const vector<int> &rhs) : LR({-1, -1}), RR({-1, -1}), rhs(rhs) {
+    SLGNonterm(const vector<int> &rhs) : rhs(rhs) {
 
     }
 
-    SLGNonterm() : LR({-1, -1}), RR({-1, -1}) {
+    SLGNonterm() {
 
     }
 };
