@@ -1,6 +1,8 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#include "typedefs.hpp"
+
 void printRecompressionRLSLP(const RecompressionRLSLP *recompression_rlslp) {
 
     cout << "RECOMPRESSION PRINTING STARTED..." << endl;
@@ -10,7 +12,7 @@ void printRecompressionRLSLP(const RecompressionRLSLP *recompression_rlslp) {
         return;
     }
 
-    int i = 0;
+    c_size_t i = 0;
 
     for(const RLSLPNonterm & rlslp_nonterm : recompression_rlslp->nonterm) {
         cout << i << " --> ";
@@ -31,11 +33,11 @@ void printSLG(const SLG *slg) {
         return;
     }
 
-    int i = 0;
+    c_size_t i = 0;
 
     for(const SLGNonterm & slg_nonterm : slg->nonterm) {
         cout << i << " --> ";
-        for(int x : slg_nonterm.rhs) {
+        for(c_size_t x : slg_nonterm.rhs) {
             cout << x << ' ';
         }
         cout << endl;
@@ -47,15 +49,15 @@ void printSLG(const SLG *slg) {
     return;
 }
 
-void expandRLSLP(int var, const vector<RLSLPNonterm> & rlslp_nonterm_vec, vector<int> & result) {
+void expandRLSLP(c_size_t var, const vector<RLSLPNonterm> & rlslp_nonterm_vec, vector<c_size_t> & result) {
     if(rlslp_nonterm_vec[var].type == '0') {
         result.push_back(rlslp_nonterm_vec[var].first);
         return;
     }
 
-    char type = rlslp_nonterm_vec[var].type;
-    int first = rlslp_nonterm_vec[var].first;
-    int second = rlslp_nonterm_vec[var].second;
+    char_t type = rlslp_nonterm_vec[var].type;
+    c_size_t first = rlslp_nonterm_vec[var].first;
+    c_size_t second = rlslp_nonterm_vec[var].second;
 
     if(type == '1') {
         expandRLSLP(first, rlslp_nonterm_vec, result);
@@ -69,9 +71,9 @@ void expandRLSLP(int var, const vector<RLSLPNonterm> & rlslp_nonterm_vec, vector
     }
     return;
 }
-vector<int> expandRLSLP(const RecompressionRLSLP *recompression_rlslp) {
+vector<c_size_t> expandRLSLP(const RecompressionRLSLP *recompression_rlslp) {
 
-    vector<int> result;
+    vector<c_size_t> result;
     vector<RLSLPNonterm> rlslp_nonterm_vec = recompression_rlslp->nonterm;
     expandRLSLP(rlslp_nonterm_vec.size()-1, rlslp_nonterm_vec, result);
 
@@ -79,21 +81,21 @@ vector<int> expandRLSLP(const RecompressionRLSLP *recompression_rlslp) {
     return result;
 }
 
-void expandSLG(int var, const vector<SLGNonterm> & slg_nonterm_vec, vector<int> & result) {
+void expandSLG(c_size_t var, const vector<SLGNonterm> & slg_nonterm_vec, vector<c_size_t> & result) {
     if(var < 0) {
         result.push_back(abs(var));
         return;
     }
 
-    const vector<int> & rhs = slg_nonterm_vec[var].rhs;
+    const vector<c_size_t> & rhs = slg_nonterm_vec[var].rhs;
 
-    for(int rhs_var : rhs) {
+    for(c_size_t rhs_var : rhs) {
         expandSLG(rhs_var, slg_nonterm_vec, result);
     }
 }
 
-vector<int> expandSLG(const SLG *slg) {
-    vector<int> result;
+vector<c_size_t> expandSLG(const SLG *slg) {
+    vector<c_size_t> result;
 
     const vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 

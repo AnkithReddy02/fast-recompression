@@ -6,10 +6,11 @@
 #include <iostream>
 #include <algorithm>
 #include "recompression_definitions.hpp"
+#include "typedefs.hpp"
 
 using namespace std;
 
-void initialize_nodes(int node, const int& i, int left, int right, stack<Node>& ancestors, const vector<RLSLPNonterm>& grammar, Node& v) {
+void initialize_nodes(c_size_t node, const c_size_t& i, c_size_t left, c_size_t right, stack<Node>& ancestors, const vector<RLSLPNonterm>& grammar, Node& v) {
     if (left > right || i < left || i > right)
         return;
 
@@ -33,10 +34,10 @@ void initialize_nodes(int node, const int& i, int left, int right, stack<Node>& 
 
     } else {
         const RLSLPNonterm& child_nt = grammar[nt.first];
-        int child_explen = child_nt.explen;
+        c_size_t child_explen = child_nt.explen;
 
-        int newLeft = left + ((i - left) / child_explen) * child_explen;
-        int newRight = left + ((i - left) / child_explen) * child_explen + child_explen - 1;
+        c_size_t newLeft = left + ((i - left) / child_explen) * child_explen;
+        c_size_t newRight = left + ((i - left) / child_explen) * child_explen + child_explen - 1;
 
         initialize_nodes(nt.first, i, newLeft, newRight, ancestors, grammar, v);
     }
@@ -49,8 +50,8 @@ Node getLeftMostChild(Node v, const vector<RLSLPNonterm> & grammar) {
 
     const RLSLPNonterm& nt = grammar[v.var];
 
-    int left = v.l;
-    int right = v.r - 1;
+    c_size_t left = v.l;
+    c_size_t right = v.r - 1;
 
     if(type == '1') {
         const RLSLPNonterm& left_nt = grammar[nt.first];
@@ -59,7 +60,7 @@ Node getLeftMostChild(Node v, const vector<RLSLPNonterm> & grammar) {
     }
     else if(type == '2') {
         const RLSLPNonterm& child_nt = grammar[nt.first];
-        int child_explen = child_nt.explen;
+        c_size_t child_explen = child_nt.explen;
         return Node(nt.first, left, left + child_explen);
     }
 
@@ -67,7 +68,7 @@ Node getLeftMostChild(Node v, const vector<RLSLPNonterm> & grammar) {
 }
 
 
-int getChildCount(const Node &parent, const vector<RLSLPNonterm> &grammar) {
+c_size_t getChildCount(const Node &parent, const vector<RLSLPNonterm> &grammar) {
     const RLSLPNonterm &nt = grammar[parent.var];
     switch (nt.type) {
         case '0': return 1;
@@ -77,7 +78,7 @@ int getChildCount(const Node &parent, const vector<RLSLPNonterm> &grammar) {
 }
 
 
-int getChildIndex(const Node &parent, const Node &v, const vector<RLSLPNonterm> &grammar) {
+c_size_t getChildIndex(const Node &parent, const Node &v, const vector<RLSLPNonterm> &grammar) {
     const RLSLPNonterm &nt = grammar[parent.var];
 
     switch (nt.type) {
@@ -88,15 +89,15 @@ int getChildIndex(const Node &parent, const Node &v, const vector<RLSLPNonterm> 
             return (parent.l == v.l) ? 1 : 2;
 
         default:
-            int span = v.r - v.l;
+            c_size_t span = v.r - v.l;
             return (v.l - parent.l) / span + 1;
     }
 }
 
-Node getKthSibling(const Node &parent, const Node &v, int k) {
-    int segmentLength = v.r - v.l;
-    int newLeft = parent.l + (k - 1) * segmentLength;
-    int newRight = newLeft + segmentLength;
+Node getKthSibling(const Node &parent, const Node &v, c_size_t k) {
+    c_size_t segmentLength = v.r - v.l;
+    c_size_t newLeft = parent.l + (k - 1) * segmentLength;
+    c_size_t newRight = newLeft + segmentLength;
 
     return Node(v.var, newLeft, newRight);
 }
@@ -121,7 +122,7 @@ Node replaceWithHighestStartingAtPosition(const Node &v, stack<Node> &ancestors,
     if (nt.type == '1') {
         return Node(nt.second, child.r, ancestor.r);
     } else {
-        int childIndex = getChildIndex(ancestor, child, grammar);
+        c_size_t childIndex = getChildIndex(ancestor, child, grammar);
         return getKthSibling(ancestor, child, childIndex + 1);
     }
 
@@ -129,9 +130,9 @@ Node replaceWithHighestStartingAtPosition(const Node &v, stack<Node> &ancestors,
 }
 
 
-int LCE(Node &v1, Node &v2, int i, stack<Node> & v1_ancestors, stack<Node> & v2_ancestors, const vector<RLSLPNonterm> &grammar) {
-    int exp_len_v1 = v1.r - v1.l;
-    int exp_len_v2 = v2.r - v2.l;
+c_size_t LCE(Node &v1, Node &v2, c_size_t i, stack<Node> & v1_ancestors, stack<Node> & v2_ancestors, const vector<RLSLPNonterm> &grammar) {
+    c_size_t exp_len_v1 = v1.r - v1.l;
+    c_size_t exp_len_v2 = v2.r - v2.l;
 
     if(exp_len_v1 == 1 and exp_len_v1 == exp_len_v2 and v1.var != v2.var) {
         return v1.l - i;
@@ -155,14 +156,14 @@ int LCE(Node &v1, Node &v2, int i, stack<Node> & v1_ancestors, stack<Node> & v2_
         Node v1_parent = v1_ancestors.top();
         Node v2_parent = v2_ancestors.top();
 
-        int j1 = getChildIndex(v1_parent, v1, grammar);
-        int j2 = getChildIndex(v2_parent, v2, grammar);
+        c_size_t j1 = getChildIndex(v1_parent, v1, grammar);
+        c_size_t j2 = getChildIndex(v2_parent, v2, grammar);
 
 
-        int d1 = getChildCount(v1_parent, grammar);
-        int d2 = getChildCount(v2_parent, grammar);
+        c_size_t d1 = getChildCount(v1_parent, grammar);
+        c_size_t d2 = getChildCount(v2_parent, grammar);
 
-        int lambda = min(d1 - j1, d2 - j2);
+        c_size_t lambda = min(d1 - j1, d2 - j2);
 
         if(lambda <= 1) {
             v1 = replaceWithHighestStartingAtPosition(v1, v1_ancestors, grammar);

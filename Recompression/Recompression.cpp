@@ -1,20 +1,22 @@
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 #include "recompression_definitions.hpp"
 #include "../radix_sort.h"
 #include "../io.h"
 #include "utilities.hpp"
 #include "lce_queries.hpp"
 #include "hash_pair.hpp"
+#include "typedefs.hpp"
+
 using namespace std;
 
-void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_pointer, const int &rr_pointer, vector<pair<int, int>> &result) {
+void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<pair<c_size_t, c_size_t>> &result) {
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer)
         return;
 
     // Iterate through the vector within the specified range
-    int currNum = vec[lr_pointer].first;
-    int currFreq = vec[lr_pointer].second;
+    c_size_t currNum = vec[lr_pointer].first;
+    c_size_t currFreq = vec[lr_pointer].second;
 
     for (size_t i = lr_pointer + 1; i <= rr_pointer && i < vec.size(); ++i) {
         // Check if the current and previous elements have the same number
@@ -36,16 +38,16 @@ void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_
     return;
 }
 
-vector<pair<int, int>> combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_pointer, const int &rr_pointer) {
-    vector<pair<int, int>> result;
+vector<pair<c_size_t, c_size_t>> combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer) {
+    vector<pair<c_size_t, c_size_t>> result;
 
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer)
         return result;
 
     // Iterate through the vector within the specified range
-    int currNum = vec[lr_pointer].first;
-    int currFreq = vec[lr_pointer].second;
+    c_size_t currNum = vec[lr_pointer].first;
+    c_size_t currFreq = vec[lr_pointer].second;
 
     for (size_t i = lr_pointer + 1; i <= rr_pointer && i < vec.size(); ++i) {
         // Check if the current and previous elements have the same number
@@ -67,18 +69,18 @@ vector<pair<int, int>> combineFrequenciesInRange(const vector<pair<int, int>>& v
     return result;
 }
 
-void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_pointer, const int &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, unordered_map<pair<int, int>, int, hash_pair> &m, RecompressionRLSLP *recompression_rlslp) {
+void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> &m, RecompressionRLSLP *recompression_rlslp) {
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer) {
         new_slg_nonterm_vec.emplace_back();
         return;
     }
 
-    vector<int> cap_rhs;
+    vector<c_size_t> cap_rhs;
 
     // Iterate through the vector within the specified range
-    int currNum = vec[lr_pointer].first;
-    int currFreq = vec[lr_pointer].second;
+    c_size_t currNum = vec[lr_pointer].first;
+    c_size_t currFreq = vec[lr_pointer].second;
 
     for (size_t i = lr_pointer + 1; i <= rr_pointer && i < vec.size(); ++i) {
         // Check if the current and previous elements have the same number
@@ -88,7 +90,7 @@ void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_
         } else {
             
             {
-                const pair<int, int> p = {currNum, currFreq};
+                const pair<c_size_t, c_size_t> p = {currNum, currFreq};
 
                 // Frequency is >=2 so merge and push to rlslp
                 // Merged variable is terminal for a new_slg, so it is marked negative
@@ -112,7 +114,7 @@ void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_
         }
     }
 
-    const pair<int, int> p = {currNum, currFreq};
+    const pair<c_size_t, c_size_t> p = {currNum, currFreq};
 
     // Frequency is >=2 so merge and push to rlslp
     // Merged variable is terminal for a new_slg, so it is marked negative
@@ -135,7 +137,7 @@ void combineFrequenciesInRange(const vector<pair<int, int>>& vec, const int &lr_
 }
 
 // Block Compression
-SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair<int, int>, int, hash_pair> & m) {
+SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> & m) {
 
     // Current slg non-term list
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
@@ -146,17 +148,17 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
     // New SLG non-term list that new_slg needs.
     vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
 
-    const int &grammar_size = slg_nonterm_vec.size();
+    const c_size_t &grammar_size = slg_nonterm_vec.size();
 
-    vector<pair<int, int>> LR_vec(grammar_size, make_pair(-1, -1));
-    vector<pair<int, int>> RR_vec(grammar_size, make_pair(-1, -1));
+    vector<pair<c_size_t, c_size_t>> LR_vec(grammar_size, make_pair(-1, -1));
+    vector<pair<c_size_t, c_size_t>> RR_vec(grammar_size, make_pair(-1, -1));
 
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
-    for(int i = 0; i < grammar_size; i++) {
+    for(c_size_t i = 0; i < grammar_size; i++) {
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
         // Take the RHS of the production.
-        vector<int> &rhs = slg_nonterm.rhs;
+        vector<c_size_t> &rhs = slg_nonterm.rhs;
 
         if(rhs.empty()) {
             new_slg_nonterm_vec.emplace_back();
@@ -164,10 +166,10 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
         }
 
         // Create the expansion of RHS.
-        vector<pair<int, int>> rhs_expansion;
+        vector<pair<c_size_t, c_size_t>> rhs_expansion;
      
         // Compute the Expansion.
-        for(const int &rhs_symbol: rhs) {
+        for(const c_size_t &rhs_symbol: rhs) {
 
             // Single Terminal
             if(rhs_symbol < 0) {
@@ -195,9 +197,9 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
         //vector<int>().swap(rhs);
 
         // Compute LR
-        int lr_pointer = 1;
+        c_size_t lr_pointer = 1;
 
-        pair<int, int> LR = rhs_expansion[0];
+        pair<c_size_t, c_size_t> LR = rhs_expansion[0];
 
         while(lr_pointer < rhs_expansion.size()) {
             if(LR.first == rhs_expansion[lr_pointer].first) {
@@ -215,9 +217,9 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
 
 
         // Compute RR
-        int rr_pointer = rhs_expansion.size()-2;
+        c_size_t rr_pointer = rhs_expansion.size()-2;
 
-        pair<int, int> RR = rhs_expansion.back();
+        pair<c_size_t, c_size_t> RR = rhs_expansion.back();
 
         // Case 1 : Everything is consumed by lr_pointer
         if(lr_pointer == rhs_expansion.size()) {
@@ -257,12 +259,12 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
 
     // Add new Starting Variable to the new Grammar G'(G Prime).
 
-    const int &start_var = slg_nonterm_vec.size()-1;
+    const c_size_t &start_var = slg_nonterm_vec.size()-1;
 
-    const pair<int, int> &start_var_LR = LR_vec[start_var];
-    const pair<int, int> &start_var_RR = RR_vec[start_var];
+    const pair<c_size_t, c_size_t> &start_var_LR = LR_vec[start_var];
+    const pair<c_size_t, c_size_t> &start_var_RR = RR_vec[start_var];
 
-    vector<int> new_start_rhs;
+    vector<c_size_t> new_start_rhs;
 
     // This always holds true.
     if(start_var_LR.second != -1) {
@@ -303,7 +305,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
     return new SLG(new_slg_nonterm_vec);
 }
 
-pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<AdjListElement> & adjList, vector<pair<int, int>> & dp, vector<int> &vOcc) {
+pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, vector<AdjListElement> & adjList, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
 
     if(var < 0) {
         return {var, var};
@@ -319,7 +321,7 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<AdjListElement> & 
     */
     SLGNonterm &slg_nonterm = slg->nonterm[var];
 
-    const vector<int> &rhs = slg_nonterm.rhs;
+    const vector<c_size_t> &rhs = slg_nonterm.rhs;
 
     // 
     if(rhs.empty()) {
@@ -333,19 +335,19 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<AdjListElement> & 
         // return dp[var] = {rhs[0], rhs[0]};
     }
     
-    vector<pair<int, int>> lms_rms_list;
+    vector<pair<c_size_t, c_size_t>> lms_rms_list;
 
-    for(const int &rhs_symbol : rhs) {
-        pair<int, int> lms_rms = computeAdjListHelper(rhs_symbol, slg, adjList, dp, vOcc);
+    for(const c_size_t &rhs_symbol : rhs) {
+        pair<c_size_t, c_size_t> lms_rms = computeAdjListHelper(rhs_symbol, slg, adjList, dp, vOcc);
         lms_rms_list.push_back(lms_rms);
     }
 
-    for(int i = 0; i < lms_rms_list.size() - 1; i++) {
+    for(c_size_t i = 0; i < lms_rms_list.size() - 1; i++) {
 
-        int f = lms_rms_list[i].second;
-        int s = lms_rms_list[i+1].first;
+        c_size_t f = lms_rms_list[i].second;
+        c_size_t s = lms_rms_list[i+1].first;
 
-        bool swapped = false;
+        bool_t swapped = false;
 
         if(abs(f) < abs(s)) {
             swap(f, s);
@@ -360,25 +362,25 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, vector<AdjListElement> & 
     return dp[var] = {lms_rms_list.front().first, lms_rms_list.back().second};
 }
 
-void computeAdjList(SLG *slg, vector<AdjListElement> &adjList, vector<int> &vOcc) {
-    vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
+void computeAdjList(SLG *slg, vector<AdjListElement> &adjList, vector<c_size_t> &vOcc) {
+    vector<pair<c_size_t, c_size_t>> dp(slg->nonterm.size(), make_pair(1, 1));
 
     computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp, vOcc);
     return;
 }
 
-vector<AdjListElement> computeAdjList(SLG *slg, vector<int> &vOcc) {
+vector<AdjListElement> computeAdjList(SLG *slg, vector<c_size_t> &vOcc) {
 
     vector<AdjListElement> adjList;
 
-    vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
+    vector<pair<c_size_t, c_size_t>> dp(slg->nonterm.size(), make_pair(1, 1));
 
     computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp, vOcc);
 
     return adjList;
 }
 
-int computeVOccHelper(vector<vector<pair<int,int>>> & graph, int u, vector<int> & dp) {
+c_size_t computeVOccHelper(vector<vector<pair<c_size_t,c_size_t>>> & graph, c_size_t u, vector<c_size_t> & dp) {
 
     // Base Case : Target is Reached / Target is Same as the current node.
     if(u == graph.size()-1) {
@@ -390,44 +392,44 @@ int computeVOccHelper(vector<vector<pair<int,int>>> & graph, int u, vector<int> 
         return dp[u];
     }
 
-    int num_paths = 0;
+    c_size_t num_paths = 0;
 
     for(const auto & edge : graph[u]) {
-        const int &v = edge.first;
-        const int &weight = edge.second;
+        const c_size_t &v = edge.first;
+        const c_size_t &weight = edge.second;
 
         num_paths += weight * computeVOccHelper(graph, v, dp);
     }
 
     // u is explored.
     graph[u].clear();
-    vector<pair<int, int>>().swap(graph[u]);
+    vector<pair<c_size_t, c_size_t>>().swap(graph[u]);
 
     return dp[u] = num_paths;
 }
-void computeVOcc(SLG *slg, vector<int> &dp) {
+void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
     // Here, any list size is slg_nonterm_vec.size()
 
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
     // Create Reverse Graph.
-    vector<vector<pair<int,int>>> graph(slg_nonterm_vec.size(), vector<pair<int, int>>());
+    vector<vector<pair<c_size_t,c_size_t>>> graph(slg_nonterm_vec.size(), vector<pair<c_size_t, c_size_t>>());
 
 
     // Enumerate Each Production Rule.
-    for(int i=0; i<slg_nonterm_vec.size(); i++) {
+    for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
 
         // Current SLGNonterm
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
-        unordered_map<int, int> var_freq;
+        unordered_map<c_size_t, c_size_t> var_freq;
 
-        const vector<int> & rhs = slg_nonterm.rhs;
+        const vector<c_size_t> & rhs = slg_nonterm.rhs;
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
-        for(const int & var : rhs) {
+        for(const c_size_t & var : rhs) {
 
             // Only Non-Terminals
             if(var >= 0) {
@@ -438,9 +440,9 @@ void computeVOcc(SLG *slg, vector<int> &dp) {
         // Construct Edges.
         for(const auto & x : var_freq) {
             // edge from v to u, u <-- v
-            const int &u = i;
-            const int &v = x.first;
-            const int &weight = x.second;
+            const c_size_t &u = i;
+            const c_size_t &v = x.first;
+            const c_size_t &weight = x.second;
 
             // Weighted Edge from v to u , v --> u
             graph[v].emplace_back(u, weight);
@@ -451,7 +453,7 @@ void computeVOcc(SLG *slg, vector<int> &dp) {
     dp.resize(slg_nonterm_vec.size(), -1);
 
     // Compute vOcc.
-    for(int i = 0; i < slg_nonterm_vec.size(); i++) {
+    for(c_size_t i = 0; i < slg_nonterm_vec.size(); i++) {
         computeVOccHelper(graph, i, dp);
     }
 
@@ -490,16 +492,16 @@ void createPartition(const vector<AdjListElement> & adjList, array<unordered_set
     //  a[1] = -a[1];
     // }
     
-    unordered_set<int>& leftSet = partition_set[0];
-    unordered_set<int>& rightSet = partition_set[1];
-    int currentIndex = 0;
+    unordered_set<c_size_t>& leftSet = partition_set[0];
+    unordered_set<c_size_t>& rightSet = partition_set[1];
+    c_size_t currentIndex = 0;
     size_t n = adjList.size();
 
-    int c = adjList[currentIndex].first;
+    c_size_t c = adjList[currentIndex].first;
 
     while(currentIndex < n) {
-        int leftSetFreq = 0;
-        int rightSetFreq = 0;
+        c_size_t leftSetFreq = 0;
+        c_size_t rightSetFreq = 0;
         while (currentIndex < n && adjList[currentIndex].first == c) {
             if(rightSet.find(adjList[currentIndex].second) == rightSet.end()) {
                 leftSet.insert(adjList[currentIndex].second);
@@ -526,8 +528,8 @@ void createPartition(const vector<AdjListElement> & adjList, array<unordered_set
         
     }
     
-    int LRPairsCount = 0;
-    int RLPairsCount = 0;
+    c_size_t LRPairsCount = 0;
+    c_size_t RLPairsCount = 0;
 
     /*
         for (int i = 0; i < arr.size() - 1; i++) {
@@ -539,8 +541,8 @@ void createPartition(const vector<AdjListElement> & adjList, array<unordered_set
     */
 
     for(const AdjListElement & arr : adjList) {
-        int f = arr.first;
-        int s = arr.second;
+        c_size_t f = arr.first;
+        c_size_t s = arr.second;
 
         if(arr.swapped == true) {
             swap(f, s);
@@ -568,7 +570,7 @@ void createPartition(const vector<AdjListElement> & adjList, array<unordered_set
     return;
 }
 
-array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjList) {
+array<unordered_set<c_size_t>, 2> createPartition(const vector<array<c_size_t, 4>> & adjList) {
 
     // // Make Positive
     // for(array<int, 4> & a : adjList) {
@@ -576,15 +578,15 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
     //  a[1] = -a[1];
     // }
     
-    unordered_set<int> leftSet, rightSet;
-    int currentIndex = 0;
+    unordered_set<c_size_t> leftSet, rightSet;
+    c_size_t currentIndex = 0;
     size_t n = adjList.size();
 
-    int c = adjList[currentIndex][0];
+    c_size_t c = adjList[currentIndex][0];
 
     while(currentIndex < n) {
-        int leftSetFreq = 0;
-        int rightSetFreq = 0;
+        c_size_t leftSetFreq = 0;
+        c_size_t rightSetFreq = 0;
         while (currentIndex < n && adjList[currentIndex][0] == c) {
             if(rightSet.find(adjList[currentIndex][1]) == rightSet.end()) {
                 leftSet.insert(adjList[currentIndex][1]);
@@ -611,11 +613,11 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
         
     }
     
-    int LRPairsCount = 0;
-    int RLPairsCount = 0;
+    c_size_t LRPairsCount = 0;
+    c_size_t RLPairsCount = 0;
 
     /*
-        for (int i = 0; i < arr.size() - 1; i++) {
+        for (c_size_t i = 0; i < arr.size() - 1; i++) {
 
 
             LRPairsCount += (leftSet.find(arr[i]) != leftSet.end()) && (rightSet.find(arr[i + 1]) != rightSet.end());
@@ -623,9 +625,9 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
         }
     */
 
-    for(const array<int, 4> & arr : adjList) {
-        int f = arr[0];
-        int s = arr[1];
+    for(const array<c_size_t, 4> & arr : adjList) {
+        c_size_t f = arr[0];
+        c_size_t s = arr[1];
 
         if(arr[2] == 1) {
             swap(f, s);
@@ -652,7 +654,7 @@ array<unordered_set<int>, 2> createPartition(const vector<array<int, 4>> & adjLi
 }
 
 // UNORDERED_MAP USAGE
-pair<int, int> computeAdjListHelper(int var, SLG *slg, unordered_map<pair<int, int>, int, hash_pair> &m0, unordered_map<pair<int, int>, int, hash_pair> &m1, vector<pair<int, int>> & dp, vector<int> &vOcc) {
+pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> &m0, unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> &m1, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
 
     if(var < 0) {
         return {var, var};
@@ -668,7 +670,7 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, unordered_map<pair<int, i
     */
     SLGNonterm &slg_nonterm = slg->nonterm[var];
 
-    const vector<int> &rhs = slg_nonterm.rhs;
+    const vector<c_size_t> &rhs = slg_nonterm.rhs;
 
     // 
     if(rhs.empty()) {
@@ -682,19 +684,19 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, unordered_map<pair<int, i
         // return dp[var] = {rhs[0], rhs[0]};
     }
     
-    vector<pair<int, int>> lms_rms_list;
+    vector<pair<c_size_t, c_size_t>> lms_rms_list;
 
-    for(const int &rhs_symbol : rhs) {
-        pair<int, int> lms_rms = computeAdjListHelper(rhs_symbol, slg, m0, m1, dp, vOcc);
+    for(const c_size_t &rhs_symbol : rhs) {
+        pair<c_size_t, c_size_t> lms_rms = computeAdjListHelper(rhs_symbol, slg, m0, m1, dp, vOcc);
         lms_rms_list.push_back(lms_rms);
     }
 
-    for(int i = 0; i < lms_rms_list.size() - 1; i++) {
+    for(c_size_t i = 0; i < lms_rms_list.size() - 1; i++) {
 
-        int f = lms_rms_list[i].second;
-        int s = lms_rms_list[i+1].first;
+        c_size_t f = lms_rms_list[i].second;
+        c_size_t s = lms_rms_list[i+1].first;
 
-        bool swapped = false;
+        bool_t swapped = false;
 
         if(abs(f) < abs(s)) {
             swap(f, s);
@@ -716,27 +718,27 @@ pair<int, int> computeAdjListHelper(int var, SLG *slg, unordered_map<pair<int, i
     return dp[var] = {lms_rms_list.front().first, lms_rms_list.back().second};
 }
 
-void computeAdjList(SLG *slg, unordered_map<pair<int, int>, int, hash_pair> &m0, unordered_map<pair<int, int>, int, hash_pair> &m1, vector<int> &vOcc) {
-    vector<pair<int, int>> dp(slg->nonterm.size(), make_pair(1, 1));
+void computeAdjList(SLG *slg, unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> &m0, unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> &m1, vector<c_size_t> &vOcc) {
+    vector<pair<c_size_t, c_size_t>> dp(slg->nonterm.size(), make_pair(1, 1));
 
     computeAdjListHelper(slg->nonterm.size()-1, slg, m0, m1, dp, vOcc);
     return;
 }
 
 // Pair-Wise Compression
-SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pair<int, int>, int, hash_pair> & m) { 
-    vector<int> vOcc;
+SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> & m) { 
+    vector<c_size_t> vOcc;
     // Compute vOcc
     computeVOcc(slg, vOcc);
 
     // Compute AdjList
-    unordered_map<pair<int, int>, int, hash_pair> m0;
-    unordered_map<pair<int, int>, int, hash_pair> m1;
+    unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> m0;
+    unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> m1;
     computeAdjList(slg, m0, m1, vOcc);
     // Avoid resizing.
     vector<AdjListElement> adjList(m0.size() + m1.size());
 
-    int index = 0;
+    c_size_t index = 0;
     for(auto & x : m0) {
         adjList[index++] = AdjListElement(x.first.first, x.first.second, false, x.second);
     }
@@ -752,13 +754,13 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
     sortAdjList(adjList);
 
     // Create Partition.
-    array<unordered_set<int>,2> arr;
+    array<unordered_set<c_size_t>,2> arr;
     createPartition(adjList, arr);
 
     adjList.clear();  // Clear immediately
     vector<AdjListElement>().swap(adjList);  // Ensure memory is released
 
-    const unordered_set<int> &left_set = arr[0], &right_set = arr[1];
+    const unordered_set<c_size_t> &left_set = arr[0], &right_set = arr[1];
 
     // Current slg non-term list
     vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
@@ -769,25 +771,25 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
     // New SLG non-term list that new_slg needs.
     vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
 
-    vector<int> LB(slg_nonterm_vec.size(), 0), RB(slg_nonterm_vec.size(), 0);
+    vector<c_size_t> LB(slg_nonterm_vec.size(), 0), RB(slg_nonterm_vec.size(), 0);
 
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
-    for(int i=0; i<slg_nonterm_vec.size(); i++) {
+    for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
-        const vector<int> & rhs = slg_nonterm.rhs;
+        const vector<c_size_t> & rhs = slg_nonterm.rhs;
 
         if(rhs.empty()) {
             new_slg_nonterm_vec.emplace_back();
             continue;
         }
-        if((int)rhs.size() >= 2) {
+        if((c_size_t)rhs.size() >= 2) {
 
-            vector<int> rhs_expansion;
+            vector<c_size_t> rhs_expansion;
 
             // Expanding RHS.
-            for(int j=0; j<rhs.size(); j++) {
+            for(c_size_t j=0; j<rhs.size(); j++) {
 
 
                 // RHS Terminal
@@ -857,9 +859,9 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
 
 
 
-            vector<int> cap_rhs;
+            vector<c_size_t> cap_rhs;
 
-            for(int j=0; j<(int)rhs_expansion.size()-1; j++) {
+            for(c_size_t j=0; j<(c_size_t)rhs_expansion.size()-1; j++) {
                 if(rhs_expansion[j] < 0 && rhs_expansion[j+1] < 0) {
                     if(left_set.find(rhs_expansion[j]) != left_set.end() && right_set.find(rhs_expansion[j+1]) != right_set.end()) {
                         if(m.find({rhs_expansion[j], rhs_expansion[j+1]}) == m.end()) {
@@ -885,7 +887,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
 	    cap_rhs.shrink_to_fit();
             new_slg_nonterm_vec.emplace_back(cap_rhs);
         }
-        else if((int)rhs.size() == 1) {
+        else if((c_size_t)rhs.size() == 1) {
 
             // Terminal;
             // A --> a
@@ -915,7 +917,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
                 // LB(A) = LB(B)
                 // RB(A) = RB(B)
                 // A^ = B^ (only if B^ is not empty)
-                vector<int> cap_rhs;
+                vector<c_size_t> cap_rhs;
 
                 LB[i] = LB[rhs[0]];
 
@@ -933,16 +935,16 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
 
     arr[0].clear();
     arr[1].clear();
-    unordered_set<int>().swap(arr[0]);
-    unordered_set<int>().swap(arr[1]);
+    unordered_set<c_size_t>().swap(arr[0]);
+    unordered_set<c_size_t>().swap(arr[1]);
 
-    const int &start_var = slg_nonterm_vec.size()-1;
+    const c_size_t &start_var = slg_nonterm_vec.size()-1;
 
-    const int &start_var_LB = LB[start_var];
-    const int &start_var_RB = RB[start_var];
+    const c_size_t &start_var_LB = LB[start_var];
+    const c_size_t &start_var_RB = RB[start_var];
 
 
-    vector<int> new_start_rhs;
+    vector<c_size_t> new_start_rhs;
 
     if(start_var_LB != 0) {
         new_start_rhs.push_back(start_var_LB);
@@ -970,7 +972,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
     RecompressionRLSLP* recompression_rlslp = new RecompressionRLSLP();
 
-    unordered_map<pair<int, int>, int, hash_pair> m;
+    unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> m;
 
     // For 0.
     recompression_rlslp->nonterm.emplace_back();
@@ -979,19 +981,19 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
 
     // Compute S0 from S and Initialize Recompression
-    for(int i=0; i<s->nonterm.size(); i++) {
-        const char &type = s->nonterm[i].type;
-        const int &first = s->nonterm[i].first;
-        const int &second = s->nonterm[i].second;
+    for(c_size_t i=0; i<s->nonterm.size(); i++) {
+        const char_t &type = s->nonterm[i].type;
+        const c_size_t &first = s->nonterm[i].first;
+        const c_size_t &second = s->nonterm[i].second;
 
 
 
-        vector<int> rhs;
+        vector<c_size_t> rhs;
 
         if(type == '0') {
             // For type '0', in SLG, terminals start from -1.
             // Initially, -1 = recompression_rlslp->nonterm size.
-            rhs = {-(int)(recompression_rlslp->nonterm).size()};
+            rhs = {-(c_size_t)(recompression_rlslp->nonterm).size()};
             // Here first is the ASCII values of the character.
             recompression_rlslp->nonterm.emplace_back('0', first, second);
         }
@@ -1010,7 +1012,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     // cout << arr << endl;
 
 
-    int i = 0;
+    c_size_t i = 0;
 
     // printSLG(slg);
 
@@ -1051,7 +1053,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     return recompression_rlslp;
 }
 
-int computeExplen(const int i, vector<RLSLPNonterm>& rlslp_nonterm_vec) {
+c_size_t computeExplen(const c_size_t i, vector<RLSLPNonterm>& rlslp_nonterm_vec) {
     // Check if already computed
     if (rlslp_nonterm_vec[i].explen != 0) {
         return rlslp_nonterm_vec[i].explen;
@@ -1074,7 +1076,7 @@ int computeExplen(const int i, vector<RLSLPNonterm>& rlslp_nonterm_vec) {
     return 0; 
 }
 
-InputSLP* getSLP(int grammar_size) {
+InputSLP* getSLP(c_size_t grammar_size) {
 
     vector<SLPNonterm> nonterm;
     
@@ -1084,24 +1086,24 @@ InputSLP* getSLP(int grammar_size) {
 
 
     // Generate random number X < n/2
-    int num_terminals = rand() % ((int)((3*grammar_size)/4));
+    c_size_t num_terminals = rand() % ((c_size_t)((3*grammar_size)/4));
 
     num_terminals++;
 
-    for(int i=1; i<=num_terminals; i++) {
+    for(c_size_t i=1; i<=num_terminals; i++) {
         nonterm.push_back(SLPNonterm('0', -i, 1));
     }
 
 
-    for (int i = num_terminals; i < grammar_size; ++i) {
-        int num1 = rand() % i; // Generate first number less than i
-        int num2 = rand() % i; // Generate second number less than i
+    for (c_size_t i = num_terminals; i < grammar_size; ++i) {
+        c_size_t num1 = rand() % i; // Generate first number less than i
+        c_size_t num2 = rand() % i; // Generate second number less than i
 
 
-        int bit1 = rand()%2;
-        int bit2 = rand()%2;
+        c_size_t bit1 = rand()%2;
+        c_size_t bit2 = rand()%2;
 
-        int num = (bit2 == 1 ? num2 : num1);
+        c_size_t num = (bit2 == 1 ? num2 : num1);
 
         if(bit1 == 0)
         nonterm.push_back(SLPNonterm('1', i-1, num));
@@ -1115,9 +1117,9 @@ InputSLP* getSLP(int grammar_size) {
     return slp;
 }
 
-vector<pair<int, int>> get_random_queries(int text_size) {
+vector<pair<c_size_t, c_size_t>> get_random_queries(c_size_t text_size) {
     // Create a vector to store the pairs
-    vector<pair<int, int>> pairs;
+    vector<pair<c_size_t, c_size_t>> pairs;
     pairs.reserve(1000000); // Reserve space for 4096 pairs to avoid reallocation
 
     // Random number generation setup
@@ -1126,9 +1128,9 @@ vector<pair<int, int>> get_random_queries(int text_size) {
     uniform_int_distribution<> distrib(0, text_size - 1);
 
     // Generate 4096 pairs
-    for (int i = 0; i < 1000000; ++i) {
-        int first = distrib(gen);
-        int second = distrib(gen);
+    for (c_size_t i = 0; i < 1000000; ++i) {
+        c_size_t first = distrib(gen);
+        c_size_t second = distrib(gen);
         pairs.emplace_back(first, second); // Emplace pair into the vector
     }
 
@@ -1136,9 +1138,9 @@ vector<pair<int, int>> get_random_queries(int text_size) {
 }
 
 
-void test(int text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNonterm> & rlslp_nonterm_vec) {
+void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNonterm> & rlslp_nonterm_vec) {
 
-    vector<int> arr = expandRLSLP(recompression_rlslp);
+    vector<c_size_t> arr = expandRLSLP(recompression_rlslp);
 
     ifstream file("einstein.en.txt");
 
@@ -1147,7 +1149,7 @@ void test(int text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNo
         exit(1);
     }
 
-    vector<int> text;
+    vector<c_size_t> text;
 
     char ch;
     while (file.get(ch)) {
@@ -1161,7 +1163,7 @@ void test(int text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNo
 
     cout << "Text Size Matched!" << endl;
 
-    for(int i=0; i<text.size(); i++) {
+    for(c_size_t i=0; i<text.size(); i++) {
         if(text[i] != arr[i]) {
             cout << "Text didn't match : " << i << ' ' << text[i] << ' ' << arr[i] << endl;
             exit(1);
@@ -1170,14 +1172,14 @@ void test(int text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNo
 
     cout << "Text Matched!" << endl;
 
-    vector<pair<int, int>> random_queries = get_random_queries(text_size);
+    vector<pair<c_size_t, c_size_t>> random_queries = get_random_queries(text_size);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
     for(auto x : random_queries) {
 
-        int i = x.first;
-        int j = x.second;
+        c_size_t i = x.first;
+        c_size_t j = x.second;
         // if(i!=7 or j!=11) continue;
 
         // cout << i << ' ' << j << endl;
@@ -1196,12 +1198,12 @@ void test(int text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNo
 
         // cout << i << ' ' << j << endl;
 
-        int res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, rlslp_nonterm_vec);
+        c_size_t res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, rlslp_nonterm_vec);
 
-        int res2 = 0;
+        c_size_t res2 = 0;
 
-        int ii = i;
-        int jj = j;
+        c_size_t ii = i;
+        c_size_t jj = j;
 
         while(jj < text_size && arr[ii] == arr[jj]) {
             res2++;
@@ -1233,10 +1235,10 @@ void start_compression(string input_file) {
     InputSLP *inputSLP = new InputSLP();
     inputSLP->read_from_file(input_file);
 
-    int j = 0;
+    c_size_t j = 0;
     cout << "Number of Non-Terminals : " << inputSLP->nonterm.size() << endl;
 
-    int i = -1;
+    c_size_t i = -1;
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1244,7 +1246,7 @@ void start_compression(string input_file) {
 
     vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
 
-    for(int i=rlslp_nonterm_vec.size()-1; i>=1; i--) {
+    for(c_size_t i=rlslp_nonterm_vec.size()-1; i>=1; i--) {
         computeExplen(i, rlslp_nonterm_vec);
     }
 
@@ -1256,7 +1258,7 @@ void start_compression(string input_file) {
     cout << "Time taken for Construction: " << duration_seconds << " seconds" << endl;
 
     // // printRecompressionRLSLP(recompression_rlslp);
-    int text_size = rlslp_nonterm_vec.back().explen;
+    c_size_t text_size = rlslp_nonterm_vec.back().explen;
 
     cout << "Text Size : " << text_size << endl;
 
@@ -1286,4 +1288,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
