@@ -69,14 +69,14 @@ vector<pair<c_size_t, c_size_t>> combineFrequenciesInRange(const vector<pair<c_s
     return result;
 }
 
-void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> &m, RecompressionRLSLP *recompression_rlslp) {
+void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, unordered_map<pair<c_size_t, c_size_t>, c_size_t, hash_pair> &m, RecompressionRLSLP *recompression_rlslp, vector<c_size_t> &new_rhs) {
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer) {
-        new_slg_nonterm_vec.emplace_back();
+        new_slg_nonterm_vec.emplace_back((int)new_rhs.size());
         return;
     }
 
-    vector<c_size_t> cap_rhs;
+    c_size_t curr_new_rhs_size = new_rhs.size();
 
     // Iterate through the vector within the specified range
     c_size_t currNum = vec[lr_pointer].first;
@@ -101,10 +101,10 @@ void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, cons
                     }
                     
                     //  ** Negative **
-                    cap_rhs.push_back(-m[p]);
+                    new_rhs.push_back(-m[p]);
                 }
                 else {
-                    cap_rhs.push_back(p.first);
+                    new_rhs.push_back(p.first);
                 }
             }
 
@@ -125,13 +125,13 @@ void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, cons
         }
         
         //  ** Negative **
-        cap_rhs.push_back(-m[p]);
+        new_rhs.push_back(-m[p]);
     }
     else {
-        cap_rhs.push_back(p.first);
+        new_rhs.push_back(p.first);
     }
-    cap_rhs.shrink_to_fit();
-    new_slg_nonterm_vec.emplace_back(cap_rhs);
+    // rhs.shrink_to_fit();
+    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
 
     return;
 }
@@ -142,11 +142,15 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
     // Current slg non-term list
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
+    // Global RHS
+    vector<c_size_t> &global_rhs = slg->rhs;
+
     // // New SLG that needs to be created by applying BComp
     // SLG *new_slg = new SLG();
 
     // New SLG non-term list that new_slg needs.
     vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
+    vector<c_size_t> new_rhs;
 
     const c_size_t &grammar_size = slg_nonterm_vec.size();
 
@@ -157,11 +161,15 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
     // 'i' --> represents the variable.
     for(c_size_t i = 0; i < grammar_size; i++) {
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
-        // Take the RHS of the production.
-        vector<c_size_t> &rhs = slg_nonterm.rhs;
 
-        if(rhs.empty()) {
-            new_slg_nonterm_vec.emplace_back();
+        c_size_t start_index = slg_nonterm.start_index;
+        c_size_t end_index = (i == grammar_size-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
+
+        // if(i==3) {
+        //     cout << "Start: " << start_index << " | End: " << end_index << endl;
+        // }
+        if(start_index > end_index) {
+            new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
             continue;
         }
 
@@ -169,7 +177,9 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
         vector<pair<c_size_t, c_size_t>> rhs_expansion;
      
         // Compute the Expansion.
-        for(const c_size_t &rhs_symbol: rhs) {
+        for(c_size_t j = start_index; j <= end_index; j++) {
+
+            const c_size_t &rhs_symbol = global_rhs[j];
 
             // Single Terminal
             if(rhs_symbol < 0) {
@@ -182,8 +192,15 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
                 rhs_expansion.push_back(LR_vec[rhs_symbol]);
             }
 
+            c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[rhs_symbol].start_index;
+            c_size_t rhs_symbol_end_index = (rhs_symbol == (c_size_t)new_slg_nonterm_vec.size()-1) ? new_rhs.size()-1 : new_slg_nonterm_vec[rhs_symbol+1].start_index - 1;
+
+            // if(i==3) {
+            //     cout << "OK" << endl;
+            //     cout << rhs_symbol_start_index << ' ' << rhs_symbol_end_index << endl;
+            // }
             // Cap is not empty --> in new SLG the variable(rhs_symbol) RHS is not empty --> then Cap is not empty.
-            if(new_slg_nonterm_vec[rhs_symbol].rhs.size() != 0) {
+            if(rhs_symbol_start_index <= rhs_symbol_end_index) {
                 rhs_expansion.emplace_back(rhs_symbol, 0);
             }
 
@@ -192,6 +209,14 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
                 rhs_expansion.push_back(RR_vec[rhs_symbol]);
             }
         }
+
+        // if(i==3) {
+        //     for(pair<c_size_t, c_size_t> x : rhs_expansion) {
+        //         cout << x.first << ' ' << x.second << endl;
+        //     }
+
+        //     cout << endl;
+        // }
 
         //rhs.clear();
         //vector<int>().swap(rhs);
@@ -224,7 +249,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
         // Case 1 : Everything is consumed by lr_pointer
         if(lr_pointer == rhs_expansion.size()) {
             // Cap is empty; set Cap
-            new_slg_nonterm_vec.emplace_back();
+            new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
             // RR is empty; set RR
             RR_vec[i] = {-1, -1};
         }
@@ -249,13 +274,32 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
             // set RR
             RR_vec[i] = RR;
 
-            // Compress Cap(middle part)
-            combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer, new_slg_nonterm_vec, m, recompression_rlslp);
+            // if(i==3) {
+            //     cout << new_rhs.size() << endl;
+            // }
 
+            // if(i==3) {
+            //     cout << "rhs exp. size: " << lr_pointer << ' ' << rr_pointer << endl;
+            // }
+
+            // Compress Cap(middle part)
+            combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer, new_slg_nonterm_vec, m, recompression_rlslp, new_rhs);
+
+
+// if(i==3) {
+//                 cout << new_rhs.size() << endl;
+//             }
             //rhs_expansion.clear();
             //vector<pair<int, int>>().swap(rhs_expansion);
         }
     }
+
+    // cout << "NEW RHS" << endl;
+    // for(c_size_t x : new_rhs) {
+    //     cout << x << ' ';
+    // }
+
+    // cout << endl;
 
     // Add new Starting Variable to the new Grammar G'(G Prime).
 
@@ -264,7 +308,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
     const pair<c_size_t, c_size_t> &start_var_LR = LR_vec[start_var];
     const pair<c_size_t, c_size_t> &start_var_RR = RR_vec[start_var];
 
-    vector<c_size_t> new_start_rhs;
+    c_size_t curr_new_rhs_size = new_rhs.size();
+
 
     // This always holds true.
     if(start_var_LR.second != -1) {
@@ -273,15 +318,23 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
                 m[start_var_LR] = recompression_rlslp->nonterm.size();
                 recompression_rlslp->nonterm.emplace_back('2', abs(start_var_LR.first), start_var_LR.second);
             }
-            new_start_rhs.push_back(-m[start_var_LR]);
+            new_rhs.push_back(-m[start_var_LR]);
         }
         else {
-            new_start_rhs.push_back(start_var_LR.first);
+            new_rhs.push_back(start_var_LR.first);
         }
     }
 
-    if(!new_slg_nonterm_vec[start_var].rhs.empty()) {
-        new_start_rhs.push_back(start_var);
+    c_size_t start_var_start_index = new_slg_nonterm_vec[start_var].start_index;
+    c_size_t start_var_end_index = (start_var == (c_size_t)new_slg_nonterm_vec.size()-1) ? curr_new_rhs_size-1 : new_slg_nonterm_vec[start_var+1].start_index - 1;
+
+
+    // // cout << "Last: " << start_var_start_index << ' ' << start_var_end_index << endl;
+    // if(new_slg_nonterm_vec.size() >= 20) {
+    //     cout << new_slg_nonterm_vec[20].start_index << ' ' << new_rhs.size() << endl << endl;
+    // } 
+    if(start_var_start_index <= start_var_end_index) {
+        new_rhs.push_back(start_var);
     }
 
     if(start_var_RR.second != -1) {
@@ -290,19 +343,19 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, unordered_map<pair
                 m[start_var_RR] = recompression_rlslp->nonterm.size();
                 recompression_rlslp->nonterm.emplace_back('2', abs(start_var_RR.first), start_var_RR.second);
             }
-            new_start_rhs.push_back(-m[start_var_RR]);
+            new_rhs.push_back(-m[start_var_RR]);
         }
         else {
-            new_start_rhs.push_back(start_var_RR.first);
+            new_rhs.push_back(start_var_RR.first);
         }
     }
 
-    new_slg_nonterm_vec.emplace_back(new_start_rhs);
+    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
 
     delete slg;
 
     // return new_slg;
-    return new SLG(new_slg_nonterm_vec);
+    return new SLG(new_slg_nonterm_vec, new_rhs);
 }
 
 pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, vector<AdjListElement> & adjList, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
@@ -321,23 +374,30 @@ pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, vector<Adj
     */
     SLGNonterm &slg_nonterm = slg->nonterm[var];
 
-    const vector<c_size_t> &rhs = slg_nonterm.rhs;
+    const vector<c_size_t> &global_rhs = slg->rhs;
+    const vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
+
+    c_size_t start_index = slg_nonterm.start_index;
+    c_size_t end_index = (var == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[var+1].start_index - 1;
+
+    c_size_t curr_rhs_size = end_index - start_index + 1;
 
     // 
-    if(rhs.empty()) {
+    if(curr_rhs_size == 0) {
         return {0, 0};
     }
-    else if(rhs.size() == 1 && rhs[0] < 0) {
+    else if(curr_rhs_size == 1 && global_rhs[start_index] < 0) {
         // Hopefully this should be always true when there is only 1 character to right
         // assert(rhs[0] < 0);
-        return dp[var] = {rhs[0], rhs[0]};
+        return dp[var] = {global_rhs[start_index], global_rhs[start_index]};
 
         // return dp[var] = {rhs[0], rhs[0]};
     }
     
     vector<pair<c_size_t, c_size_t>> lms_rms_list;
 
-    for(const c_size_t &rhs_symbol : rhs) {
+    for(c_size_t j=start_index; j<=end_index; j++) {
+        const c_size_t &rhs_symbol = global_rhs[j];
         pair<c_size_t, c_size_t> lms_rms = computeAdjListHelper(rhs_symbol, slg, adjList, dp, vOcc);
         lms_rms_list.push_back(lms_rms);
     }
@@ -412,6 +472,7 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
     // Here, any list size is slg_nonterm_vec.size()
 
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
+    vector<c_size_t> &global_rhs = slg->rhs;
 
     // Create Reverse Graph.
     vector<vector<pair<c_size_t,c_size_t>>> graph(slg_nonterm_vec.size(), vector<pair<c_size_t, c_size_t>>());
@@ -423,14 +484,18 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
         // Current SLGNonterm
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
-        unordered_map<c_size_t, c_size_t> var_freq;
+        c_size_t start_index = slg_nonterm.start_index;
+        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
 
-        const vector<c_size_t> & rhs = slg_nonterm.rhs;
+        c_size_t curr_rhs_size = end_index - start_index + 1;
+
+        unordered_map<c_size_t, c_size_t> var_freq;
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
-        for(const c_size_t & var : rhs) {
+        for(c_size_t j=start_index; j<=end_index; j++) {
 
+            const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
                 var_freq[var]++;
@@ -670,23 +735,33 @@ pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, unordered_
     */
     SLGNonterm &slg_nonterm = slg->nonterm[var];
 
-    const vector<c_size_t> &rhs = slg_nonterm.rhs;
+    const vector<c_size_t> & global_rhs = slg->rhs;
+    vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
+
+    c_size_t start_index = slg_nonterm.start_index;
+    c_size_t end_index = (var == slg_nonterm_vec.size()-1) ? (c_size_t)global_rhs.size()-1 : slg_nonterm_vec[var+1].start_index - 1;
+
+    c_size_t curr_rhs_size = end_index - start_index + 1;
+
 
     // 
-    if(rhs.empty()) {
+    if(curr_rhs_size == 0) {
         return {0, 0};
     }
-    else if(rhs.size() == 1 && rhs[0] < 0) {
+    else if(curr_rhs_size == 1 && global_rhs[start_index] < 0) {
         // Hopefully this should be always true when there is only 1 character to right
         // assert(rhs[0] < 0);
-        return dp[var] = {rhs[0], rhs[0]};
+        return dp[var] = {global_rhs[start_index], global_rhs[start_index]};
 
         // return dp[var] = {rhs[0], rhs[0]};
     }
     
     vector<pair<c_size_t, c_size_t>> lms_rms_list;
 
-    for(const c_size_t &rhs_symbol : rhs) {
+    
+
+    for(c_size_t j = start_index; j <= end_index; j++) {
+        const c_size_t &rhs_symbol = global_rhs[j];
         pair<c_size_t, c_size_t> lms_rms = computeAdjListHelper(rhs_symbol, slg, m0, m1, dp, vOcc);
         lms_rms_list.push_back(lms_rms);
     }
@@ -762,14 +837,34 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
 
     const unordered_set<c_size_t> &left_set = arr[0], &right_set = arr[1];
 
+    // cout << "Left Set: " ;
+    // for(c_size_t x : left_set) {
+    //     cout << x << ' ';
+    // }
+
+    // cout << endl;
+
+    // cout << "Right Set: " ;
+    // for(c_size_t x : right_set) {
+    //     cout << x << ' ';
+    // }
+
+    // cout << endl;
+
     // Current slg non-term list
     vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
+
+    // Current rhs
+    vector<c_size_t> &global_rhs = slg->rhs;
 
     // New SLG that needs to be created by applying BComp
     // SLG *new_slg = new SLG();
 
     // New SLG non-term list that new_slg needs.
     vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
+
+    // New RHS
+    vector<c_size_t> new_rhs;
 
     vector<c_size_t> LB(slg_nonterm_vec.size(), 0), RB(slg_nonterm_vec.size(), 0);
 
@@ -778,44 +873,50 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
-        const vector<c_size_t> & rhs = slg_nonterm.rhs;
+        // const vector<c_size_t> & rhs = slg_nonterm.rhs;
+        c_size_t start_index = slg_nonterm.start_index;
+        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
 
-        if(rhs.empty()) {
-            new_slg_nonterm_vec.emplace_back();
+        c_size_t curr_rhs_size = end_index - start_index + 1;
+
+        c_size_t curr_new_rhs_size = new_rhs.size();
+
+        if(curr_rhs_size == 0) {
+            new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
             continue;
         }
-        if((c_size_t)rhs.size() >= 2) {
+        if((c_size_t)curr_rhs_size >= 2) {
 
             vector<c_size_t> rhs_expansion;
 
             // Expanding RHS.
-            for(c_size_t j=0; j<rhs.size(); j++) {
+            for(c_size_t j=start_index; j<=end_index; j++) {
 
 
                 // RHS Terminal
-                if(rhs[j] < 0) {
+                if(global_rhs[j] < 0) {
 
-                    rhs_expansion.push_back(rhs[j]);
+                    rhs_expansion.push_back(global_rhs[j]);
 
-                    if(j==0) {
-                        if(left_set.find(rhs[j]) != left_set.end()) {
+                    if(j==start_index) {
+                        if(left_set.find(global_rhs[j]) != left_set.end()) {
                             LB[i] = 0;
                         }
-                        else if(right_set.find(rhs[j]) != right_set.end()) {
-                            LB[i] = rhs[j];
+                        else if(right_set.find(global_rhs[j]) != right_set.end()) {
+                            LB[i] = global_rhs[j];
 
                             // Remove the pushed element
                             rhs_expansion.pop_back();
                         }
                     }
-                    else if(j == rhs.size() - 1) {
-                        if(left_set.find(rhs[j]) != left_set.end()) {
-                            RB[i] = rhs[j];
+                    else if(j == end_index) {
+                        if(left_set.find(global_rhs[j]) != left_set.end()) {
+                            RB[i] = global_rhs[j];
 
                             // Remove the pushed element
                             rhs_expansion.pop_back();
                         }
-                        else if(right_set.find(rhs[j]) != right_set.end()) {
+                        else if(right_set.find(global_rhs[j]) != right_set.end()) {
                             RB[i] = 0;
                         }
                     }
@@ -825,41 +926,51 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
                 // RHS Non-Terminal
                 else {
 
-                    if(j==0) {
-                        LB[i] = LB[rhs[j]];
+                    if(j==start_index) {
+                        LB[i] = LB[global_rhs[j]];
 
                     }
-                    else if(j == rhs.size() - 1) {
-                        RB[i] = RB[rhs[j]];
+                    else if(j == end_index) {
+                        RB[i] = RB[global_rhs[j]];
                     }
                     // LB --> not equal to 0
                     // If j == 0 we set it to LB in slg_nonterm but not in to the expansion.
-                    if((j != 0) and LB[rhs[j]]) {
-                        rhs_expansion.push_back(LB[rhs[j]]);
+                    if((j != start_index) and LB[global_rhs[j]]) {
+                        rhs_expansion.push_back(LB[global_rhs[j]]);
                     }
 
+                    c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[global_rhs[j]].start_index;
+                    c_size_t rhs_symbol_end_index = (global_rhs[j] == (c_size_t)new_slg_nonterm_vec.size()-1) ? new_rhs.size()-1 : new_slg_nonterm_vec[global_rhs[j]+1].start_index - 1;
+
                     // Check whether Cap is Empty in new_slg_nonterm_vec.
-                    if(new_slg_nonterm_vec[rhs[j]].rhs.empty() == false){
-                        rhs_expansion.push_back(rhs[j]);
+                    if(rhs_symbol_start_index <= rhs_symbol_end_index){
+                        rhs_expansion.push_back(global_rhs[j]);
                     }
 
 
 
                     // RB --> not equal to 0.
                     // If j is last element, we set it to RB in slg_nonterm but not in to the expansion
-                    if((j != rhs.size() - 1) and RB[rhs[j]]) {
-                        rhs_expansion.push_back(RB[rhs[j]]);
+                    if((j != end_index) and RB[global_rhs[j]]) {
+                        rhs_expansion.push_back(RB[global_rhs[j]]);
                     }
                 }
             }
+
+            // if(i==5) {
+            //     cout << global_rhs[start_index] << ' ' << global_rhs[start_index+1]  << endl;
+            //     cout << "RHS Expansion: " << endl;
+            //     for(c_size_t x : rhs_expansion) {
+            //         cout << x << ' ';
+            //     }
+            //     cout << endl;
+            // }
 
             // To handle last character/corner case
             // if(rhs_expansion.size()>=2)
             rhs_expansion.push_back(rhs_expansion.back());
 
-
-
-            vector<c_size_t> cap_rhs;
+            // vector<c_size_t> cap_rhs;
 
             for(c_size_t j=0; j<(c_size_t)rhs_expansion.size()-1; j++) {
                 if(rhs_expansion[j] < 0 && rhs_expansion[j+1] < 0) {
@@ -869,45 +980,45 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
                             recompression_rlslp->nonterm.emplace_back('1', abs(rhs_expansion[j]), abs(rhs_expansion[j+1]));
                         }
 
-                        cap_rhs.push_back(-m[{rhs_expansion[j], rhs_expansion[j+1]}]);
+                        new_rhs.push_back(-m[{rhs_expansion[j], rhs_expansion[j+1]}]);
                         j++;
                     }
                     else {
-                        cap_rhs.push_back(rhs_expansion[j]);
+                        new_rhs.push_back(rhs_expansion[j]);
                     }
                 }
                 else if(rhs_expansion[j] >= 0) {
-                    cap_rhs.push_back(rhs_expansion[j]);
+                    new_rhs.push_back(rhs_expansion[j]);
                 }
                 else {
-                    cap_rhs.push_back(rhs_expansion[j]);
+                    new_rhs.push_back(rhs_expansion[j]);
                 }
             }
 
-	    cap_rhs.shrink_to_fit();
-            new_slg_nonterm_vec.emplace_back(cap_rhs);
+	        // cap_rhs.shrink_to_fit();
+            new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
         }
-        else if((c_size_t)rhs.size() == 1) {
+        else if(curr_rhs_size == 1) {
 
             // Terminal;
             // A --> a
             // B --> b
-            if(rhs[0] < 0) {
-                if(left_set.find(rhs[0]) != left_set.end()) {
+            if(global_rhs[start_index] < 0) {
+                if(left_set.find(global_rhs[start_index]) != left_set.end()) {
                     LB[i] = 0;
-                    new_slg_nonterm_vec.emplace_back();
-                    RB[i] = rhs[0];
+                    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
+                    RB[i] = global_rhs[start_index];
                 }
-                else if(right_set.find(rhs[0]) != right_set.end()) {
-                    LB[i] = rhs[0];
-                    new_slg_nonterm_vec.emplace_back();
+                else if(right_set.find(global_rhs[start_index]) != right_set.end()) {
+                    LB[i] = global_rhs[start_index];
+                    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
                     RB[i] = 0;
                 }
                 else {
                     // Non-reachable Non-Terminals.
                     // A --> a
                     // 'a' is not found in adjacency list so push empty.
-                    new_slg_nonterm_vec.emplace_back();
+                    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
                     cout << "Error: Not Found in Left and Right." << endl;
                 }
             }
@@ -917,17 +1028,23 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
                 // LB(A) = LB(B)
                 // RB(A) = RB(B)
                 // A^ = B^ (only if B^ is not empty)
-                vector<c_size_t> cap_rhs;
+                // vector<c_size_t> cap_rhs;
 
-                LB[i] = LB[rhs[0]];
+                c_size_t rhs_symbol = global_rhs[start_index];
 
-                if(new_slg_nonterm_vec[rhs[0]].rhs.empty() == false) {
-                    cap_rhs.push_back(rhs[0]);
+                LB[i] = LB[rhs_symbol];
+
+                c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[rhs_symbol].start_index;
+                c_size_t rhs_symbol_end_index = (rhs_symbol == (c_size_t)new_slg_nonterm_vec.size()-1) ? new_rhs.size()-1 : new_slg_nonterm_vec[rhs_symbol+1].start_index - 1;
+
+
+                if(rhs_symbol_start_index <= rhs_symbol_end_index) {
+                    new_rhs.push_back(rhs_symbol);
                 }
 
-                RB[i] = RB[rhs[0]];
-		        cap_rhs.shrink_to_fit();
-                new_slg_nonterm_vec.emplace_back(cap_rhs);
+                RB[i] = RB[global_rhs[start_index]];
+		        // new_rhs.shrink_to_fit();
+                new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
             }
             
         }
@@ -944,29 +1061,47 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  unordered_map<pa
     const c_size_t &start_var_RB = RB[start_var];
 
 
-    vector<c_size_t> new_start_rhs;
+    // vector<c_size_t> new_start_rhs;
+    c_size_t curr_new_rhs_size = new_rhs.size();
+    
 
     if(start_var_LB != 0) {
-        new_start_rhs.push_back(start_var_LB);
+        new_rhs.push_back(start_var_LB);
     }
 
-    if(new_slg_nonterm_vec[start_var].rhs.empty() == false) {
-        new_start_rhs.push_back(start_var);
+    c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[start_var].start_index;
+    c_size_t rhs_symbol_end_index = (start_var == (c_size_t)new_slg_nonterm_vec.size()-1) ? curr_new_rhs_size-1 : new_slg_nonterm_vec[start_var+1].start_index - 1;
+
+    if(rhs_symbol_start_index <= rhs_symbol_end_index) {
+        new_rhs.push_back(start_var);
     }
     
     if(start_var_RB != 0) {
-        new_start_rhs.push_back(start_var_RB);
+        new_rhs.push_back(start_var_RB);
     }
 
-    new_slg_nonterm_vec.emplace_back(new_start_rhs);
+    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
 
     delete slg;
 
     // return new_slg;
-    return new SLG(new_slg_nonterm_vec);
+    return new SLG(new_slg_nonterm_vec, new_rhs);
 }
 
 RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
+
+    // delete s;
+
+    // s = new InputSLP();
+    // // s->nonterm.push_back(SLPNonterm('0', 97, 0));
+    // s->nonterm.push_back(SLPNonterm('0', 98, 0));
+    // s->nonterm.push_back(SLPNonterm('0', 99, 0));
+    // s->nonterm.push_back(SLPNonterm('1', 1, 0));
+    // s->nonterm.push_back(SLPNonterm('1', 2, 0));
+    // s->nonterm.push_back(SLPNonterm('1', 3, 1));
+    // s->nonterm.push_back(SLPNonterm('1', 4, 3));
+    // s->nonterm.push_back(SLPNonterm('1', 5, 4));
+
 
     SLG* slg = new SLG();
 
@@ -988,20 +1123,24 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
 
 
-        vector<c_size_t> rhs;
+        // vector<c_size_t> rhs;
+
+        c_size_t global_rhs_size = slg->rhs.size();
 
         if(type == '0') {
             // For type '0', in SLG, terminals start from -1.
             // Initially, -1 = recompression_rlslp->nonterm size.
-            rhs = {-(c_size_t)(recompression_rlslp->nonterm).size()};
+            slg->rhs.push_back(-(c_size_t)(recompression_rlslp->nonterm).size());
             // Here first is the ASCII values of the character.
             recompression_rlslp->nonterm.emplace_back('0', first, second);
         }
         else {
-            rhs = {first, second};
+            // rhs = {first, second};
+            slg->rhs.push_back(first);
+            slg->rhs.push_back(second);
         }
 
-        slg->nonterm.emplace_back(rhs);
+        slg->nonterm.emplace_back(global_rhs_size);
 
     }
 
@@ -1016,22 +1155,78 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
     // printSLG(slg);
 
+    // for(int i=0; i<slg->nonterm.size(); i++) {
+    //         cout << i << ' ';
+    //         c_size_t start_index = slg->nonterm[i].start_index;
+    //         c_size_t end_index = (i==slg->nonterm.size()-1) ? slg->rhs.size()-1 : slg->nonterm[i+1].start_index - 1;
+
+    //         for(int j=start_index; j<=end_index; j++) {
+    //             cout << slg->rhs[j] << ' ';
+    //         }
+
+    //         cout << endl;
+    //     }
+
+    // for(int i=0;i<slg->nonterm.size(); i++) {
+    //     cout << slg->nonterm[i].start_index << ' ';
+    // }
+    // cout << endl;
+    // for(int i=0; i<slg->rhs.size(); i++) {
+    //     cout << slg->rhs[i] << ' ';
+    // }
+
+    // cout << endl;
+
     while(++i) {
 
         const vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
 
-        if(slg_nonterm_vec.back().rhs.size() == 1 && slg_nonterm_vec.back().rhs.back() < 0) {
+        const vector<c_size_t> &global_rhs = slg->rhs;
+
+        const SLGNonterm &slg_nonterm = slg_nonterm_vec.back();
+
+        c_size_t start_var = slg_nonterm_vec.size()-1;
+
+        c_size_t start_index = slg_nonterm.start_index;
+        c_size_t end_index = (start_var == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[start_var+1].start_index - 1;
+
+        c_size_t start_var_rhs_size = end_index - start_index + 1;
+
+        if(start_var_rhs_size == 1 && global_rhs[end_index] < 0) {
             break;
         }
+
+        // cout << endl;
 
         if(i&1) {
             slg = BComp(slg, recompression_rlslp, m);
             // cout << i << ' ' << "BComp" << endl;
+
+            // if(i==1) {
+            //     cout << slg->nonterm.size() << ' ' << slg->rhs.size() << endl;
+            //     for(SLGNonterm idx : slg->nonterm) {
+            //         cout << idx.start_index << ' ';
+            //     }
+
+            //     cout << endl;
+            // }
         }
         else {
             slg = PComp(slg, recompression_rlslp, m);
             // cout << i << ' ' << "PComp" << endl;
         }
+
+        // for(int i=0; i<slg->nonterm.size(); i++) {
+        //     cout << i << ' ';
+        //     c_size_t start_index = slg->nonterm[i].start_index;
+        //     c_size_t end_index = (i==slg->nonterm.size()-1) ? slg->rhs.size()-1 : slg->nonterm[i+1].start_index - 1;
+
+        //     for(int j=start_index; j<=end_index; j++) {
+        //         cout << slg->rhs[j] << ' ';
+        //     }
+
+        //     cout << endl;
+        // }
         
         m.clear();
         // printSLG(slg);

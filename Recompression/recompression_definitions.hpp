@@ -28,7 +28,7 @@ public:
 
 struct SLGNonterm {
     // rhs empty represents empty variable.
-    vector<c_size_t> rhs;
+    c_size_t start_index;
     //int LMS;
     //int RMS;
 
@@ -40,7 +40,7 @@ struct SLGNonterm {
     // pair<int, int> LR;
     // pair<int, int> RR;
 
-    SLGNonterm(const vector<c_size_t> &rhs) : rhs(rhs) {
+    SLGNonterm(const c_size_t &start_index) : start_index(start_index) {
 
     }
 
@@ -55,10 +55,12 @@ public:
     SLG() {
 
     }
-    SLG(vector<SLGNonterm> & nonterm) : nonterm(nonterm) {
+    SLG(vector<SLGNonterm> & nonterm, vector<int> &rhs) : nonterm(nonterm), rhs(rhs) {
 
     }
+    
     vector<SLGNonterm> nonterm;
+    vector<c_size_t> rhs;
 };
 
 struct  __attribute__((packed)) SLPNonterm {
