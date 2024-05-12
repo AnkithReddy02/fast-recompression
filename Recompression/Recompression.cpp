@@ -525,6 +525,14 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
     return;
 }
 
+bool AdjListElementCompare(const AdjListElement &a, const AdjListElement &b) {
+    if(a.first != b.first) {
+        return a.first < b.first;
+    }
+
+    return a.second < b.second;
+}
+
 void sortAdjList(vector<AdjListElement> & adjList) {
 
     // Make Positive
@@ -539,7 +547,8 @@ void sortAdjList(vector<AdjListElement> & adjList) {
     }
 
     // Sort It.
-    radixSort(adjList);
+    // radixSort(adjList);
+    sort(adjList.begin(), adjList.end(), AdjListElementCompare);
 
 
     // Revert to Negative
