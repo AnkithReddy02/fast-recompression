@@ -440,7 +440,7 @@ vector<AdjListElement> computeAdjList(SLG *slg, vector<c_size_t> &vOcc) {
     return adjList;
 }
 
-c_size_t computeVOccHelper(vector<pair<c_size_t, c_size_t>> & edges, vector<c_size_t> &curr_index, vector<bool_t> &have_edges, c_size_t u, vector<c_size_t> & dp) {
+c_size_t computeVOccHelper(vector<pair<c_size_t, char_t>> & edges, vector<c_size_t> &curr_index, vector<bool_t> &have_edges, vector<array<int, 3>> &large_weight_edges, c_size_t u, vector<c_size_t> & dp) {
 
     // Base Case : Target is Reached / Target is Same as the current node.
     if(u == curr_index.size()-1) {
@@ -468,10 +468,20 @@ c_size_t computeVOccHelper(vector<pair<c_size_t, c_size_t>> & edges, vector<c_si
 
         const auto &edge = edges[u_curr_index++];
         const c_size_t &v = edge.first;
-        const c_size_t &weight = edge.second;
+        // edge.second is unsigned_char(typedefs.hpp)
+        c_size_t weight = static_cast<c_size_t>(edge.second);
+        array<int, 3> search_arr = {u, v, 0};
+        if(weight == 255) {
+            // Binary Search
+            auto it = lower_bound(large_weight_edges.begin(), large_weight_edges.end(), search_arr);
+            assert(it != large_weight_edges.end());
+
+            // u - v - weight
+            weight = (*it)[2];
+        }
 
         
-        num_paths += weight * computeVOccHelper(edges, curr_index, have_edges, v, dp);
+        num_paths += weight * computeVOccHelper(edges, curr_index, have_edges, large_weight_edges, v, dp);
         // cout << u << ' ' << v << ' ' << weight << endl;
         // cout << num_paths << endl;
     }
@@ -490,7 +500,10 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
 
     vector<c_size_t> curr_index(slg_nonterm_vec.size(), -1);
-    vector<pair<c_size_t, c_size_t>> edges;
+    vector<pair<c_size_t, char_t>> edges;
+
+    vector<array<int, 3>> large_weight_edges;
+
 
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
 
@@ -572,13 +585,25 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
             // Weighted Edge from v to u , v --> u
             // graph[v].emplace_back(u, weight);
-            edges[--curr_index[v]] = make_pair(u, weight);
+
+            // byte optimization.
+            if(weight >= 255) {
+                large_weight_edges.push_back({v, u, weight});
+                edges[--curr_index[v]] = make_pair(u, 255);
+            }
+            else {
+                edges[--curr_index[v]] = make_pair(u, weight);
+            }
             // if(curr_index[v]==-1) curr_index[v] = 0;
             // curr_index[v]++;
             
         }
     }
 
+    // Sort large_weight_edges for binary search.
+    sort(large_weight_edges.begin(), large_weight_edges.end());
+
+    // index `i` represents whether it has edges in the graph or not.
     vector<bool> have_edges(curr_index.size(), false);
 
     for(int i=curr_index.size()-1; i>=0; i--) {
@@ -601,7 +626,7 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
     // Compute vOcc.
     for(c_size_t i = 0; i < slg_nonterm_vec.size(); i++) {
-        computeVOccHelper(edges, curr_index, have_edges, i, dp);
+        computeVOccHelper(edges, curr_index, have_edges, large_weight_edges, i, dp);
     }
 
     return;
