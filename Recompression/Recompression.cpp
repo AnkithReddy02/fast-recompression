@@ -440,10 +440,10 @@ vector<AdjListElement> computeAdjList(SLG *slg, vector<c_size_t> &vOcc) {
     return adjList;
 }
 
-c_size_t computeVOccHelper(vector<vector<pair<c_size_t,c_size_t>>> & graph, c_size_t u, vector<c_size_t> & dp) {
+c_size_t computeVOccHelper(vector<pair<c_size_t, c_size_t>> & edges, vector<c_size_t> &curr_index, vector<bool_t> &have_edges, c_size_t u, vector<c_size_t> & dp) {
 
     // Base Case : Target is Reached / Target is Same as the current node.
-    if(u == graph.size()-1) {
+    if(u == curr_index.size()-1) {
         return dp[u] = 1;
     }
 
@@ -454,16 +454,27 @@ c_size_t computeVOccHelper(vector<vector<pair<c_size_t,c_size_t>>> & graph, c_si
 
     c_size_t num_paths = 0;
 
-    for(const auto & edge : graph[u]) {
+    c_size_t u_curr_index = curr_index[u];
+
+    while(true) {
+
+       
+        if(u_curr_index >= edges.size() || have_edges[u] == false || (u < curr_index.size()-1 && u_curr_index == curr_index[u+1])) {
+            break;
+        }
+
+        // cout << u_curr_index << ' ' << curr_index[u+1] << endl;
+
+
+        const auto &edge = edges[u_curr_index++];
         const c_size_t &v = edge.first;
         const c_size_t &weight = edge.second;
 
-        num_paths += weight * computeVOccHelper(graph, v, dp);
+        
+        num_paths += weight * computeVOccHelper(edges, curr_index, have_edges, v, dp);
+        // cout << u << ' ' << v << ' ' << weight << endl;
+        // cout << num_paths << endl;
     }
-
-    // u is explored.
-    graph[u].clear();
-    vector<pair<c_size_t, c_size_t>>().swap(graph[u]);
 
     return dp[u] = num_paths;
 }
@@ -475,8 +486,58 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
     vector<c_size_t> &global_rhs = slg->rhs;
 
     // Create Reverse Graph.
-    vector<vector<pair<c_size_t,c_size_t>>> graph(slg_nonterm_vec.size(), vector<pair<c_size_t, c_size_t>>());
+    // vector<vector<pair<c_size_t,c_size_t>>> graph(slg_nonterm_vec.size(), vector<pair<c_size_t, c_size_t>>());
 
+
+    vector<c_size_t> curr_index(slg_nonterm_vec.size(), -1);
+    vector<pair<c_size_t, c_size_t>> edges;
+
+    for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
+
+        // Current SLGNonterm
+        SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
+
+        c_size_t start_index = slg_nonterm.start_index;
+        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
+
+        c_size_t curr_rhs_size = end_index - start_index + 1;
+
+        unordered_set<c_size_t> unique_var;
+
+        // Enumerate each character of RHS
+        // Frequency calculation for reverse of the graph.
+        for(c_size_t j=start_index; j<=end_index; j++) {
+
+            const c_size_t & var = global_rhs[j];
+            // Only Non-Terminals
+            if(var >= 0) {
+                unique_var.insert(var);
+            }
+        }
+
+        // Construct Edges.
+        for(const auto & v : unique_var) {
+           
+
+            // Weighted Edge from v to u , v --> u
+            if(curr_index[v]==-1) curr_index[v] = 0;
+            curr_index[v]++;
+            
+        }
+    }
+
+    // // cout << curr_index << endl;
+
+    c_size_t prefix_sum = 0;
+    for(c_size_t i=0; i<curr_index.size(); i++) {
+        if(curr_index[i] > 0) {
+            c_size_t temp = curr_index[i];
+            curr_index[i] += prefix_sum;
+            prefix_sum += temp;
+        }
+    }
+
+    edges.resize(prefix_sum);
 
     // Enumerate Each Production Rule.
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
@@ -510,7 +571,28 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
             const c_size_t &weight = x.second;
 
             // Weighted Edge from v to u , v --> u
-            graph[v].emplace_back(u, weight);
+            // graph[v].emplace_back(u, weight);
+            edges[--curr_index[v]] = make_pair(u, weight);
+            // if(curr_index[v]==-1) curr_index[v] = 0;
+            // curr_index[v]++;
+            
+        }
+    }
+
+    vector<bool> have_edges(curr_index.size(), false);
+
+    for(int i=curr_index.size()-1; i>=0; i--) {
+
+        if(curr_index[i] == -1) {
+            have_edges[i] = false;
+        }
+        else {
+            have_edges[i] = true;
+        }
+        if(i <= curr_index.size()-2) {
+            if(curr_index[i] == -1 && curr_index[i+1] != -1) {
+                curr_index[i] = curr_index[i+1];
+            }
         }
     }
 
@@ -519,7 +601,7 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
     // Compute vOcc.
     for(c_size_t i = 0; i < slg_nonterm_vec.size(); i++) {
-        computeVOccHelper(graph, i, dp);
+        computeVOccHelper(edges, curr_index, have_edges, i, dp);
     }
 
     return;
