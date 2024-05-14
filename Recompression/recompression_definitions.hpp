@@ -93,8 +93,8 @@ public:
         ifstream file(file_name, ios::binary);
 
         if (!file.is_open()) {
-            cout << "Error: Unable to open the file!" << endl;
-            return;
+            cerr << "Error: Unable to open the file - " + file_name << endl;
+            exit(1);
         }
 
         file.seekg(0, ios::end);

@@ -1110,7 +1110,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
                     // A --> a
                     // 'a' is not found in adjacency list so push empty.
                     new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
-                    cout << "Error: Not Found in Left and Right." << endl;
+                    cerr << "Error: Not Found in Left and Right." << endl;
                 }
             }
             else {
@@ -1424,14 +1424,14 @@ vector<pair<c_size_t, c_size_t>> get_random_queries(c_size_t text_size) {
 }
 
 
-void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNonterm> & rlslp_nonterm_vec) {
+void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNonterm> & rlslp_nonterm_vec, const string &raw_input_text) {
 
     vector<c_size_t> arr = expandRLSLP(recompression_rlslp);
 
-    ifstream file("einstein.en.txt");
+    ifstream file(raw_input_text);
 
     if (!file.is_open()) {
-        cerr << "Error opening file!" << endl;
+        cerr << "Error opening file - " + raw_input_text << endl;
         exit(1);
     }
 
@@ -1502,7 +1502,7 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RL
         // assert(res1==res2);
 
         if(res1 != res2) {
-            cout << "ERROR" << endl;
+            cerr << "Error: LCE Query didn't match with Naive!!" << endl;
             exit(1);
         }
 
@@ -1517,7 +1517,7 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RL
     cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
 }
 
-void start_compression(string input_file) {
+void start_compression(const string &input_file, const string &raw_input_text) {
     InputSLP *inputSLP = new InputSLP();
     inputSLP->read_from_file(input_file);
 
@@ -1549,21 +1549,52 @@ void start_compression(string input_file) {
     cout << "Text Size : " << text_size << endl;
 
     // TEST
-    // test(text_size, recompression_rlslp, rlslp_nonterm_vec);
+
+    if(!raw_input_text.empty())
+    test(text_size, recompression_rlslp, rlslp_nonterm_vec, raw_input_text);
 }
 
 int main(int argc, char *argv[]) {
 
-    if(argc < 2) {
-        cout << "Please provided the Input SLP file!" << endl;
+    if(!(argc == 2 or argc == 4)) {
+        cout << "Usage: " + string(argv[0]) + " [-t raw_input_text] input_slp" << endl;
         exit(1);
     }
 
-    string input_file(argv[1]);
+    string raw_input_text;
+    string input_slp;
+
+    for(c_size_t i=1; i<argc; i++) {
+        string curr_arg(argv[i]);
+
+        if(curr_arg == "-t") {
+            if(i+1 == argc) {
+                cout << "Usage: " + string(argv[0]) + " [-t raw_input_text] input_slp" << endl;
+                exit(1);
+            }
+
+            raw_input_text = string(argv[i+1]);
+            i++;
+        }
+        else {
+            input_slp = string(argv[i]);
+        }
+    }
+
+    if(!raw_input_text.empty()) {
+        ifstream file(raw_input_text);
+
+        if (!file.is_open()) {
+            cerr << "Error: Unable to open the file - " + raw_input_text << endl;
+            exit(1);
+        }
+
+        file.close();
+    }
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    start_compression(input_file);
+    start_compression(input_slp, raw_input_text);
 
     auto end_time = std::chrono::high_resolution_clock::now();
 
