@@ -55,7 +55,7 @@ public:
     SLG() {
 
     }
-    SLG(vector<SLGNonterm> & nonterm, vector<int> &rhs) : nonterm(nonterm), rhs(rhs) {
+    SLG(vector<SLGNonterm> & nonterm, vector<c_size_t> &rhs) : nonterm(nonterm), rhs(rhs) {
 
     }
     

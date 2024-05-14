@@ -72,7 +72,7 @@ vector<pair<c_size_t, c_size_t>> combineFrequenciesInRange(const vector<pair<c_s
 void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, map<pair<c_size_t, c_size_t>, c_size_t> &m, RecompressionRLSLP *recompression_rlslp, vector<c_size_t> &new_rhs) {
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer) {
-        new_slg_nonterm_vec.emplace_back((int)new_rhs.size());
+        new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
         return;
     }
 
@@ -579,9 +579,9 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
         }
     }
 
-    vector<bool> have_edges(curr_index.size(), false);
+    vector<bool_t> have_edges(curr_index.size(), false);
 
-    for(int i=curr_index.size()-1; i>=0; i--) {
+    for(c_size_t i=curr_index.size()-1; i>=0; i--) {
 
         if(curr_index[i] == -1) {
             have_edges[i] = false;
@@ -640,7 +640,7 @@ void sortAdjList(vector<AdjListElement> & adjList) {
     }
 }
 
-void createPartition(const vector<AdjListElement> & adjList, array<set<int>, 2> &partition_set) {
+void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>, 2> &partition_set) {
 
     // // Make Positive
     // for(array<int, 4> & a : adjList) {
@@ -1268,6 +1268,8 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
     // cout << endl;
 
+    double max_BComp_time = 0;
+    double max_PComp_time = 0;
     while(++i) {
 
         const vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
@@ -1290,21 +1292,26 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         // cout << endl;
 
         if(i&1) {
+            auto start_time = std::chrono::high_resolution_clock::now();
+
             slg = BComp(slg, recompression_rlslp, m);
-            // cout << i << ' ' << "BComp" << endl;
 
-            // if(i==1) {
-            //     cout << slg->nonterm.size() << ' ' << slg->rhs.size() << endl;
-            //     for(SLGNonterm idx : slg->nonterm) {
-            //         cout << idx.start_index << ' ';
-            //     }
+            auto end_time = std::chrono::high_resolution_clock::now();
 
-            //     cout << endl;
-            // }
+            auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+
+            max_BComp_time = max(max_BComp_time, duration_seconds);
         }
         else {
+            auto start_time = std::chrono::high_resolution_clock::now();
+
             slg = PComp(slg, recompression_rlslp, m);
-            // cout << i << ' ' << "PComp" << endl;
+
+            auto end_time = std::chrono::high_resolution_clock::now();
+
+            auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+
+            max_PComp_time = max(max_PComp_time, duration_seconds);
         }
 
         // for(int i=0; i<slg->nonterm.size(); i++) {
@@ -1324,7 +1331,9 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         // printRecompressionRLSLP(recompression_rlslp);
     }
 
-    cout << "Runs: " << i << endl;
+    cout << "Runs: " << i << endl << endl;
+    cout << "Max. BComp Time: " << max_BComp_time << endl;
+    cout << "Max. PComp TIme: " << max_PComp_time << endl;
 
     // vector<int> arr2 = expandRLSLP(recompression_rlslp);
 
@@ -1513,6 +1522,7 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RL
 
     auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
 
+    cout << "LCE Queries Passed!" << endl;
     // Output the duration
     cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
 }
