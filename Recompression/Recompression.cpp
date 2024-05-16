@@ -435,7 +435,9 @@ vector<AdjListElement> computeAdjList(SLG *slg, vector<c_size_t> &vOcc) {
 
     vector<pair<c_size_t, c_size_t>> dp(slg->nonterm.size(), make_pair(1, 1));
 
-    computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp, vOcc);
+    for(c_size_t i = 0; i < slg->nonterm.size(); ++i) {
+        computeAdjListHelper(i, slg, adjList, dp, vOcc);
+    }
 
     return adjList;
 }
@@ -600,7 +602,7 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
     dp.resize(slg_nonterm_vec.size(), -1);
 
     // Compute vOcc.
-    for(c_size_t i = 0; i < slg_nonterm_vec.size(); i++) {
+    for(c_size_t i = slg_nonterm_vec.size() - 1; i >= 0; i--) {
         computeVOccHelper(edges, curr_index, have_edges, i, dp);
     }
 
