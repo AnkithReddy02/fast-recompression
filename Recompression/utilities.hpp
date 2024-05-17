@@ -1,5 +1,5 @@
-// #ifndef UTILITIES_H
-// #define UTILITIES_H
+#ifndef UTILITIES_H
+#define UTILITIES_H
 
 // #include "typedefs.hpp"
 
@@ -25,29 +25,21 @@
 //     return;
 // }
 
-// void printSLG(const SLG *slg) {
-//     cout << "SLG PRINTING STARTED..." << endl;
+void printSLG(const SLG *slg) {
+    for(int i=0; i<slg->nonterm.size(); i++) {
+        cout << i << " : ";
+        c_size_t start_index = slg->nonterm[i].start_index;
+        c_size_t end_index = (i==slg->nonterm.size()-1) ? slg->rhs.size()-1 : slg->nonterm[i+1].start_index - 1;
 
-//     if(!(slg->nonterm).size()) {
-//         cout << "SLG is Empty!!" << endl;
-//         return;
-//     }
+        for(int j=start_index; j<=end_index; j++) {
+            cout << slg->rhs[j] << ' ';
+        }
 
-//     c_size_t i = 0;
+        cout << endl;
+    }
 
-//     for(const SLGNonterm & slg_nonterm : slg->nonterm) {
-//         cout << i << " --> ";
-//         for(c_size_t x : slg_nonterm.rhs) {
-//             cout << x << ' ';
-//         }
-//         cout << endl;
-//         i++;
-//     }
-
-//     cout << "SLG PRINTING ENDED!" << endl << endl;
-
-//     return;
-// }
+    return;
+}
 
 void expandRLSLP(c_size_t var, const vector<RLSLPNonterm> & rlslp_nonterm_vec, vector<c_size_t> & result) {
     if(rlslp_nonterm_vec[var].type == '0') {
@@ -103,4 +95,4 @@ vector<c_size_t> expandRLSLP(const RecompressionRLSLP *recompression_rlslp) {
 
 //     return result;
 // }
-// #endif
+#endif

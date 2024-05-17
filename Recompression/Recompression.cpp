@@ -8,8 +8,11 @@
 #include "typedefs.hpp"
 #include "packed_pair.hpp"
 
+// #define TEST_SAMPLE
+
 using namespace std;
 
+#if 0
 void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<pair<c_size_t, c_size_t>> &result) {
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer)
@@ -69,11 +72,12 @@ vector<pair<c_size_t, c_size_t>> combineFrequenciesInRange(const vector<pair<c_s
 
     return result;
 }
+#endif
 
 void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, map<pair<c_size_t, c_size_t>, c_size_t> &m, RecompressionRLSLP *recompression_rlslp, vector<c_size_t> &new_rhs) {
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer) {
-        new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
+        new_slg_nonterm_vec.push_back((c_size_t)new_rhs.size());
         return;
     }
 
@@ -132,7 +136,7 @@ void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, cons
         new_rhs.push_back(p.first);
     }
     // rhs.shrink_to_fit();
-    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
+    new_slg_nonterm_vec.push_back(curr_new_rhs_size);
 
     return;
 }
@@ -159,6 +163,7 @@ c_size_t lower_bound(const vector<T> &vec, const T &search_element) {
 
     return vec.size();
 }
+
 // Block Compression
 SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t, c_size_t>, c_size_t> & m) {
 
@@ -192,11 +197,9 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
         c_size_t end_index = (i == grammar_size-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
 
         if(start_index > end_index) {
-            new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
+            new_slg_nonterm_vec.push_back((c_size_t)new_rhs.size());
             continue;
         }
-
-        // cout << i << " : ";
 
         // Create the expansion of RHS.
         vector<pair<c_size_t, c_size_t>> rhs_expansion;
@@ -205,8 +208,6 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
         for(c_size_t j = start_index; j <= end_index; j++) {
 
             const c_size_t &rhs_symbol = global_rhs[j];
-
-            // cout << rhs_symbol << ' ';
 
             // Single Terminal
             if(rhs_symbol < 0) {
@@ -234,10 +235,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
             c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[rhs_symbol].start_index;
             c_size_t rhs_symbol_end_index = (rhs_symbol == (c_size_t)new_slg_nonterm_vec.size()-1) ? new_rhs.size()-1 : new_slg_nonterm_vec[rhs_symbol+1].start_index - 1;
 
-            // if(i==3) {
-            //     cout << "OK" << endl;
-            //     cout << rhs_symbol_start_index << ' ' << rhs_symbol_end_index << endl;
-            // }
+           
             // Cap is not empty --> in new SLG the variable(rhs_symbol) RHS is not empty --> then Cap is not empty.
             if(rhs_symbol_start_index <= rhs_symbol_end_index) {
                 rhs_expansion.emplace_back(rhs_symbol, 0);
@@ -260,15 +258,6 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
                 rhs_expansion.push_back(make_pair((c_size_t)RR_vec[rhs_symbol].first, (c_size_t)k));
             }
         }
-        // cout << '\n';
-
-        // if(i==3) {
-        //     for(pair<c_size_t, c_size_t> x : rhs_expansion) {
-        //         cout << x.first << ' ' << x.second << endl;
-        //     }
-
-        //     cout << endl;
-        // }
 
         //rhs.clear();
         //vector<int>().swap(rhs);
@@ -297,7 +286,6 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
             LR_vec[i] = packed_pair<c_size_t, char_t>(LR.first, LR.second);
         }
 
-
         // Compute RR
         c_size_t rr_pointer = rhs_expansion.size()-2;
 
@@ -306,13 +294,12 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
         // Case 1 : Everything is consumed by lr_pointer
         if(lr_pointer == rhs_expansion.size()) {
             // Cap is empty; set Cap
-            new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
+            new_slg_nonterm_vec.push_back((c_size_t)new_rhs.size());
             // RR is empty; set RR
             RR_vec[i] = packed_pair<c_size_t, char_t>(-1, 0);
         }
         // Case 2 : There is room for RR
         else {
-
             // rr_pointer can max go upto lr_pointer
             while(lr_pointer <= rr_pointer) {
 
@@ -337,45 +324,12 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
                 RR_vec[i] = packed_pair<c_size_t, char_t>(RR.first, RR.second);
             }
 
-            // if(i==3) {
-            //     cout << new_rhs.size() << endl;
-            // }
-
-            // if(i==3) {
-            //     cout << "rhs exp. size: " << lr_pointer << ' ' << rr_pointer << endl;
-            // }
-
             // Compress Cap(middle part)
             combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer, new_slg_nonterm_vec, m, recompression_rlslp, new_rhs);
-
-
-// if(i==3) {
-//                 cout << new_rhs.size() << endl;
-//             }
-            //rhs_expansion.clear();
-            //vector<pair<int, int>>().swap(rhs_expansion);
         }
     }
 
-    // cout << "LR_vec" << endl;
-    // for(int i=0; i < LR_vec.size(); i++) {
-    //     cout << i << " : " << LR_vec[i].first << ' ' << LR_vec[i].second << endl;
-    // }
-
-    // cout << "RR_vec" << endl;
-    // for(int i=0; i < RR_vec.size(); i++) {
-    //     cout << i << " : " << RR_vec[i].first << ' ' << RR_vec[i].second << endl;
-    // }
-
-    // cout << "NEW RHS" << endl;
-    // for(c_size_t x : new_rhs) {
-    //     cout << x << ' ';
-    // }
-
-    // cout << endl;
-
     // Add new Starting Variable to the new Grammar G'(G Prime).
-
     const c_size_t &start_var = slg_nonterm_vec.size()-1;
 
     pair<c_size_t, c_size_t> start_var_LR;
@@ -416,7 +370,6 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
 
     c_size_t curr_new_rhs_size = new_rhs.size();
 
-
     // This always holds true.
     if(start_var_LR.second != 0) {
         if(start_var_LR.second >= 2) {
@@ -434,16 +387,9 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
     c_size_t start_var_start_index = new_slg_nonterm_vec[start_var].start_index;
     c_size_t start_var_end_index = (start_var == (c_size_t)new_slg_nonterm_vec.size()-1) ? curr_new_rhs_size-1 : new_slg_nonterm_vec[start_var+1].start_index - 1;
 
-
-    // // cout << "Last: " << start_var_start_index << ' ' << start_var_end_index << endl;
-    // if(new_slg_nonterm_vec.size() >= 20) {
-    //     cout << new_slg_nonterm_vec[20].start_index << ' ' << new_rhs.size() << endl << endl;
-    // } 
     if(start_var_start_index <= start_var_end_index) {
         new_rhs.push_back(start_var);
     }
-
-    // cout << start_var_RR.second << endl;
 
     if(start_var_RR.second != 0) {
         if(start_var_RR.second >= 2) {
@@ -458,7 +404,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
         }
     }
 
-    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
+    new_slg_nonterm_vec.push_back(curr_new_rhs_size);
 
     delete slg;
 
@@ -466,6 +412,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
     return new SLG(new_slg_nonterm_vec, new_rhs);
 }
 
+#if 0
 pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, vector<AdjListElement> & adjList, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
 
     if(var < 0) {
@@ -476,10 +423,8 @@ pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, vector<Adj
         return dp[var];
     }
 
-    /*
-        1. Modifying LMS and RMS
-        2. Access rhs
-    */
+    // 1. Modifying LMS and RMS
+    // 2. Access rhs
     SLGNonterm &slg_nonterm = slg->nonterm[var];
 
     const vector<c_size_t> &global_rhs = slg->rhs;
@@ -549,6 +494,7 @@ vector<AdjListElement> computeAdjList(SLG *slg, vector<c_size_t> &vOcc) {
 
     return adjList;
 }
+#endif
 
 c_size_t computeVOccHelper(vector<pair<c_size_t, c_size_t>> & edges, vector<c_size_t> &curr_index, vector<bool_t> &have_edges, c_size_t u, vector<c_size_t> & dp) {
 
@@ -588,17 +534,15 @@ c_size_t computeVOccHelper(vector<pair<c_size_t, c_size_t>> & edges, vector<c_si
 
     return dp[u] = num_paths;
 }
+
 void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
     // Here, any list size is slg_nonterm_vec.size()
-
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
     vector<c_size_t> &global_rhs = slg->rhs;
 
     // Create Reverse Graph.
     // vector<vector<pair<c_size_t,c_size_t>>> graph(slg_nonterm_vec.size(), vector<pair<c_size_t, c_size_t>>());
-
-
     vector<c_size_t> curr_index(slg_nonterm_vec.size(), -1);
     vector<pair<c_size_t, c_size_t>> edges;
 
@@ -617,7 +561,6 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
         for(c_size_t j=start_index; j<=end_index; j++) {
-
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
@@ -627,16 +570,12 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
         // Construct Edges.
         for(const auto & v : unique_var) {
-           
-
             // Weighted Edge from v to u , v --> u
             if(curr_index[v]==-1) curr_index[v] = 0;
             curr_index[v]++;
             
         }
     }
-
-    // // cout << curr_index << endl;
 
     c_size_t prefix_sum = 0;
     for(c_size_t i=0; i<curr_index.size(); i++) {
@@ -651,7 +590,6 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
     // Enumerate Each Production Rule.
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
-
         // Current SLGNonterm
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
@@ -836,6 +774,7 @@ void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>
     return;
 }
 
+#if 0
 array<set<c_size_t>, 2> createPartition(const vector<array<c_size_t, 4>> & adjList) {
 
     // // Make Positive
@@ -918,6 +857,7 @@ array<set<c_size_t>, 2> createPartition(const vector<array<c_size_t, 4>> & adjLi
 
     return { rightSet, leftSet };
 }
+#endif
 
 // UNORDERED_MAP USAGE
 pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, map<pair<c_size_t, c_size_t>, c_size_t> &m0, map<pair<c_size_t, c_size_t>, c_size_t> &m1, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
@@ -1040,20 +980,6 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
 
     const set<c_size_t> &left_set = arr[0], &right_set = arr[1];
 
-    // cout << "Left Set: " ;
-    // for(c_size_t x : left_set) {
-    //     cout << x << ' ';
-    // }
-
-    // cout << endl;
-
-    // cout << "Right Set: " ;
-    // for(c_size_t x : right_set) {
-    //     cout << x << ' ';
-    // }
-
-    // cout << endl;
-
     // Current slg non-term list
     vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
 
@@ -1087,7 +1013,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
         c_size_t curr_new_rhs_size = new_rhs.size();
 
         if(curr_rhs_size == 0) {
-            new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
+            new_slg_nonterm_vec.push_back((c_size_t)new_rhs.size());
             // cout << '\n';
             continue;
         }
@@ -1204,7 +1130,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
             }
 
 	        // cap_rhs.shrink_to_fit();
-            new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
+            new_slg_nonterm_vec.push_back(curr_new_rhs_size);
         }
         else if(curr_rhs_size == 1) {
 
@@ -1216,19 +1142,19 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
             if(global_rhs[start_index] < 0) {
                 if(left_set.find(global_rhs[start_index]) != left_set.end()) {
                     LB[i] = 0;
-                    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
+                    new_slg_nonterm_vec.push_back(curr_new_rhs_size);
                     RB[i] = global_rhs[start_index];
                 }
                 else if(right_set.find(global_rhs[start_index]) != right_set.end()) {
                     LB[i] = global_rhs[start_index];
-                    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
+                    new_slg_nonterm_vec.push_back(curr_new_rhs_size);
                     RB[i] = 0;
                 }
                 else {
                     // Non-reachable Non-Terminals.
                     // A --> a
                     // 'a' is not found in adjacency list so push empty.
-                    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
+                    new_slg_nonterm_vec.push_back(curr_new_rhs_size);
                     cerr << "Error: Not Found in Left and Right." << endl;
                 }
             }
@@ -1254,7 +1180,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
 
                 RB[i] = RB[global_rhs[start_index]];
 		        // new_rhs.shrink_to_fit();
-                new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
+                new_slg_nonterm_vec.push_back(curr_new_rhs_size);
             }
             
         }
@@ -1290,7 +1216,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
         new_rhs.push_back(start_var_RB);
     }
 
-    new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
+    new_slg_nonterm_vec.push_back(curr_new_rhs_size);
 
     delete slg;
 
@@ -1300,17 +1226,19 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
 
 RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
-    // delete s;
+    #ifdef TEST_SAMPLE
+    delete s;
 
-    // s = new InputSLP();
-    // // s->nonterm.push_back(SLPNonterm('0', 97, 0));
-    // s->nonterm.push_back(SLPNonterm('0', 98, 0));
-    // s->nonterm.push_back(SLPNonterm('0', 99, 0));
-    // s->nonterm.push_back(SLPNonterm('1', 1, 0));
-    // s->nonterm.push_back(SLPNonterm('1', 2, 0));
-    // s->nonterm.push_back(SLPNonterm('1', 3, 1));
-    // s->nonterm.push_back(SLPNonterm('1', 4, 3));
-    // s->nonterm.push_back(SLPNonterm('1', 5, 4));
+    s = new InputSLP();
+    // s->nonterm.push_back(SLPNonterm('0', 97, 0));
+    s->nonterm.push_back(SLPNonterm('0', 98, 0));
+    s->nonterm.push_back(SLPNonterm('0', 99, 0));
+    s->nonterm.push_back(SLPNonterm('1', 1, 0));
+    s->nonterm.push_back(SLPNonterm('1', 2, 0));
+    s->nonterm.push_back(SLPNonterm('1', 3, 1));
+    s->nonterm.push_back(SLPNonterm('1', 4, 3));
+    s->nonterm.push_back(SLPNonterm('1', 5, 4));
+    #endif
 
 
     SLG* slg = new SLG();
@@ -1322,18 +1250,11 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     // For 0.
     recompression_rlslp->nonterm.emplace_back();
 
-    // cout << "OK" << endl;
-
-
     // Compute S0 from S and Initialize Recompression
     for(c_size_t i=0; i<s->nonterm.size(); i++) {
         const char_t &type = s->nonterm[i].type;
         const c_size_t &first = s->nonterm[i].first;
         const c_size_t &second = s->nonterm[i].second;
-
-
-
-        // vector<c_size_t> rhs;
 
         c_size_t global_rhs_size = slg->rhs.size();
 
@@ -1345,47 +1266,17 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             recompression_rlslp->nonterm.emplace_back('0', first, second);
         }
         else {
-            // rhs = {first, second};
             slg->rhs.push_back(first);
             slg->rhs.push_back(second);
         }
 
-        slg->nonterm.emplace_back(global_rhs_size);
+        slg->nonterm.push_back(global_rhs_size);
 
     }
 
     delete s;
 
-    // vector<int> arr1 = expandSLG(slg);
-
-    // cout << arr << endl;
-
-
     c_size_t i = 0;
-
-    // printSLG(slg);
-
-    // for(int i=0; i<slg->nonterm.size(); i++) {
-    //         cout << i << ' ';
-    //         c_size_t start_index = slg->nonterm[i].start_index;
-    //         c_size_t end_index = (i==slg->nonterm.size()-1) ? slg->rhs.size()-1 : slg->nonterm[i+1].start_index - 1;
-
-    //         for(int j=start_index; j<=end_index; j++) {
-    //             cout << slg->rhs[j] << ' ';
-    //         }
-
-    //         cout << endl;
-    //     }
-
-    // for(int i=0;i<slg->nonterm.size(); i++) {
-    //     cout << slg->nonterm[i].start_index << ' ';
-    // }
-    // cout << endl;
-    // for(int i=0; i<slg->rhs.size(); i++) {
-    //     cout << slg->rhs[i] << ' ';
-    // }
-
-    // cout << endl;
 
     double max_BComp_time = 0;
     double max_PComp_time = 0;
@@ -1407,8 +1298,6 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         if(start_var_rhs_size == 1 && global_rhs[end_index] < 0) {
             break;
         }
-
-        // cout << endl;
 
         if(i&1) {
             // cout << i << " BComp \n";
@@ -1435,18 +1324,6 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             max_PComp_time = max(max_PComp_time, duration_seconds);
         }
 
-        // for(int i=0; i<slg->nonterm.size(); i++) {
-        //     cout << i << ' ';
-        //     c_size_t start_index = slg->nonterm[i].start_index;
-        //     c_size_t end_index = (i==slg->nonterm.size()-1) ? slg->rhs.size()-1 : slg->nonterm[i+1].start_index - 1;
-
-        //     for(int j=start_index; j<=end_index; j++) {
-        //         cout << slg->rhs[j] << ' ';
-        //     }
-
-        //     cout << endl;
-        // }
-        
         m.clear();
         // printSLG(slg);
         // printRecompressionRLSLP(recompression_rlslp);
@@ -1456,15 +1333,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     cout << "Max. BComp Time: " << max_BComp_time << endl;
     cout << "Max. PComp TIme: " << max_PComp_time << endl;
 
-    // vector<int> arr2 = expandRLSLP(recompression_rlslp);
-
-    // if(arr1 != arr2) {
-    //     cout << "SLG and RLSLP expansion didn't match!" << endl;
-    //     exit(1);
-    // }
-
     delete slg;
-    
 
     return recompression_rlslp;
 }
@@ -1680,7 +1549,6 @@ void start_compression(const string &input_file, const string &raw_input_text) {
     cout << "Text Size : " << text_size << endl;
 
     // TEST
-
     if(!raw_input_text.empty())
     test(text_size, recompression_rlslp, rlslp_nonterm_vec, raw_input_text);
 }

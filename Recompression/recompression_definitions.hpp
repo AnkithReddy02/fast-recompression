@@ -27,18 +27,7 @@ public:
 };
 
 struct SLGNonterm {
-    // rhs empty represents empty variable.
     c_size_t start_index;
-    //int LMS;
-    //int RMS;
-
-    // 0 is empty
-    // int LB;
-    // int RB;
-    
-    // {-1, -1} is empty
-    // pair<int, int> LR;
-    // pair<int, int> RR;
 
     SLGNonterm(const c_size_t &start_index) : start_index(start_index) {
 
@@ -50,7 +39,6 @@ struct SLGNonterm {
 };
 
 class SLG {
-
 public:
     SLG() {
 
