@@ -6,6 +6,7 @@
 #include "lce_queries.hpp"
 #include "hash_pair.hpp"
 #include "typedefs.hpp"
+#include "packed_pair.hpp"
 
 using namespace std;
 
@@ -136,6 +137,28 @@ void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, cons
     return;
 }
 
+template <typename T>
+c_size_t lower_bound(const vector<T> &vec, const T &search_element) {
+    c_size_t low = 0;
+    c_size_t high = vec.size() - 1;
+
+    while(high - low > 1) {
+        c_size_t mid = low + (high - low)/2;
+
+        if(vec[mid] < search_element) {
+            low = mid + 1;
+        }
+        else {
+            high = mid;
+        }
+    }
+
+    if(search_element <= vec[low]) return low;
+    if(search_element <= vec[high]) return high;
+
+
+    return vec.size();
+}
 // Block Compression
 SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t, c_size_t>, c_size_t> & m) {
 
@@ -154,8 +177,11 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
 
     const c_size_t &grammar_size = slg_nonterm_vec.size();
 
-    vector<pair<c_size_t, c_size_t>> LR_vec(grammar_size, make_pair(-1, -1));
-    vector<pair<c_size_t, c_size_t>> RR_vec(grammar_size, make_pair(-1, -1));
+    vector<packed_pair<c_size_t, char_t>> LR_vec(grammar_size, packed_pair<c_size_t, char_t>(-1,0));
+    vector<packed_pair<c_size_t, char_t>> RR_vec(grammar_size, packed_pair<c_size_t, char_t>(-1,0));
+
+    vector<pair<c_size_t, c_size_t>> large_LR_vec;
+    vector<pair<c_size_t, c_size_t>> large_RR_vec;
 
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
@@ -165,13 +191,12 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
         c_size_t start_index = slg_nonterm.start_index;
         c_size_t end_index = (i == grammar_size-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
 
-        // if(i==3) {
-        //     cout << "Start: " << start_index << " | End: " << end_index << endl;
-        // }
         if(start_index > end_index) {
             new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
             continue;
         }
+
+        // cout << i << " : ";
 
         // Create the expansion of RHS.
         vector<pair<c_size_t, c_size_t>> rhs_expansion;
@@ -181,6 +206,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
 
             const c_size_t &rhs_symbol = global_rhs[j];
 
+            // cout << rhs_symbol << ' ';
+
             // Single Terminal
             if(rhs_symbol < 0) {
                 rhs_expansion.emplace_back(rhs_symbol, 1);
@@ -188,8 +215,20 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
             }
 
             // **LR** of a current variable(rhs_symbol) in current RHS is **not empty**.
-            if(LR_vec[rhs_symbol].second != -1) {
-                rhs_expansion.push_back(LR_vec[rhs_symbol]);
+            if(static_cast<c_size_t>(LR_vec[rhs_symbol].second) != 0) {
+                c_size_t k = static_cast<c_size_t>(LR_vec[rhs_symbol].second);
+                if(k == 255) {
+                    pair<c_size_t, c_size_t> search_element = {rhs_symbol, 0};
+
+                    c_size_t search_index = lower_bound(large_LR_vec, search_element);
+
+                    assert(large_LR_vec[search_index].first == rhs_symbol);
+                    assert(search_index != large_LR_vec.size());
+
+                    k = large_LR_vec[search_index].second;
+                }
+
+                rhs_expansion.push_back(make_pair((c_size_t)LR_vec[rhs_symbol].first, (c_size_t)k));
             }
 
             c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[rhs_symbol].start_index;
@@ -205,10 +244,23 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
             }
 
             // **RR** of a current variable(rhs_symbol) in current RHS is **not empty**.
-            if(RR_vec[rhs_symbol].second != -1) {
-                rhs_expansion.push_back(RR_vec[rhs_symbol]);
+            if(static_cast<c_size_t>(RR_vec[rhs_symbol].second) != 0) {
+                c_size_t k = static_cast<c_size_t>(RR_vec[rhs_symbol].second);
+                if(k == 255) {
+                    pair<c_size_t, c_size_t> search_element = {rhs_symbol, 0};
+
+                    c_size_t search_index = lower_bound(large_RR_vec, search_element);
+
+                    assert(large_RR_vec[search_index].first == rhs_symbol);
+                    assert(search_index != large_RR_vec.size());
+
+                    k = large_RR_vec[search_index].second;
+                }
+
+                rhs_expansion.push_back(make_pair((c_size_t)RR_vec[rhs_symbol].first, (c_size_t)k));
             }
         }
+        // cout << '\n';
 
         // if(i==3) {
         //     for(pair<c_size_t, c_size_t> x : rhs_expansion) {
@@ -237,8 +289,13 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
             lr_pointer++;
         }
 
-        // set LR
-        LR_vec[i] = LR;
+        if(LR.second >= 255) {
+            LR_vec[i] = packed_pair<c_size_t, char_t>(LR.first, 255);
+            large_LR_vec.push_back(make_pair((c_size_t)i, (c_size_t)LR.second));
+        }
+        else {
+            LR_vec[i] = packed_pair<c_size_t, char_t>(LR.first, LR.second);
+        }
 
 
         // Compute RR
@@ -251,7 +308,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
             // Cap is empty; set Cap
             new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
             // RR is empty; set RR
-            RR_vec[i] = {-1, -1};
+            RR_vec[i] = packed_pair<c_size_t, char_t>(-1, 0);
         }
         // Case 2 : There is room for RR
         else {
@@ -272,7 +329,13 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
             }
 
             // set RR
-            RR_vec[i] = RR;
+            if(RR.second >= 255) {
+                RR_vec[i] = packed_pair<c_size_t, char_t>(RR.first, 255);
+                large_RR_vec.push_back(make_pair(i, RR.second));
+            }
+            else {
+                RR_vec[i] = packed_pair<c_size_t, char_t>(RR.first, RR.second);
+            }
 
             // if(i==3) {
             //     cout << new_rhs.size() << endl;
@@ -294,6 +357,16 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
         }
     }
 
+    // cout << "LR_vec" << endl;
+    // for(int i=0; i < LR_vec.size(); i++) {
+    //     cout << i << " : " << LR_vec[i].first << ' ' << LR_vec[i].second << endl;
+    // }
+
+    // cout << "RR_vec" << endl;
+    // for(int i=0; i < RR_vec.size(); i++) {
+    //     cout << i << " : " << RR_vec[i].first << ' ' << RR_vec[i].second << endl;
+    // }
+
     // cout << "NEW RHS" << endl;
     // for(c_size_t x : new_rhs) {
     //     cout << x << ' ';
@@ -305,14 +378,47 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
 
     const c_size_t &start_var = slg_nonterm_vec.size()-1;
 
-    const pair<c_size_t, c_size_t> &start_var_LR = LR_vec[start_var];
-    const pair<c_size_t, c_size_t> &start_var_RR = RR_vec[start_var];
+    pair<c_size_t, c_size_t> start_var_LR;
+    if(static_cast<c_size_t>(LR_vec[start_var].second) == 255) {
+
+        c_size_t k = static_cast<c_size_t>(LR_vec[start_var].second);
+        pair<c_size_t, c_size_t> search_arr = make_pair((c_size_t)start_var, (c_size_t)0);
+        
+        c_size_t search_index = lower_bound(large_LR_vec, search_arr);
+
+        assert(search_index != large_LR_vec.size());
+
+        k = large_LR_vec[search_index].second;
+
+        start_var_LR = make_pair((c_size_t)LR_vec[start_var].first, (c_size_t)k);
+    }
+    else {
+        start_var_LR = make_pair((c_size_t)LR_vec[start_var].first, static_cast<c_size_t>(LR_vec[start_var].second));
+    }
+
+    pair<c_size_t, c_size_t> start_var_RR;
+    if(static_cast<c_size_t>(RR_vec[start_var].second) == 255) {
+
+        c_size_t k = static_cast<c_size_t>(RR_vec[start_var].second);
+        pair<c_size_t, c_size_t> search_arr = make_pair(start_var, 0);
+        
+        c_size_t search_index = lower_bound(large_RR_vec, search_arr);
+
+        assert(search_index != large_RR_vec.size());
+
+        k = large_RR_vec[search_index].second;
+
+        start_var_RR = make_pair((c_size_t)RR_vec[start_var].first, (c_size_t)k);
+    }
+    else {
+        start_var_RR = make_pair((c_size_t)RR_vec[start_var].first, static_cast<c_size_t>(RR_vec[start_var].second));
+    }
 
     c_size_t curr_new_rhs_size = new_rhs.size();
 
 
     // This always holds true.
-    if(start_var_LR.second != -1) {
+    if(start_var_LR.second != 0) {
         if(start_var_LR.second >= 2) {
             if(m.find(start_var_LR) == m.end()) {
                 m[start_var_LR] = recompression_rlslp->nonterm.size();
@@ -337,7 +443,9 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
         new_rhs.push_back(start_var);
     }
 
-    if(start_var_RR.second != -1) {
+    // cout << start_var_RR.second << endl;
+
+    if(start_var_RR.second != 0) {
         if(start_var_RR.second >= 2) {
             if(m.find(start_var_RR) == m.end()) {
                 m[start_var_RR] = recompression_rlslp->nonterm.size();
@@ -906,6 +1014,8 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
     // Avoid resizing.
     vector<AdjListElement> adjList(m0.size() + m1.size());
 
+    assert(adjList.size() != 0);
+
     c_size_t index = 0;
     for(auto & x : m0) {
         adjList[index++] = AdjListElement(x.first.first, x.first.second, false, x.second);
@@ -964,6 +1074,8 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
+
+        // cout << i << " : ";
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
         // const vector<c_size_t> & rhs = slg_nonterm.rhs;
@@ -976,6 +1088,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
 
         if(curr_rhs_size == 0) {
             new_slg_nonterm_vec.emplace_back((c_size_t)new_rhs.size());
+            // cout << '\n';
             continue;
         }
         if((c_size_t)curr_rhs_size >= 2) {
@@ -985,7 +1098,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
             // Expanding RHS.
             for(c_size_t j=start_index; j<=end_index; j++) {
 
-
+                // cout << global_rhs[j] << ' ';
                 // RHS Terminal
                 if(global_rhs[j] < 0) {
 
@@ -1050,6 +1163,8 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
                 }
             }
 
+            // cout << '\n';
+
             // if(i==5) {
             //     cout << global_rhs[start_index] << ' ' << global_rhs[start_index+1]  << endl;
             //     cout << "RHS Expansion: " << endl;
@@ -1092,6 +1207,8 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
             new_slg_nonterm_vec.emplace_back(curr_new_rhs_size);
         }
         else if(curr_rhs_size == 1) {
+
+            // cout << global_rhs[start_index] << '\n';
 
             // Terminal;
             // A --> a
@@ -1294,6 +1411,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         // cout << endl;
 
         if(i&1) {
+            // cout << i << " BComp \n";
             auto start_time = std::chrono::high_resolution_clock::now();
 
             slg = BComp(slg, recompression_rlslp, m);
@@ -1305,6 +1423,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             max_BComp_time = max(max_BComp_time, duration_seconds);
         }
         else {
+            // cout << i << " PComp \n";
             auto start_time = std::chrono::high_resolution_clock::now();
 
             slg = PComp(slg, recompression_rlslp, m);
