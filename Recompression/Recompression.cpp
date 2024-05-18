@@ -597,8 +597,8 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
         c_size_t curr_rhs_size = end_index - start_index + 1;
 
-        // set<c_size_t> unique_var;
-        hash_table<c_size_t, bool> unique_var;
+        set<c_size_t> unique_var;
+        // hash_table<c_size_t, bool> unique_var;
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
@@ -606,15 +606,15 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
-                // unique_var.insert(var);
-                unique_var.insert(var, true);
+                unique_var.insert(var);
+                // unique_var.insert(var, true);
             }
         }
 
         // Construct Edges.
-        // for(const auto & v : unique_var) {
-        for(c_size_t i = 0; i < unique_var.size(); ++i) {
-            c_size_t v = unique_var.get(i).first;
+        for(const auto & v : unique_var) {
+        // for(c_size_t i = 0; i < unique_var.size(); ++i) {
+            // c_size_t v = unique_var.get(i).first;
             // Weighted Edge from v to u , v --> u
             if(curr_index[v]==-1) curr_index[v] = 0;
             curr_index[v]++;
@@ -643,8 +643,8 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
         c_size_t curr_rhs_size = end_index - start_index + 1;
 
-        // unordered_map<c_size_t, c_size_t> var_freq;
-        hash_table<c_size_t, c_size_t, c_size_t> var_freq;
+        unordered_map<c_size_t, c_size_t> var_freq;
+        // hash_table<c_size_t, c_size_t, c_size_t> var_freq;
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
@@ -653,18 +653,18 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
-                // var_freq[var]++;
-                if(!var_freq.find(var)) {
-                    var_freq.insert(var, 0);
-                }
-                var_freq.insert(var, var_freq[var] + 1);
+                var_freq[var]++;
+                // if(!var_freq.find(var)) {
+                //     var_freq.insert(var, 0);
+                // }
+                // var_freq.insert(var, var_freq[var] + 1);
             }
         }
 
         // Construct Edges.
-        // for(const auto & x : var_freq) {
-        for(c_size_t j = 0; j < var_freq.size(); ++j) {
-            auto x = var_freq.get(j); 
+        for(const auto & x : var_freq) {
+        // for(c_size_t j = 0; j < var_freq.size(); ++j) {
+            // auto x = var_freq.get(j); 
 
             // edge from v to u, u <-- v
             const c_size_t &u = i;
