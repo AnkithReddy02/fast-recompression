@@ -7,10 +7,42 @@
 #include "hash_pair.hpp"
 #include "typedefs.hpp"
 #include "packed_pair.hpp"
+#include "hash_table.hpp"
 
 // #define TEST_SAMPLE
 
 using namespace std;
+
+template<>
+std::uint64_t get_hash(const std::pair<c_size_t, c_size_t> &x) {
+    return (std::uint64_t)x.first * (std::uint64_t)4972548694736365 +
+           (std::uint64_t)x.second * (std::uint64_t)3878547385475748;
+}
+
+template<>
+std::uint64_t get_hash(const c_size_t &x) {
+    return (std::uint64_t)x * (std::uint64_t)1232545666776865;
+}
+
+template<>
+std::string keyToString(const c_size_t &x) {
+  return utils::intToStr(x);
+}
+
+template<>
+std::string keyToString(const std::pair<c_size_t,c_size_t> &x) {
+  return "std::pair(" + utils::intToStr(x.first) + ", " + utils::intToStr(x.second) + ")";
+}
+
+template<>
+std::string valToString(const c_size_t &x) {
+  return utils::intToStr(x);
+}
+
+template<>
+std::string valToString(const bool &x) {
+  return utils::intToStr((std::uint64_t)x);
+}
 
 #if 0
 void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<pair<c_size_t, c_size_t>> &result) {
@@ -74,7 +106,7 @@ vector<pair<c_size_t, c_size_t>> combineFrequenciesInRange(const vector<pair<c_s
 }
 #endif
 
-void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, map<pair<c_size_t, c_size_t>, c_size_t> &m, RecompressionRLSLP *recompression_rlslp, vector<c_size_t> &new_rhs) {
+void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, /* map<pair<c_size_t, c_size_t>, c_size_t> &m */hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m, RecompressionRLSLP *recompression_rlslp, vector<c_size_t> &new_rhs) {
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer) {
         new_slg_nonterm_vec.push_back((c_size_t)new_rhs.size());
@@ -100,8 +132,10 @@ void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, cons
                 // Frequency is >=2 so merge and push to rlslp
                 // Merged variable is terminal for a new_slg, so it is marked negative
                 if(p.second >= 2) {
-                    if(m.find(p) == m.end()) {
-                        m[p] = recompression_rlslp->nonterm.size();
+                    // if(m.find(p) == m.end()) {
+                    if(!m.find(p)) {
+                        // m[p] = recompression_rlslp->nonterm.size();
+                        m.insert(p, recompression_rlslp->nonterm.size());
                         recompression_rlslp->nonterm.emplace_back('2', abs(p.first), p.second);
                     }
                     
@@ -124,8 +158,10 @@ void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, cons
     // Frequency is >=2 so merge and push to rlslp
     // Merged variable is terminal for a new_slg, so it is marked negative
     if(p.second >= 2) {
-        if(m.find(p) == m.end()) {
-            m[p] = recompression_rlslp->nonterm.size();
+        // if(m.find(p) == m.end()) {
+        if(!m.find(p)) {    
+            // m[p] = recompression_rlslp->nonterm.size();
+            m.insert(p, recompression_rlslp->nonterm.size());
             recompression_rlslp->nonterm.emplace_back('2', abs(p.first), p.second);
         }
         
@@ -165,7 +201,8 @@ c_size_t lower_bound(const vector<T> &vec, const T &search_element) {
 }
 
 // Block Compression
-SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t, c_size_t>, c_size_t> & m) {
+SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_t, c_size_t>, c_size_t> & m) {
+    hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> & m) {
 
     // Current slg non-term list
     vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
@@ -373,8 +410,10 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
     // This always holds true.
     if(start_var_LR.second != 0) {
         if(start_var_LR.second >= 2) {
-            if(m.find(start_var_LR) == m.end()) {
-                m[start_var_LR] = recompression_rlslp->nonterm.size();
+            // if(m.find(start_var_LR) == m.end()) {
+            if(!m.find(start_var_LR)) {
+                // m[start_var_LR] = recompression_rlslp->nonterm.size();
+                m.insert(start_var_LR, recompression_rlslp->nonterm.size());
                 recompression_rlslp->nonterm.emplace_back('2', abs(start_var_LR.first), start_var_LR.second);
             }
             new_rhs.push_back(-m[start_var_LR]);
@@ -393,8 +432,10 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, map<pair<c_size_t,
 
     if(start_var_RR.second != 0) {
         if(start_var_RR.second >= 2) {
-            if(m.find(start_var_RR) == m.end()) {
-                m[start_var_RR] = recompression_rlslp->nonterm.size();
+            // if(m.find(start_var_RR) == m.end()) {
+            if(!m.find(start_var_RR)) {
+                // m[start_var_RR] = recompression_rlslp->nonterm.size();
+                m.insert(start_var_RR, recompression_rlslp->nonterm.size());
                 recompression_rlslp->nonterm.emplace_back('2', abs(start_var_RR.first), start_var_RR.second);
             }
             new_rhs.push_back(-m[start_var_RR]);
@@ -556,7 +597,8 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
         c_size_t curr_rhs_size = end_index - start_index + 1;
 
-        set<c_size_t> unique_var;
+        // set<c_size_t> unique_var;
+        hash_table<c_size_t, bool> unique_var;
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
@@ -564,12 +606,15 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
-                unique_var.insert(var);
+                // unique_var.insert(var);
+                unique_var.insert(var, true);
             }
         }
 
         // Construct Edges.
-        for(const auto & v : unique_var) {
+        // for(const auto & v : unique_var) {
+        for(c_size_t i = 0; i < unique_var.size(); ++i) {
+            c_size_t v = unique_var.get(i).first;
             // Weighted Edge from v to u , v --> u
             if(curr_index[v]==-1) curr_index[v] = 0;
             curr_index[v]++;
@@ -598,7 +643,8 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
 
         c_size_t curr_rhs_size = end_index - start_index + 1;
 
-        map<c_size_t, c_size_t> var_freq;
+        // unordered_map<c_size_t, c_size_t> var_freq;
+        hash_table<c_size_t, c_size_t, c_size_t> var_freq;
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
@@ -607,12 +653,19 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
-                var_freq[var]++;
+                // var_freq[var]++;
+                if(!var_freq.find(var)) {
+                    var_freq.insert(var, 0);
+                }
+                var_freq.insert(var, var_freq[var] + 1);
             }
         }
 
         // Construct Edges.
-        for(const auto & x : var_freq) {
+        // for(const auto & x : var_freq) {
+        for(c_size_t j = 0; j < var_freq.size(); ++j) {
+            auto x = var_freq.get(j); 
+
             // edge from v to u, u <-- v
             const c_size_t &u = i;
             const c_size_t &v = x.first;
@@ -688,7 +741,8 @@ void sortAdjList(vector<AdjListElement> & adjList) {
     }
 }
 
-void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>, 2> &partition_set) {
+// void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>, 2> &partition_set) {
+pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *> createPartition(const vector<AdjListElement> & adjList) {
 
     // // Make Positive
     // for(array<int, 4> & a : adjList) {
@@ -696,8 +750,17 @@ void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>
     //  a[1] = -a[1];
     // }
     
-    set<c_size_t>& leftSet = partition_set[0];
-    set<c_size_t>& rightSet = partition_set[1];
+    typedef c_size_t key_type;
+    typedef bool value_type;
+    typedef hash_table<key_type, value_type> hash_table_type;
+    // set<c_size_t>& leftSet = partition_set[0];
+    hash_table_type *leftSet_ptr = new hash_table_type();
+    // set<c_size_t>& rightSet = partition_set[1];
+    hash_table_type *rightSet_ptr = new hash_table_type();
+
+    hash_table_type &leftSet = *leftSet_ptr;
+    hash_table_type &rightSet = *rightSet_ptr;
+
     c_size_t currentIndex = 0;
     size_t n = adjList.size();
 
@@ -707,11 +770,11 @@ void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>
         c_size_t leftSetFreq = 0;
         c_size_t rightSetFreq = 0;
         while (currentIndex < n && adjList[currentIndex].first == c) {
-            if(rightSet.find(adjList[currentIndex].second) == rightSet.end()) {
-                leftSet.insert(adjList[currentIndex].second);
+            if(!rightSet.find(adjList[currentIndex].second) /*== rightSet.end()*/) {
+                leftSet.insert(adjList[currentIndex].second, true);
             }
 
-            if (leftSet.find(adjList[currentIndex].second) != leftSet.end()) {
+            if (leftSet.find(adjList[currentIndex].second) /*!= leftSet.end()*/) {
                 leftSetFreq += adjList[currentIndex].vOcc;
             } else {
                 rightSetFreq += adjList[currentIndex].vOcc;
@@ -721,9 +784,9 @@ void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>
 
 
         if (leftSetFreq >= rightSetFreq) {
-            rightSet.insert(c);
+            rightSet.insert(c, true);
         } else {
-            leftSet.insert(c);
+            leftSet.insert(c, true);
         }
 
         if(currentIndex < n) {
@@ -752,16 +815,18 @@ void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>
             swap(f, s);
         }
 
-        LRPairsCount += ((leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end())) ? arr.vOcc : 0;
-        RLPairsCount += ((rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end())) ? arr.vOcc : 0;
+        LRPairsCount += ((leftSet.find(f) /*!= leftSet.end()*/) && (rightSet.find(s) /*!= rightSet.end()*/)) ? arr.vOcc : 0;
+        RLPairsCount += ((rightSet.find(f) /*!= rightSet.end()*/) && (leftSet.find(s) /*!= leftSet.end()*/)) ? arr.vOcc : 0;
 
     }
 
     if (RLPairsCount < LRPairsCount) {
-        swap(leftSet, rightSet);
+        // swap(leftSet, rightSet);
+        swap(leftSet_ptr, rightSet_ptr);
     }
 
-    swap(rightSet, leftSet);
+    // swap(rightSet, leftSet);
+    swap(rightSet_ptr, leftSet_ptr);
 
  //    // Revert to Negative
     // for(array<int, 4> & a : adjList) {
@@ -771,7 +836,7 @@ void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>
 
     
 
-    return;
+    return make_pair(leftSet_ptr, rightSet_ptr);
 }
 
 #if 0
@@ -859,8 +924,9 @@ array<set<c_size_t>, 2> createPartition(const vector<array<c_size_t, 4>> & adjLi
 }
 #endif
 
-// UNORDERED_MAP USAGE
-pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, map<pair<c_size_t, c_size_t>, c_size_t> &m0, map<pair<c_size_t, c_size_t>, c_size_t> &m1, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
+// MAP USAGE
+pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, //map<pair<c_size_t, c_size_t>, c_size_t> &m0, map<pair<c_size_t, c_size_t>, c_size_t> &m1, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
+hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m0, hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m1, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
 
     if(var < 0) {
         return {var, var};
@@ -920,10 +986,24 @@ pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, map<pair<c
         }
 
         if(swapped) {
-            m1[{f, s}] += vOcc[var];
+            // m1[{f, s}] += vOcc[var];
+            pair<c_size_t, c_size_t> p = {f, s};
+
+            if(!m1.find(p)) {
+                m1.insert(p, 0);
+            }
+
+            m1.insert(p, m1[p] + vOcc[var]);
         }
         else {
-            m0[{f, s}] += vOcc[var];
+            // m0[{f, s}] += vOcc[var];
+            pair<c_size_t, c_size_t> p = {f, s};
+
+            if(!m0.find(p)) {
+                m0.insert(p, 0);
+            }
+
+            m0.insert(p, m0[p] + vOcc[var]);
         }
         // adjList.push_back(AdjListElement(f, s, swapped, vOcc[var]));
     }
@@ -934,7 +1014,9 @@ pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, map<pair<c
     return dp[var] = {lms_rms_list.front().first, lms_rms_list.back().second};
 }
 
-void computeAdjList(SLG *slg, map<pair<c_size_t, c_size_t>, c_size_t> &m0, map<pair<c_size_t, c_size_t>, c_size_t> &m1, vector<c_size_t> &vOcc) {
+void computeAdjList(SLG *slg, //map<pair<c_size_t, c_size_t>, c_size_t> &m0, map<pair<c_size_t, c_size_t>, c_size_t> &m1, vector<c_size_t> &vOcc) {
+    hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m0, hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m1, vector<c_size_t> &vOcc) {
+
     vector<pair<c_size_t, c_size_t>> dp(slg->nonterm.size(), make_pair(1, 1));
 
     computeAdjListHelper(slg->nonterm.size()-1, slg, m0, m1, dp, vOcc);
@@ -942,14 +1024,15 @@ void computeAdjList(SLG *slg, map<pair<c_size_t, c_size_t>, c_size_t> &m0, map<p
 }
 
 // Pair-Wise Compression
-SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_t, c_size_t>, c_size_t> & m) { 
+SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_size_t, c_size_t>, c_size_t> & m) { 
+    hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> & m) { 
     vector<c_size_t> vOcc;
     // Compute vOcc
     computeVOcc(slg, vOcc);
 
     // Compute AdjList
-    map<pair<c_size_t, c_size_t>, c_size_t> m0;
-    map<pair<c_size_t, c_size_t>, c_size_t> m1;
+    hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m0;
+    hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m1;
     computeAdjList(slg, m0, m1, vOcc);
     // Avoid resizing.
     vector<AdjListElement> adjList(m0.size() + m1.size());
@@ -957,28 +1040,42 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
     assert(adjList.size() != 0);
 
     c_size_t index = 0;
-    for(auto & x : m0) {
+    // for(auto & x : m0) {
+    //     adjList[index++] = AdjListElement(x.first.first, x.first.second, false, x.second);
+    // }
+    for(c_size_t i = 0; i < m0.size(); i++) {
+        pair<pair<c_size_t, c_size_t>, c_size_t> x = m0.get(i);
         adjList[index++] = AdjListElement(x.first.first, x.first.second, false, x.second);
     }
 
-    m0.clear();
+    // m0.clear();
 
-    for(auto & x : m1) {
+    // for(auto & x : m1) {
+    //     adjList[index++] = AdjListElement(x.first.first, x.first.second, true, x.second);
+    // }
+    for(c_size_t i = 0; i < m1.size(); i++) {
+        pair<pair<c_size_t, c_size_t>, c_size_t> x = m1.get(i);
         adjList[index++] = AdjListElement(x.first.first, x.first.second, true, x.second);
     }
 
-    m1.clear();
+    // m1.clear();
 
     sortAdjList(adjList);
 
     // Create Partition.
-    array<set<c_size_t>,2> arr;
-    createPartition(adjList, arr);
+    // array<set<c_size_t>,2> arr;
+    // createPartition(adjList, arr);
+    typedef c_size_t key_type;
+    typedef bool value_type;
+    typedef hash_table<key_type, value_type> hash_table_type;
+    pair<hash_table_type*, hash_table_type*> partition = createPartition(adjList);
 
     adjList.clear();  // Clear immediately
     vector<AdjListElement>().swap(adjList);  // Ensure memory is released
 
-    const set<c_size_t> &left_set = arr[0], &right_set = arr[1];
+    // const set<c_size_t> &left_set = arr[0], &right_set = arr[1];
+    const hash_table_type &left_set = *partition.first;
+    const hash_table_type &right_set = *partition.second;
 
     // Current slg non-term list
     vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
@@ -1031,10 +1128,10 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
                     rhs_expansion.push_back(global_rhs[j]);
 
                     if(j==start_index) {
-                        if(left_set.find(global_rhs[j]) != left_set.end()) {
+                        if(left_set.find(global_rhs[j]) /*!= left_set.end()*/) {
                             LB[i] = 0;
                         }
-                        else if(right_set.find(global_rhs[j]) != right_set.end()) {
+                        else if(right_set.find(global_rhs[j]) /*!= right_set.end()*/) {
                             LB[i] = global_rhs[j];
 
                             // Remove the pushed element
@@ -1042,13 +1139,13 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
                         }
                     }
                     else if(j == end_index) {
-                        if(left_set.find(global_rhs[j]) != left_set.end()) {
+                        if(left_set.find(global_rhs[j]) /*!= left_set.end()*/) {
                             RB[i] = global_rhs[j];
 
                             // Remove the pushed element
                             rhs_expansion.pop_back();
                         }
-                        else if(right_set.find(global_rhs[j]) != right_set.end()) {
+                        else if(right_set.find(global_rhs[j]) /*!= right_set.end()*/) {
                             RB[i] = 0;
                         }
                     }
@@ -1108,9 +1205,11 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
 
             for(c_size_t j=0; j<(c_size_t)rhs_expansion.size()-1; j++) {
                 if(rhs_expansion[j] < 0 && rhs_expansion[j+1] < 0) {
-                    if(left_set.find(rhs_expansion[j]) != left_set.end() && right_set.find(rhs_expansion[j+1]) != right_set.end()) {
-                        if(m.find({rhs_expansion[j], rhs_expansion[j+1]}) == m.end()) {
-                            m[{rhs_expansion[j], rhs_expansion[j+1]}] = recompression_rlslp->nonterm.size();
+                    if(left_set.find(rhs_expansion[j]) /*!= left_set.end()*/ && right_set.find(rhs_expansion[j+1]) /*!= right_set.end()*/) {
+                        // if(m.find({rhs_expansion[j], rhs_expansion[j+1]}) == m.end()) {
+                        if(!m.find(make_pair(rhs_expansion[j], rhs_expansion[j+1]))) {
+                            // m[{rhs_expansion[j], rhs_expansion[j+1]}] = recompression_rlslp->nonterm.size();
+                            m.insert(make_pair(rhs_expansion[j], rhs_expansion[j+1]), recompression_rlslp->nonterm.size());
                             recompression_rlslp->nonterm.emplace_back('1', abs(rhs_expansion[j]), abs(rhs_expansion[j+1]));
                         }
 
@@ -1140,12 +1239,12 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
             // A --> a
             // B --> b
             if(global_rhs[start_index] < 0) {
-                if(left_set.find(global_rhs[start_index]) != left_set.end()) {
+                if(left_set.find(global_rhs[start_index]) /*!= left_set.end()*/) {
                     LB[i] = 0;
                     new_slg_nonterm_vec.push_back(curr_new_rhs_size);
                     RB[i] = global_rhs[start_index];
                 }
-                else if(right_set.find(global_rhs[start_index]) != right_set.end()) {
+                else if(right_set.find(global_rhs[start_index]) /*!= right_set.end()*/) {
                     LB[i] = global_rhs[start_index];
                     new_slg_nonterm_vec.push_back(curr_new_rhs_size);
                     RB[i] = 0;
@@ -1186,10 +1285,13 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  map<pair<c_size_
         }
     }
 
-    arr[0].clear();
-    arr[1].clear();
-    set<c_size_t>().swap(arr[0]);
-    set<c_size_t>().swap(arr[1]);
+    // arr[0].clear();
+    // arr[1].clear();
+    // set<c_size_t>().swap(arr[0]);
+    // set<c_size_t>().swap(arr[1]);
+
+    delete partition.first;
+    delete partition.second;
 
     const c_size_t &start_var = slg_nonterm_vec.size()-1;
 
@@ -1245,8 +1347,6 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
     RecompressionRLSLP* recompression_rlslp = new RecompressionRLSLP();
 
-    map<pair<c_size_t, c_size_t>, c_size_t> m;
-
     // For 0.
     recompression_rlslp->nonterm.emplace_back();
 
@@ -1281,6 +1381,8 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     double max_BComp_time = 0;
     double max_PComp_time = 0;
     while(++i) {
+        // map<pair<c_size_t, c_size_t>, c_size_t> m;
+        hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m;
 
         const vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
 
@@ -1300,7 +1402,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         }
 
         if(i&1) {
-            // cout << i << " BComp \n";
+            // cout << i << " BComp \n" << flush;
             auto start_time = std::chrono::high_resolution_clock::now();
 
             slg = BComp(slg, recompression_rlslp, m);
@@ -1312,7 +1414,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             max_BComp_time = max(max_BComp_time, duration_seconds);
         }
         else {
-            // cout << i << " PComp \n";
+            // cout << i << " PComp \n" << flush;
             auto start_time = std::chrono::high_resolution_clock::now();
 
             slg = PComp(slg, recompression_rlslp, m);
@@ -1324,8 +1426,8 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             max_PComp_time = max(max_PComp_time, duration_seconds);
         }
 
-        m.clear();
-        // printSLG(slg);
+        // m.clear();
+        m.reset();
         // printRecompressionRLSLP(recompression_rlslp);
     }
 
