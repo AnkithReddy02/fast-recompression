@@ -89,6 +89,44 @@ class space_efficient_vector {
       m_blocks[0] = utils::allocate_array<value_type>(m_block_size);
     }
 
+    space_efficient_vector(const std::uint64_t &initial_size, const value_type &initial_val) {
+        m_size = initial_size;
+        m_block_size_log = 0;
+        m_block_size_mask = 0;
+        m_block_size = initial_size;
+        m_allocated_blocks = 1;
+        m_cur_block_filled = initial_size;
+        m_cur_block_id = 0;
+        m_blocks = utils::allocate_array<value_type*>(max_blocks);
+        m_blocks[0] = utils::allocate_array<value_type>(m_block_size);
+
+        for(std::uint64_t i = 0; i < initial_size; ++i) {
+            m_blocks[0][i] = initial_val;
+        }
+    }
+
+    // Efficient? or divide into blocks?
+    space_efficient_vector(const std::uint64_t &initial_size) {
+        m_size = initial_size;
+        m_block_size_log = 0;
+        m_block_size_mask = 0;
+        m_block_size = initial_size;
+        m_allocated_blocks = 1;
+        m_cur_block_filled = initial_size;
+        m_cur_block_id = 0;
+        m_blocks = utils::allocate_array<value_type*>(max_blocks);
+        m_blocks[0] = utils::allocate_array<value_type>(m_block_size);
+    }
+
+    // Efficient? or divide into blocks?
+    // Copy Constructor
+    space_efficient_vector(const space_efficient_vector<value_type> &vec) : space_efficient_vector(vec.size()){
+        assert(m_size == vec.size());
+        for(std::uint64_t i = 0; i < m_size; ++i) {
+            m_blocks[0][i] = vec[i];
+        }
+    }
+
     //=========================================================================
     // Destructor.
     //=========================================================================
@@ -176,6 +214,26 @@ class space_efficient_vector {
       ++m_size;
     }
 
+    void reserve(const std::uint64_t &size_requested) {
+        m_size = 0;
+        m_block_size_log = 0;
+        m_block_size_mask = 0;
+        m_block_size = size_requested;
+        m_allocated_blocks = 1;
+        m_cur_block_filled = 0;
+        m_cur_block_id = 0;
+        m_blocks = utils::allocate_array<value_type*>(max_blocks);
+        m_blocks[0] = utils::allocate_array<value_type>(m_block_size);
+    }
+
+    inline value_type& front() {
+      return m_blocks[0][0];
+    }
+
+    inline const value_type& front() const {
+      return m_blocks[0][0];
+    }
+
     //=========================================================================
     // Return the reference to the last element.
     //=========================================================================
@@ -194,8 +252,10 @@ class space_efficient_vector {
     // Access operator.
     //=========================================================================
     inline value_type& operator[] (const std::uint64_t i) {
-      const std::uint64_t block_id = (i >> m_block_size_log);
-      const std::uint64_t block_offset = (i & m_block_size_mask);
+    //   const std::uint64_t block_id = (i >> m_block_size_log);
+    //   const std::uint64_t block_offset = (i & m_block_size_mask);
+      const std::uint64_t block_id = (i / m_block_size);
+      const std::uint64_t block_offset = (i % m_block_size);
       return m_blocks[block_id][block_offset];
     }
 
@@ -203,8 +263,10 @@ class space_efficient_vector {
     // Access operator.
     //=========================================================================
     inline const value_type& operator[] (const std::uint64_t i) const {
-      const std::uint64_t block_id = (i >> m_block_size_log);
-      const std::uint64_t block_offset = (i & m_block_size_mask);
+    //   const std::uint64_t block_id = (i >> m_block_size_log);
+    //   const std::uint64_t block_offset = (i & m_block_size_mask);
+      const std::uint64_t block_id = (i / m_block_size);
+      const std::uint64_t block_offset = (i % m_block_size);
       return m_blocks[block_id][block_offset];
     }
 
