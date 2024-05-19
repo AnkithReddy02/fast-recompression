@@ -136,7 +136,7 @@ void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, cons
                     if(!m.find(p)) {
                         // m[p] = recompression_rlslp->nonterm.size();
                         m.insert(p, recompression_rlslp->nonterm.size());
-                        recompression_rlslp->nonterm.emplace_back('2', abs(p.first), p.second);
+                        recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(p.first), p.second));
                     }
                     
                     //  ** Negative **
@@ -162,7 +162,7 @@ void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, cons
         if(!m.find(p)) {    
             // m[p] = recompression_rlslp->nonterm.size();
             m.insert(p, recompression_rlslp->nonterm.size());
-            recompression_rlslp->nonterm.emplace_back('2', abs(p.first), p.second);
+            recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(p.first), p.second));
         }
         
         //  ** Negative **
@@ -248,7 +248,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
 
             // Single Terminal
             if(rhs_symbol < 0) {
-                rhs_expansion.emplace_back(rhs_symbol, 1);
+                rhs_expansion.push_back(make_pair(rhs_symbol, 1));
                 continue;
             }
 
@@ -275,7 +275,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
            
             // Cap is not empty --> in new SLG the variable(rhs_symbol) RHS is not empty --> then Cap is not empty.
             if(rhs_symbol_start_index <= rhs_symbol_end_index) {
-                rhs_expansion.emplace_back(rhs_symbol, 0);
+                rhs_expansion.push_back(make_pair(rhs_symbol, 0));
             }
 
             // **RR** of a current variable(rhs_symbol) in current RHS is **not empty**.
@@ -414,7 +414,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
             if(!m.find(start_var_LR)) {
                 // m[start_var_LR] = recompression_rlslp->nonterm.size();
                 m.insert(start_var_LR, recompression_rlslp->nonterm.size());
-                recompression_rlslp->nonterm.emplace_back('2', abs(start_var_LR.first), start_var_LR.second);
+                recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(start_var_LR.first), start_var_LR.second));
             }
             new_rhs.push_back(-m[start_var_LR]);
         }
@@ -436,7 +436,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
             if(!m.find(start_var_RR)) {
                 // m[start_var_RR] = recompression_rlslp->nonterm.size();
                 m.insert(start_var_RR, recompression_rlslp->nonterm.size());
-                recompression_rlslp->nonterm.emplace_back('2', abs(start_var_RR.first), start_var_RR.second);
+                recompression_rlslp->nonterm.push_back(RLSLPNonterm('2', abs(start_var_RR.first), start_var_RR.second));
             }
             new_rhs.push_back(-m[start_var_RR]);
         }
@@ -1210,7 +1210,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
                         if(!m.find(make_pair(rhs_expansion[j], rhs_expansion[j+1]))) {
                             // m[{rhs_expansion[j], rhs_expansion[j+1]}] = recompression_rlslp->nonterm.size();
                             m.insert(make_pair(rhs_expansion[j], rhs_expansion[j+1]), recompression_rlslp->nonterm.size());
-                            recompression_rlslp->nonterm.emplace_back('1', abs(rhs_expansion[j]), abs(rhs_expansion[j+1]));
+                            recompression_rlslp->nonterm.push_back(RLSLPNonterm('1', abs(rhs_expansion[j]), abs(rhs_expansion[j+1])));
                         }
 
                         new_rhs.push_back(-m[{rhs_expansion[j], rhs_expansion[j+1]}]);
@@ -1348,7 +1348,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     RecompressionRLSLP* recompression_rlslp = new RecompressionRLSLP();
 
     // For 0.
-    recompression_rlslp->nonterm.emplace_back();
+    recompression_rlslp->nonterm.push_back(RLSLPNonterm());
 
     // Compute S0 from S and Initialize Recompression
     for(c_size_t i=0; i<s->nonterm.size(); i++) {
@@ -1363,7 +1363,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             // Initially, -1 = recompression_rlslp->nonterm size.
             slg->rhs.push_back(-(c_size_t)(recompression_rlslp->nonterm).size());
             // Here first is the ASCII values of the character.
-            recompression_rlslp->nonterm.emplace_back('0', first, second);
+            recompression_rlslp->nonterm.push_back(RLSLPNonterm('0', first, second));
         }
         else {
             slg->rhs.push_back(first);
@@ -1505,20 +1505,18 @@ InputSLP* getSLP(c_size_t grammar_size) {
 }
 
 vector<pair<c_size_t, c_size_t>> get_random_queries(c_size_t text_size) {
-    // Create a vector to store the pairs
     vector<pair<c_size_t, c_size_t>> pairs;
-    pairs.reserve(1000000); // Reserve space for 4096 pairs to avoid reallocation
+    pairs.reserve(1000000); 
 
-    // Random number generation setup
-    random_device rd;  // Obtain a random number from hardware
-    mt19937 gen(rd()); // Seed the generator
+    random_device rd; 
+    mt19937 gen(rd());
     uniform_int_distribution<> distrib(0, text_size - 1);
 
     // Generate 4096 pairs
     for (c_size_t i = 0; i < 1000000; ++i) {
         c_size_t first = distrib(gen);
         c_size_t second = distrib(gen);
-        pairs.emplace_back(first, second); // Emplace pair into the vector
+        pairs.push_back(make_pair(first, second));
     }
 
     return pairs;
