@@ -228,6 +228,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
     space_efficient_vector<pair<c_size_t, c_size_t>> large_LR_vec;
     space_efficient_vector<pair<c_size_t, c_size_t>> large_RR_vec;
 
+    space_efficient_vector<pair<c_size_t, c_size_t>> rhs_expansion;
+
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
     for(c_size_t i = 0; i < grammar_size; i++) {
@@ -246,7 +248,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
         }
 
         // Create the expansion of RHS.
-        space_efficient_vector<pair<c_size_t, c_size_t>> rhs_expansion;
+        // space_efficient_vector<pair<c_size_t, c_size_t>> rhs_expansion;
+        rhs_expansion.set_empty();
      
         // Compute the Expansion.
         for(c_size_t j = start_index; j <= end_index; j++) {
@@ -597,6 +600,8 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     space_efficient_vector<c_size_t> curr_index(slg_nonterm_vec.size(), -1);
     // space_efficient_vector<pair<c_size_t, c_size_t>> edges;
 
+    hash_table<c_size_t, bool> unique_var;
+
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
 
         // Current SLGNonterm
@@ -607,8 +612,9 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
         c_size_t curr_rhs_size = end_index - start_index + 1;
 
-        set<c_size_t> unique_var;
+        // set<c_size_t> unique_var;
         // hash_table<c_size_t, bool> unique_var;
+        unique_var.reset();
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
@@ -616,15 +622,15 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
-                unique_var.insert(var);
-                // unique_var.insert(var, true);
+                // unique_var.insert(var);
+                unique_var.insert(var, true);
             }
         }
 
         // Construct Edges.
-        for(const auto & v : unique_var) {
-        // for(c_size_t i = 0; i < unique_var.size(); ++i) {
-            // c_size_t v = unique_var.get(i).first;
+        // for(const auto & v : unique_var) {
+        for(c_size_t i = 0; i < unique_var.size(); ++i) {
+            c_size_t v = unique_var.get(i).first;
             // Weighted Edge from v to u , v --> u
             if(curr_index[v]==-1) curr_index[v] = 0;
             curr_index[v]++;
@@ -644,6 +650,8 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     // edges.resize(prefix_sum);
     space_efficient_vector<pair<c_size_t, c_size_t>> edges(prefix_sum);
 
+    hash_table<c_size_t, c_size_t, c_size_t> var_freq;
+
     // Enumerate Each Production Rule.
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
         // Current SLGNonterm
@@ -654,8 +662,9 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
         c_size_t curr_rhs_size = end_index - start_index + 1;
 
-        unordered_map<c_size_t, c_size_t> var_freq;
+        // unordered_map<c_size_t, c_size_t> var_freq;
         // hash_table<c_size_t, c_size_t, c_size_t> var_freq;
+        var_freq.reset();
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
@@ -664,18 +673,18 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
-                var_freq[var]++;
-                // if(!var_freq.find(var)) {
-                //     var_freq.insert(var, 0);
-                // }
-                // var_freq.insert(var, var_freq[var] + 1);
+                // var_freq[var]++;
+                if(!var_freq.find(var)) {
+                    var_freq.insert(var, 0);
+                }
+                var_freq.insert(var, var_freq[var] + 1);
             }
         }
 
         // Construct Edges.
-        for(const auto & x : var_freq) {
-        // for(c_size_t j = 0; j < var_freq.size(); ++j) {
-            // auto x = var_freq.get(j); 
+        // for(const auto & x : var_freq) {
+        for(c_size_t j = 0; j < var_freq.size(); ++j) {
+            auto x = var_freq.get(j); 
 
             // edge from v to u, u <-- v
             const c_size_t &u = i;
@@ -1145,6 +1154,8 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
     space_efficient_vector<c_size_t> LB(slg_nonterm_vec.size(), 0), RB(slg_nonterm_vec.size(), 0);
 
+    space_efficient_vector<c_size_t> rhs_expansion;
+
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
@@ -1167,7 +1178,8 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
         }
         if((c_size_t)curr_rhs_size >= 2) {
 
-            space_efficient_vector<c_size_t> rhs_expansion;
+            // space_efficient_vector<c_size_t> rhs_expansion;
+            rhs_expansion.set_empty();
 
             // Expanding RHS.
             for(c_size_t j=start_index; j<=end_index; j++) {
@@ -1431,9 +1443,12 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
     double max_BComp_time = 0;
     double max_PComp_time = 0;
+
+    hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m;
+    
     while(++i) {
         // map<pair<c_size_t, c_size_t>, c_size_t> m;
-        hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m;
+        // hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m;
 
         const space_efficient_vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
 
