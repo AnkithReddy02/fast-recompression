@@ -48,6 +48,14 @@ struct packed_pair {
     return (first == p.first) && (second == p.second);
   }
 
+  inline bool operator < (const pair_type &p) const {
+    return (first < p.first) || (first == p.first && second < p.second);
+  }
+
+  inline bool operator <= (const pair_type &p) const {
+    return !(p < *this);
+  }
+
   S first;
   T second;
 } __attribute__((packed));
