@@ -695,10 +695,13 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
             // Only Non-Terminals
             if(var >= 0) {
                 // var_freq[var]++;
-                if(!var_freq.find(var)) {
+                /*if(!var_freq.find(var)) {
                     var_freq.insert(var, 0);
                 }
-                var_freq.insert(var, var_freq[var] + 1);
+                var_freq.insert(var, var_freq[var] + 1);*/
+                c_size_t *freq = var_freq.find(var);
+                if (!freq) var_freq.insert(var, 1);
+                else *freq += 1;
             }
         }
 
