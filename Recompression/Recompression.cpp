@@ -1614,8 +1614,8 @@ InputSLP* getSLP(c_size_t grammar_size) {
     return slp;
 }
 
-space_efficient_vector<pair<c_size_t, c_size_t>> get_random_queries(c_size_t text_size) {
-    space_efficient_vector<pair<c_size_t, c_size_t>> pairs;
+void get_random_queries(c_size_t text_size,
+    space_efficient_vector<pair<c_size_t, c_size_t>> &pairs) {
     // pairs.reserve(1000000); 
 
     random_device rd; 
@@ -1628,8 +1628,6 @@ space_efficient_vector<pair<c_size_t, c_size_t>> get_random_queries(c_size_t tex
         c_size_t second = distrib(gen);
         pairs.push_back(make_pair(first, second));
     }
-
-    return pairs;
 }
 
 
@@ -1668,7 +1666,8 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_eff
 
     cout << "Text Matched!" << endl;
 
-    space_efficient_vector<pair<c_size_t, c_size_t>> random_queries = get_random_queries(text_size);
+    space_efficient_vector<pair<c_size_t, c_size_t>> random_queries;
+    get_random_queries(text_size, random_queries);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
