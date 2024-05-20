@@ -218,6 +218,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
 
     // New SLG non-term list that new_slg needs.
     space_efficient_vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
+    new_slg_nonterm_vec.reserve(slg_nonterm_vec.size() + 1);
     space_efficient_vector<c_size_t> new_rhs;
 
     const c_size_t &grammar_size = slg_nonterm_vec.size();
@@ -1148,7 +1149,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
     // New SLG non-term list that new_slg needs.
     space_efficient_vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
-
+    new_slg_nonterm_vec.reserve(slg_nonterm_vec.size() + 1);
     // New RHS
     space_efficient_vector<c_size_t> new_rhs;
 
