@@ -8,10 +8,13 @@
 #include "typedefs.hpp"
 #include "packed_pair.hpp"
 #include "hash_table.hpp"
+#include "utils.hpp"
 
 // #define TEST_SAMPLE
+// #define DEBUG_LOG
 
 using namespace std;
+using namespace utils;
 
 template<>
 std::uint64_t get_hash(const std::pair<c_size_t, c_size_t> &x) {
@@ -106,7 +109,7 @@ vector<pair<c_size_t, c_size_t>> combineFrequenciesInRange(const vector<pair<c_s
 }
 #endif
 
-void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<SLGNonterm> &new_slg_nonterm_vec, /* map<pair<c_size_t, c_size_t>, c_size_t> &m */hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m, RecompressionRLSLP *recompression_rlslp, vector<c_size_t> &new_rhs) {
+void combineFrequenciesInRange(const space_efficient_vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, space_efficient_vector<SLGNonterm> &new_slg_nonterm_vec, /* map<pair<c_size_t, c_size_t>, c_size_t> &m */hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m, RecompressionRLSLP *recompression_rlslp, space_efficient_vector<c_size_t> &new_rhs) {
     // Check if vector is empty
     if (vec.empty() || lr_pointer > rr_pointer) {
         new_slg_nonterm_vec.push_back((c_size_t)new_rhs.size());
@@ -178,7 +181,7 @@ void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, cons
 }
 
 template <typename T>
-c_size_t lower_bound(const vector<T> &vec, const T &search_element) {
+c_size_t lower_bound(const space_efficient_vector<T> &vec, const T &search_element) {
     c_size_t low = 0;
     c_size_t high = vec.size() - 1;
 
@@ -205,29 +208,33 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
     hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> & m) {
 
     // Current slg non-term list
-    vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
+    space_efficient_vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
     // Global RHS
-    vector<c_size_t> &global_rhs = slg->rhs;
+    space_efficient_vector<c_size_t> &global_rhs = slg->rhs;
 
     // // New SLG that needs to be created by applying BComp
     // SLG *new_slg = new SLG();
 
     // New SLG non-term list that new_slg needs.
-    vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
-    vector<c_size_t> new_rhs;
+    space_efficient_vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
+    space_efficient_vector<c_size_t> new_rhs;
 
     const c_size_t &grammar_size = slg_nonterm_vec.size();
 
-    vector<packed_pair<c_size_t, char_t>> LR_vec(grammar_size, packed_pair<c_size_t, char_t>(-1,0));
-    vector<packed_pair<c_size_t, char_t>> RR_vec(grammar_size, packed_pair<c_size_t, char_t>(-1,0));
+    space_efficient_vector<packed_pair<c_size_t, char_t>> LR_vec(grammar_size, packed_pair<c_size_t, char_t>(-1,0));
+    space_efficient_vector<packed_pair<c_size_t, char_t>> RR_vec(grammar_size, packed_pair<c_size_t, char_t>(-1,0));
 
-    vector<pair<c_size_t, c_size_t>> large_LR_vec;
-    vector<pair<c_size_t, c_size_t>> large_RR_vec;
+    space_efficient_vector<pair<c_size_t, c_size_t>> large_LR_vec;
+    space_efficient_vector<pair<c_size_t, c_size_t>> large_RR_vec;
 
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
     for(c_size_t i = 0; i < grammar_size; i++) {
+        #ifdef DEBUG_LOG
+        cout << fixed << setprecision(2) << "Progress: " << ((i+1)*(long double)100)/grammar_size << '\r' << flush;
+        #endif
+
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
         c_size_t start_index = slg_nonterm.start_index;
@@ -239,7 +246,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
         }
 
         // Create the expansion of RHS.
-        vector<pair<c_size_t, c_size_t>> rhs_expansion;
+        space_efficient_vector<pair<c_size_t, c_size_t>> rhs_expansion;
      
         // Compute the Expansion.
         for(c_size_t j = start_index; j <= end_index; j++) {
@@ -365,6 +372,9 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
             combineFrequenciesInRange(rhs_expansion, lr_pointer, rr_pointer, new_slg_nonterm_vec, m, recompression_rlslp, new_rhs);
         }
     }
+    #ifdef DEBUG_LOG
+    cout << endl;
+    #endif
 
     // Add new Starting Variable to the new Grammar G'(G Prime).
     const c_size_t &start_var = slg_nonterm_vec.size()-1;
@@ -537,7 +547,7 @@ vector<AdjListElement> computeAdjList(SLG *slg, vector<c_size_t> &vOcc) {
 }
 #endif
 
-c_size_t computeVOccHelper(vector<pair<c_size_t, c_size_t>> & edges, vector<c_size_t> &curr_index, vector<bool_t> &have_edges, c_size_t u, vector<c_size_t> & dp) {
+c_size_t computeVOccHelper(space_efficient_vector<pair<c_size_t, c_size_t>> & edges, space_efficient_vector<c_size_t> &curr_index, space_efficient_vector<bool_t> &have_edges, c_size_t u, space_efficient_vector<c_size_t> & dp) {
 
     // Base Case : Target is Reached / Target is Same as the current node.
     if(u == curr_index.size()-1) {
@@ -576,16 +586,16 @@ c_size_t computeVOccHelper(vector<pair<c_size_t, c_size_t>> & edges, vector<c_si
     return dp[u] = num_paths;
 }
 
-void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
+void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
     // Here, any list size is slg_nonterm_vec.size()
-    vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
-    vector<c_size_t> &global_rhs = slg->rhs;
+    space_efficient_vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
+    space_efficient_vector<c_size_t> &global_rhs = slg->rhs;
 
     // Create Reverse Graph.
     // vector<vector<pair<c_size_t,c_size_t>>> graph(slg_nonterm_vec.size(), vector<pair<c_size_t, c_size_t>>());
-    vector<c_size_t> curr_index(slg_nonterm_vec.size(), -1);
-    vector<pair<c_size_t, c_size_t>> edges;
+    space_efficient_vector<c_size_t> curr_index(slg_nonterm_vec.size(), -1);
+    // space_efficient_vector<pair<c_size_t, c_size_t>> edges;
 
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
 
@@ -631,7 +641,8 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
         }
     }
 
-    edges.resize(prefix_sum);
+    // edges.resize(prefix_sum);
+    space_efficient_vector<pair<c_size_t, c_size_t>> edges(prefix_sum);
 
     // Enumerate Each Production Rule.
     for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
@@ -680,7 +691,7 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
         }
     }
 
-    vector<bool_t> have_edges(curr_index.size(), false);
+    space_efficient_vector<bool_t> have_edges(curr_index.size(), false);
 
     for(c_size_t i=curr_index.size()-1; i>=0; i--) {
 
@@ -698,12 +709,19 @@ void computeVOcc(SLG *slg, vector<c_size_t> &dp) {
     }
 
     // Store VOcc.
-    dp.resize(slg_nonterm_vec.size(), -1);
+    // dp.resize(slg_nonterm_vec.size(), -1);
 
     // Compute vOcc.
     for(c_size_t i = slg_nonterm_vec.size() - 1; i >= 0; i--) {
+        #ifdef DEBUG_LOG
+        cout << fixed << setprecision(2) << "  VOcc Progress: " << (slg_nonterm_vec.size() - i) * (double)100/(slg_nonterm_vec.size()) << '\r';
+        #endif
         computeVOccHelper(edges, curr_index, have_edges, i, dp);
     }
+
+    #ifdef DEBUG_LOG
+        cout << endl;
+    #endif
 
     return;
 }
@@ -716,7 +734,7 @@ bool AdjListElementCompare(const AdjListElement &a, const AdjListElement &b) {
     return a.second < b.second;
 }
 
-void sortAdjList(vector<AdjListElement> & adjList) {
+void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
 
     // Make Positive
     // for(array<int, 4> & a : adjList) {
@@ -724,25 +742,35 @@ void sortAdjList(vector<AdjListElement> & adjList) {
     //     a[1] = -a[1];
     // }
 
-    for(AdjListElement & a : adjList) {
-        a.first = -a.first;
-        a.second = -a.second;
+    // for(AdjListElement & a : adjList) {
+    //     a.first = -a.first;
+    //     a.second = -a.second;
+    // }
+
+    for(c_size_t i = 0; i < adjList.size(); ++i) {
+        adjList[i].first = -adjList[i].first;
+        adjList[i].second = -adjList[i].second;
     }
 
     // Sort It.
-    // radixSort(adjList);
-    sort(adjList.begin(), adjList.end(), AdjListElementCompare);
+    radixSort(adjList);
+    // sort(adjList.begin(), adjList.end(), AdjListElementCompare);
 
 
     // Revert to Negative
-    for(AdjListElement & a : adjList) {
-        a.first = -a.first;
-        a.second = -a.second;
+    // for(AdjListElement & a : adjList) {
+    //     a.first = -a.first;
+    //     a.second = -a.second;
+    // }
+
+    for(c_size_t i = 0; i < adjList.size(); ++i) {
+        adjList[i].first = -adjList[i].first;
+        adjList[i].second = -adjList[i].second;
     }
 }
 
 // void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>, 2> &partition_set) {
-pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *> createPartition(const vector<AdjListElement> & adjList) {
+pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *> createPartition(const space_efficient_vector<AdjListElement> & adjList) {
 
     // // Make Positive
     // for(array<int, 4> & a : adjList) {
@@ -807,7 +835,10 @@ pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *> createPartition
         }
     */
 
-    for(const AdjListElement & arr : adjList) {
+    // for(const AdjListElement & arr : adjList) {
+    for(c_size_t i = 0; i < adjList.size(); ++i) {
+        const AdjListElement & arr = adjList[i];
+
         c_size_t f = arr.first;
         c_size_t s = arr.second;
 
@@ -926,7 +957,7 @@ array<set<c_size_t>, 2> createPartition(const vector<array<c_size_t, 4>> & adjLi
 
 // MAP USAGE
 pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, //map<pair<c_size_t, c_size_t>, c_size_t> &m0, map<pair<c_size_t, c_size_t>, c_size_t> &m1, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
-hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m0, hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m1, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
+hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m0, hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m1, space_efficient_vector<pair<c_size_t, c_size_t>> & dp, space_efficient_vector<c_size_t> &vOcc) {
 
     if(var < 0) {
         return {var, var};
@@ -942,8 +973,8 @@ hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m0, hash_table<pair<c_
     */
     SLGNonterm &slg_nonterm = slg->nonterm[var];
 
-    const vector<c_size_t> & global_rhs = slg->rhs;
-    vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
+    const space_efficient_vector<c_size_t> & global_rhs = slg->rhs;
+    space_efficient_vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
     c_size_t start_index = slg_nonterm.start_index;
     c_size_t end_index = (var == slg_nonterm_vec.size()-1) ? (c_size_t)global_rhs.size()-1 : slg_nonterm_vec[var+1].start_index - 1;
@@ -963,7 +994,7 @@ hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m0, hash_table<pair<c_
         // return dp[var] = {rhs[0], rhs[0]};
     }
     
-    vector<pair<c_size_t, c_size_t>> lms_rms_list;
+    space_efficient_vector<pair<c_size_t, c_size_t>> lms_rms_list;
 
     
 
@@ -1015,9 +1046,9 @@ hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m0, hash_table<pair<c_
 }
 
 void computeAdjList(SLG *slg, //map<pair<c_size_t, c_size_t>, c_size_t> &m0, map<pair<c_size_t, c_size_t>, c_size_t> &m1, vector<c_size_t> &vOcc) {
-    hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m0, hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m1, vector<c_size_t> &vOcc) {
+    hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m0, hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m1, space_efficient_vector<c_size_t> &vOcc) {
 
-    vector<pair<c_size_t, c_size_t>> dp(slg->nonterm.size(), make_pair(1, 1));
+    space_efficient_vector<pair<c_size_t, c_size_t>> dp(slg->nonterm.size(), make_pair(1, 1));
 
     computeAdjListHelper(slg->nonterm.size()-1, slg, m0, m1, dp, vOcc);
     return;
@@ -1026,16 +1057,25 @@ void computeAdjList(SLG *slg, //map<pair<c_size_t, c_size_t>, c_size_t> &m0, map
 // Pair-Wise Compression
 SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_size_t, c_size_t>, c_size_t> & m) { 
     hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> & m) { 
-    vector<c_size_t> vOcc;
+    space_efficient_vector<c_size_t> vOcc(slg->nonterm.size(), -1);
+
+    #ifdef DEBUG_LOG
+    cout << "Computing VOcc..." << endl;
+    #endif
+
     // Compute vOcc
     computeVOcc(slg, vOcc);
+
+    #ifdef DEBUG_LOG
+    cout << "Computing AdjList..." << endl;
+    #endif
 
     // Compute AdjList
     hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m0;
     hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m1;
     computeAdjList(slg, m0, m1, vOcc);
     // Avoid resizing.
-    vector<AdjListElement> adjList(m0.size() + m1.size());
+    space_efficient_vector<AdjListElement> adjList(m0.size() + m1.size());
 
     assert(adjList.size() != 0);
 
@@ -1059,8 +1099,14 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
     }
 
     // m1.clear();
-
+    #ifdef DEBUG_LOG
+    cout << "Sorting AdjList..." << endl;
+    #endif
     sortAdjList(adjList);
+
+    #ifdef DEBUG_LOG
+    cout << "Computing Partition..." << endl;
+    #endif
 
     // Create Partition.
     // array<set<c_size_t>,2> arr;
@@ -1070,29 +1116,34 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
     typedef hash_table<key_type, value_type> hash_table_type;
     pair<hash_table_type*, hash_table_type*> partition = createPartition(adjList);
 
-    adjList.clear();  // Clear immediately
-    vector<AdjListElement>().swap(adjList);  // Ensure memory is released
+    #ifdef DEBUG_LOG
+    cout << "Performing PComp..." << endl;
+    #endif
+
+    // adjList.clear();  // Clear immediately
+    // vector<AdjListElement>().swap(adjList);  // Ensure memory is released
+    adjList.clear();
 
     // const set<c_size_t> &left_set = arr[0], &right_set = arr[1];
     const hash_table_type &left_set = *partition.first;
     const hash_table_type &right_set = *partition.second;
 
     // Current slg non-term list
-    vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
+    space_efficient_vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
 
     // Current rhs
-    vector<c_size_t> &global_rhs = slg->rhs;
+    space_efficient_vector<c_size_t> &global_rhs = slg->rhs;
 
     // New SLG that needs to be created by applying BComp
     // SLG *new_slg = new SLG();
 
     // New SLG non-term list that new_slg needs.
-    vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
+    space_efficient_vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
 
     // New RHS
-    vector<c_size_t> new_rhs;
+    space_efficient_vector<c_size_t> new_rhs;
 
-    vector<c_size_t> LB(slg_nonterm_vec.size(), 0), RB(slg_nonterm_vec.size(), 0);
+    space_efficient_vector<c_size_t> LB(slg_nonterm_vec.size(), 0), RB(slg_nonterm_vec.size(), 0);
 
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
@@ -1116,7 +1167,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
         }
         if((c_size_t)curr_rhs_size >= 2) {
 
-            vector<c_size_t> rhs_expansion;
+            space_efficient_vector<c_size_t> rhs_expansion;
 
             // Expanding RHS.
             for(c_size_t j=start_index; j<=end_index; j++) {
@@ -1384,9 +1435,9 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         // map<pair<c_size_t, c_size_t>, c_size_t> m;
         hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m;
 
-        const vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
+        const space_efficient_vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
 
-        const vector<c_size_t> &global_rhs = slg->rhs;
+        const space_efficient_vector<c_size_t> &global_rhs = slg->rhs;
 
         const SLGNonterm &slg_nonterm = slg_nonterm_vec.back();
 
@@ -1402,7 +1453,9 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         }
 
         if(i&1) {
-            // cout << i << " BComp \n" << flush;
+            #ifdef DEBUG_LOG
+            cout << '\n' << i << " : Starting BComp..." << endl;
+            #endif
             auto start_time = std::chrono::high_resolution_clock::now();
 
             slg = BComp(slg, recompression_rlslp, m);
@@ -1414,7 +1467,10 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             max_BComp_time = max(max_BComp_time, duration_seconds);
         }
         else {
-            // cout << i << " PComp \n" << flush;
+            #ifdef DEBUG_LOG
+            cout << '\n' << i << " : Starting PComp..." << endl;
+            #endif
+
             auto start_time = std::chrono::high_resolution_clock::now();
 
             slg = PComp(slg, recompression_rlslp, m);
@@ -1431,16 +1487,17 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         // printRecompressionRLSLP(recompression_rlslp);
     }
 
+    cout << endl;
     cout << "Runs: " << i << endl << endl;
-    cout << "Max. BComp Time: " << max_BComp_time << endl;
-    cout << "Max. PComp TIme: " << max_PComp_time << endl;
+    cout << "Max. BComp Time: " << max_BComp_time << " seconds" << endl;
+    cout << "Max. PComp TIme: " << max_PComp_time << " seconds" << endl << endl;
 
     delete slg;
 
     return recompression_rlslp;
 }
 
-c_size_t computeExplen(const c_size_t i, vector<RLSLPNonterm>& rlslp_nonterm_vec) {
+c_size_t computeExplen(const c_size_t i, space_efficient_vector<RLSLPNonterm>& rlslp_nonterm_vec) {
     // Check if already computed
     if (rlslp_nonterm_vec[i].explen != 0) {
         return rlslp_nonterm_vec[i].explen;
@@ -1465,7 +1522,7 @@ c_size_t computeExplen(const c_size_t i, vector<RLSLPNonterm>& rlslp_nonterm_vec
 
 InputSLP* getSLP(c_size_t grammar_size) {
 
-    vector<SLPNonterm> nonterm;
+    space_efficient_vector<SLPNonterm> nonterm;
     
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     srand(seed);
@@ -1504,9 +1561,9 @@ InputSLP* getSLP(c_size_t grammar_size) {
     return slp;
 }
 
-vector<pair<c_size_t, c_size_t>> get_random_queries(c_size_t text_size) {
-    vector<pair<c_size_t, c_size_t>> pairs;
-    pairs.reserve(1000000); 
+space_efficient_vector<pair<c_size_t, c_size_t>> get_random_queries(c_size_t text_size) {
+    space_efficient_vector<pair<c_size_t, c_size_t>> pairs;
+    // pairs.reserve(1000000); 
 
     random_device rd; 
     mt19937 gen(rd());
@@ -1523,9 +1580,10 @@ vector<pair<c_size_t, c_size_t>> get_random_queries(c_size_t text_size) {
 }
 
 
-void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RLSLPNonterm> & rlslp_nonterm_vec, const string &raw_input_text) {
+void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec, const string &raw_input_text) {
 
-    vector<c_size_t> arr = expandRLSLP(recompression_rlslp);
+    space_efficient_vector<c_size_t> arr;
+    expandRLSLP(recompression_rlslp, arr);
 
     ifstream file(raw_input_text);
 
@@ -1534,7 +1592,7 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RL
         exit(1);
     }
 
-    vector<c_size_t> text;
+    space_efficient_vector<c_size_t> text;
 
     char ch;
     while (file.get(ch)) {
@@ -1557,11 +1615,13 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RL
 
     cout << "Text Matched!" << endl;
 
-    vector<pair<c_size_t, c_size_t>> random_queries = get_random_queries(text_size);
+    space_efficient_vector<pair<c_size_t, c_size_t>> random_queries = get_random_queries(text_size);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    for(auto x : random_queries) {
+    // for(auto x : random_queries) {
+    for(c_size_t k = 0; k < random_queries.size(); ++k) {
+        const auto& x = random_queries[k];
 
         c_size_t i = x.first;
         c_size_t j = x.second;
@@ -1618,6 +1678,9 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, vector<RL
 }
 
 void start_compression(const string &input_file, const string &raw_input_text) {
+
+    initialize_stats();
+
     InputSLP *inputSLP = new InputSLP();
     inputSLP->read_from_file(input_file);
 
@@ -1628,13 +1691,16 @@ void start_compression(const string &input_file, const string &raw_input_text) {
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
+    
+
     RecompressionRLSLP *recompression_rlslp = recompression_on_slp(inputSLP);
 
-    vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
+    space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
 
     for(c_size_t i=rlslp_nonterm_vec.size()-1; i>=1; i--) {
         computeExplen(i, rlslp_nonterm_vec);
     }
+
 
     auto end_time = std::chrono::high_resolution_clock::now();
 
@@ -1646,11 +1712,19 @@ void start_compression(const string &input_file, const string &raw_input_text) {
     // // printRecompressionRLSLP(recompression_rlslp);
     c_size_t text_size = rlslp_nonterm_vec.back().explen;
 
-    cout << "Text Size : " << text_size << endl;
+    cout << "Text Size : " << text_size << endl << endl;
+
+    cout << "****************" << endl;
+    cout << "Peak RAM usage for Construction: " << get_peak_ram_allocation()/(1024.0 * 1024.0) << " MB" << endl;
+    cout << "****************" << endl << endl;
 
     // TEST
     if(!raw_input_text.empty())
     test(text_size, recompression_rlslp, rlslp_nonterm_vec, raw_input_text);
+
+    // cout << "****************" << endl;
+    // cout << "Overall Peak RAM uage: " << get_peak_ram_allocation() << endl;
+    // cout << "****************" << endl << endl;
 }
 
 int main(int argc, char *argv[]) {

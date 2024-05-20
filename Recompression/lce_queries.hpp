@@ -7,10 +7,11 @@
 #include <algorithm>
 #include "recompression_definitions.hpp"
 #include "typedefs.hpp"
+#include "space_efficient_vector.hpp"
 
 using namespace std;
 
-void initialize_nodes(c_size_t node, const c_size_t& i, c_size_t left, c_size_t right, stack<Node>& ancestors, const vector<RLSLPNonterm>& grammar, Node& v) {
+void initialize_nodes(c_size_t node, const c_size_t& i, c_size_t left, c_size_t right, stack<Node>& ancestors, const space_efficient_vector<RLSLPNonterm>& grammar, Node& v) {
     if (left > right || i < left || i > right)
         return;
 
@@ -45,7 +46,7 @@ void initialize_nodes(c_size_t node, const c_size_t& i, c_size_t left, c_size_t 
     return;
 }
 
-Node getLeftMostChild(Node v, const vector<RLSLPNonterm> & grammar) {
+Node getLeftMostChild(Node v, const space_efficient_vector<RLSLPNonterm> & grammar) {
     char type = grammar[v.var].type;
 
     const RLSLPNonterm& nt = grammar[v.var];
@@ -68,7 +69,7 @@ Node getLeftMostChild(Node v, const vector<RLSLPNonterm> & grammar) {
 }
 
 
-c_size_t getChildCount(const Node &parent, const vector<RLSLPNonterm> &grammar) {
+c_size_t getChildCount(const Node &parent, const space_efficient_vector<RLSLPNonterm> &grammar) {
     const RLSLPNonterm &nt = grammar[parent.var];
     switch (nt.type) {
         case '0': return 1;
@@ -78,7 +79,7 @@ c_size_t getChildCount(const Node &parent, const vector<RLSLPNonterm> &grammar) 
 }
 
 
-c_size_t getChildIndex(const Node &parent, const Node &v, const vector<RLSLPNonterm> &grammar) {
+c_size_t getChildIndex(const Node &parent, const Node &v, const space_efficient_vector<RLSLPNonterm> &grammar) {
     const RLSLPNonterm &nt = grammar[parent.var];
 
     switch (nt.type) {
@@ -103,7 +104,7 @@ Node getKthSibling(const Node &parent, const Node &v, c_size_t k) {
 }
 
 
-Node replaceWithHighestStartingAtPosition(const Node &v, stack<Node> &ancestors, const vector<RLSLPNonterm> &grammar) {
+Node replaceWithHighestStartingAtPosition(const Node &v, stack<Node> &ancestors, const space_efficient_vector<RLSLPNonterm> &grammar) {
     Node child = v;
     while (!ancestors.empty() && ancestors.top().r == v.r) {
         child = ancestors.top();
@@ -130,7 +131,7 @@ Node replaceWithHighestStartingAtPosition(const Node &v, stack<Node> &ancestors,
 }
 
 
-c_size_t LCE(Node &v1, Node &v2, c_size_t i, stack<Node> & v1_ancestors, stack<Node> & v2_ancestors, const vector<RLSLPNonterm> &grammar) {
+c_size_t LCE(Node &v1, Node &v2, c_size_t i, stack<Node> & v1_ancestors, stack<Node> & v2_ancestors, const space_efficient_vector<RLSLPNonterm> &grammar) {
     c_size_t exp_len_v1 = v1.r - v1.l;
     c_size_t exp_len_v2 = v2.r - v2.l;
 

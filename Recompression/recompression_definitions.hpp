@@ -6,6 +6,7 @@
 #include <fstream>
 #include <queue>
 #include "typedefs.hpp"
+#include "space_efficient_vector.hpp"
 
 using namespace std;
 
@@ -23,7 +24,7 @@ struct __attribute__((packed)) RLSLPNonterm {
 
 class RecompressionRLSLP {
 public:
-    vector<RLSLPNonterm> nonterm;
+    space_efficient_vector<RLSLPNonterm> nonterm;
 };
 
 struct SLGNonterm {
@@ -43,12 +44,12 @@ public:
     SLG() {
 
     }
-    SLG(vector<SLGNonterm> & nonterm, vector<c_size_t> &rhs) : nonterm(nonterm), rhs(rhs) {
+    SLG(space_efficient_vector<SLGNonterm> & nonterm, space_efficient_vector<c_size_t> &rhs) : nonterm(nonterm), rhs(rhs) {
 
     }
     
-    vector<SLGNonterm> nonterm;
-    vector<c_size_t> rhs;
+    space_efficient_vector<SLGNonterm> nonterm;
+    space_efficient_vector<c_size_t> rhs;
 };
 
 struct  __attribute__((packed)) SLPNonterm {
@@ -67,13 +68,13 @@ struct  __attribute__((packed)) SLPNonterm {
 
 class InputSLP {
 public:
-    vector<SLPNonterm> nonterm;
+    space_efficient_vector<SLPNonterm> nonterm;
 
     InputSLP() {
 
     }
 
-    InputSLP(const vector<SLPNonterm>& nonterm) : nonterm(nonterm) {
+    InputSLP(const space_efficient_vector<SLPNonterm>& nonterm) : nonterm(nonterm) {
 
     }
 
@@ -92,7 +93,12 @@ public:
 
         unsigned char buffer[10]; // Buffer to hold 10 bytes (5 bytes read two times)
 
-        nonterm.resize(file_size/10);
+        // ****
+        // nonterm.resize(file_size/10);
+        for(c_size_t i = 0; i < (file_size/10); ++i) {
+            nonterm.push_back(SLPNonterm());
+        }
+
 
         c_size_t i = 0;
 
@@ -123,7 +129,7 @@ public:
         }
 
         if (file.eof()) {
-            cout << "Reached end of the file!" << endl;
+            cout << "File successfully read and stored SLP" << endl;
         } else {
             cout << "Error in reading file!" << endl;
         }
@@ -141,10 +147,11 @@ private:
 
     void order_slp() {
 
+        cout << "Ordering SLP" << endl;
         const c_size_t grammar_size = nonterm.size();
-        vector<vector<c_size_t>> graph(grammar_size, vector<c_size_t>());
-        vector<uint8_t> inorder(grammar_size, 0);
-        vector<c_size_t> old_new_map(grammar_size, 0);
+        space_efficient_vector<vector<c_size_t>> graph(grammar_size, vector<c_size_t>());
+        space_efficient_vector<uint8_t> inorder(grammar_size, 0);
+        space_efficient_vector<c_size_t> old_new_map(grammar_size, 0);
 
         queue<c_size_t> q;
 
@@ -169,7 +176,10 @@ private:
 
             old_new_map[u] = nonterminal_ptr++;
 
-            for(c_size_t v : graph[u]) {
+            // ****
+            // for(c_size_t v : graph[u]) {
+            for(c_size_t i = 0; i < graph[u].size(); ++i) {
+                const c_size_t &v = graph[u][i];
                 inorder[v]--;
 
                 if(inorder[v] == 0) {
@@ -181,9 +191,9 @@ private:
         graph.clear();
         inorder.clear();
 
-        vector<SLPNonterm> ordered_nonterm(grammar_size);
+        space_efficient_vector<SLPNonterm> ordered_nonterm(grammar_size);
 
-        for(c_size_t i=0; i<nonterm.size(); i++) {
+        for(c_size_t i = 0; i < nonterm.size(); i++) {
 
             const char_t &type = nonterm[i].type;
             const c_size_t &first = nonterm[i].first;
@@ -197,7 +207,14 @@ private:
             }
         }
         
-        nonterm = move(ordered_nonterm);
+        // *****
+        // nonterm = move(ordered_nonterm);
+        assert(nonterm.size() == ordered_nonterm.size());
+        for(c_size_t i = 0; i < grammar_size; ++i) {
+            ordered_nonterm[i] = nonterm[i];
+        }
+
+        cout << "Ordered SLP!" << endl << endl;
 
         return;
     }

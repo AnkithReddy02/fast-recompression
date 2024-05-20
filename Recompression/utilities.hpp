@@ -1,7 +1,8 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-// #include "typedefs.hpp"
+#include "typedefs.hpp"
+#include "space_efficient_vector.hpp"
 
 // void printRecompressionRLSLP(const RecompressionRLSLP *recompression_rlslp) {
 
@@ -25,23 +26,23 @@
 //     return;
 // }
 
-void printSLG(const SLG *slg) {
-    for(int i=0; i<slg->nonterm.size(); i++) {
-        cout << i << " : ";
-        c_size_t start_index = slg->nonterm[i].start_index;
-        c_size_t end_index = (i==slg->nonterm.size()-1) ? slg->rhs.size()-1 : slg->nonterm[i+1].start_index - 1;
+// void printSLG(const SLG *slg) {
+//     for(int i=0; i<slg->nonterm.size(); i++) {
+//         cout << i << " : ";
+//         c_size_t start_index = slg->nonterm[i].start_index;
+//         c_size_t end_index = (i==slg->nonterm.size()-1) ? slg->rhs.size()-1 : slg->nonterm[i+1].start_index - 1;
 
-        for(int j=start_index; j<=end_index; j++) {
-            cout << slg->rhs[j] << ' ';
-        }
+//         for(int j=start_index; j<=end_index; j++) {
+//             cout << slg->rhs[j] << ' ';
+//         }
 
-        cout << endl;
-    }
+//         cout << endl;
+//     }
 
-    return;
-}
+//     return;
+// }
 
-void expandRLSLP(c_size_t var, const vector<RLSLPNonterm> & rlslp_nonterm_vec, vector<c_size_t> & result) {
+void expandRLSLP(c_size_t var, const space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec, space_efficient_vector<c_size_t> & result) {
     if(rlslp_nonterm_vec[var].type == '0') {
         result.push_back(rlslp_nonterm_vec[var].first);
         return;
@@ -63,33 +64,42 @@ void expandRLSLP(c_size_t var, const vector<RLSLPNonterm> & rlslp_nonterm_vec, v
     }
     return;
 }
-vector<c_size_t> expandRLSLP(const RecompressionRLSLP *recompression_rlslp) {
 
-    vector<c_size_t> result;
-    vector<RLSLPNonterm> rlslp_nonterm_vec = recompression_rlslp->nonterm;
+void expandRLSLP(const RecompressionRLSLP *recompression_rlslp, space_efficient_vector<c_size_t> &result) {
+
+    const space_efficient_vector<RLSLPNonterm> &rlslp_nonterm_vec = recompression_rlslp->nonterm;
+    expandRLSLP(rlslp_nonterm_vec.size()-1, rlslp_nonterm_vec, result);
+
+    return;
+}
+
+space_efficient_vector<c_size_t> expandRLSLP(const RecompressionRLSLP *recompression_rlslp) {
+
+    space_efficient_vector<c_size_t> result;
+    space_efficient_vector<RLSLPNonterm> rlslp_nonterm_vec = recompression_rlslp->nonterm;
     expandRLSLP(rlslp_nonterm_vec.size()-1, rlslp_nonterm_vec, result);
 
 
     return result;
 }
 
-// void expandSLG(c_size_t var, const vector<SLGNonterm> & slg_nonterm_vec, vector<c_size_t> & result) {
+// void expandSLG(c_size_t var, const space_efficient_vector<SLGNonterm> & slg_nonterm_vec, space_efficient_vector<c_size_t> & result) {
 //     if(var < 0) {
 //         result.push_back(abs(var));
 //         return;
 //     }
 
-//     const vector<c_size_t> & rhs = slg_nonterm_vec[var].rhs;
+//     const space_efficient_vector<c_size_t> & rhs = slg_nonterm_vec[var].rhs;
 
 //     for(c_size_t rhs_var : rhs) {
 //         expandSLG(rhs_var, slg_nonterm_vec, result);
 //     }
 // }
 
-// vector<c_size_t> expandSLG(const SLG *slg) {
-//     vector<c_size_t> result;
+// space_efficient_vector<c_size_t> expandSLG(const SLG *slg) {
+//     space_efficient_vector<c_size_t> result;
 
-//     const vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
+//     const space_efficient_vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
 //     expandSLG(slg_nonterm_vec.size() - 1, slg_nonterm_vec, result);
 
