@@ -89,42 +89,25 @@ class space_efficient_vector {
       m_blocks[0] = utils::allocate_array<value_type>(m_block_size);
     }
 
-    space_efficient_vector(const std::uint64_t &initial_size, const value_type &initial_val) {
-        m_size = initial_size;
-        m_block_size_log = 0;
-        m_block_size_mask = 0;
-        m_block_size = initial_size;
-        m_allocated_blocks = 1;
-        m_cur_block_filled = initial_size;
-        m_cur_block_id = 0;
-        m_blocks = utils::allocate_array<value_type*>(max_blocks);
-        m_blocks[0] = utils::allocate_array<value_type>(m_block_size);
+    space_efficient_vector(
+        const std::uint64_t initial_size,
+        const value_type &initial_val = value_type())
+        : space_efficient_vector() {
+      for (std::uint64_t i = 0; i < initial_size; ++i)
+        push_back(initial_val);
 
-        for(std::uint64_t i = 0; i < initial_size; ++i) {
-            m_blocks[0][i] = initial_val;
-        }
-    }
+      /*m_size = initial_size;
+      m_block_size_log = 0;
+      m_block_size_mask = 0;
+      m_block_size = initial_size;
+      m_allocated_blocks = 1;
+      m_cur_block_filled = initial_size;
+      m_cur_block_id = 0;
+      m_blocks = utils::allocate_array<value_type*>(max_blocks);
+      m_blocks[0] = utils::allocate_array<value_type>(m_block_size);
 
-    // Efficient? or divide into blocks?
-    space_efficient_vector(const std::uint64_t &initial_size) {
-        m_size = initial_size;
-        m_block_size_log = 0;
-        m_block_size_mask = 0;
-        m_block_size = initial_size;
-        m_allocated_blocks = 1;
-        m_cur_block_filled = initial_size;
-        m_cur_block_id = 0;
-        m_blocks = utils::allocate_array<value_type*>(max_blocks);
-        m_blocks[0] = utils::allocate_array<value_type>(m_block_size);
-    }
-
-    // Efficient? or divide into blocks?
-    // Copy Constructor
-    space_efficient_vector(const space_efficient_vector<value_type> &vec) : space_efficient_vector(vec.size()){
-        assert(m_size == vec.size());
-        for(std::uint64_t i = 0; i < m_size; ++i) {
-            m_blocks[0][i] = vec[i];
-        }
+      for(std::uint64_t i = 0; i < initial_size; ++i)
+          m_blocks[0][i] = initial_val;*/
     }
 
     //=========================================================================
@@ -214,7 +197,17 @@ class space_efficient_vector {
       ++m_size;
     }
 
-    void reserve(const std::uint64_t &size_requested) {
+    //=========================================================================
+    // Resizes the vector to a specified size.
+    // TODO: implement without memory overhead.
+    //=========================================================================
+    void resize(const std::uint64_t newsize) {
+      clear();
+      for (std::uint64_t i = 0; i < newsize; ++i)
+        push_back(value_type());
+    }
+
+    /*void reserve(const std::uint64_t size_requested) {
         m_size = 0;
         m_block_size_log = 0;
         m_block_size_mask = 0;
@@ -224,7 +217,7 @@ class space_efficient_vector {
         m_cur_block_id = 0;
         m_blocks = utils::allocate_array<value_type*>(max_blocks);
         m_blocks[0] = utils::allocate_array<value_type>(m_block_size);
-    }
+    }*/
 
     inline value_type& front() {
       return m_blocks[0][0];

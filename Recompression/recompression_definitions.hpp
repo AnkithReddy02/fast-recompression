@@ -44,9 +44,6 @@ public:
     SLG() {
 
     }
-    SLG(space_efficient_vector<SLGNonterm> & nonterm, space_efficient_vector<c_size_t> &rhs) : nonterm(nonterm), rhs(rhs) {
-
-    }
     
     space_efficient_vector<SLGNonterm> nonterm;
     space_efficient_vector<c_size_t> rhs;
@@ -149,6 +146,110 @@ private:
 
         cout << "Ordering SLP" << endl;
         const c_size_t grammar_size = nonterm.size();
+
+        space_efficient_vector<uint8_t> inorder(grammar_size, 0);
+        space_efficient_vector<c_size_t> old_new_map(grammar_size, 0);
+
+        // Create reversed graph.
+        space_efficient_vector<c_size_t> vertex_ptr(grammar_size + 1, (c_size_t)0);
+        space_efficient_vector<c_size_t> edges;
+        {
+
+          // Step 1: Compute vertex degrees.
+          for (c_size_t i = 0; i < nonterm.size(); ++i) {
+            if (nonterm[i].type == '1') {
+              ++vertex_ptr[nonterm[i].first];
+              ++vertex_ptr[nonterm[i].second];
+            }
+          }
+
+          // Step 2: turn vertex_ptr into exclusive prefix sum.
+          c_size_t degsum = 0;
+          for (c_size_t i = 0; i < grammar_size; ++i) {
+            c_size_t newsum = degsum + vertex_ptr[i];
+            vertex_ptr[i] = degsum;
+            degsum = newsum;
+          }
+          vertex_ptr[grammar_size] = degsum;
+
+          // Step 3: resize `edges' to accomodate all edges.
+          edges.resize(degsum);
+
+          // Step 4: compute edges.
+          for (c_size_t i = 0; i < nonterm.size(); ++i) {
+            if (nonterm[i].type == '1') {
+              edges[vertex_ptr[nonterm[i].first]++] = i;
+              edges[vertex_ptr[nonterm[i].second]++] = i;
+            }
+          }
+
+          // Step 5: restore pointers to adj list begin.
+          for (c_size_t i = grammar_size; i > 0; --i)
+            vertex_ptr[i] = vertex_ptr[i - 1];
+          vertex_ptr[0] = 0;
+        }
+
+        queue<c_size_t> q;
+
+        // Note: graph is reversed!
+        for(c_size_t i = 0; i < nonterm.size(); i++) {
+            if(nonterm[i].type == '1')
+                inorder[i] += 2;
+            else
+                q.push(i);
+        }
+
+        c_size_t nonterminal_ptr = 0;
+
+        while(!q.empty()) {
+            c_size_t u = q.front();
+            q.pop();
+            old_new_map[u] = nonterminal_ptr++;
+
+            for (c_size_t i = vertex_ptr[u]; i < vertex_ptr[u+1]; ++i) {
+              const c_size_t v = edges[i];
+              inorder[v]--;
+              if(inorder[v] == 0)
+                  q.push(v);
+            }
+        }
+
+        edges.clear();
+        vertex_ptr.clear();
+        inorder.clear();
+
+        space_efficient_vector<SLPNonterm> ordered_nonterm(grammar_size);
+
+        for(c_size_t i = 0; i < nonterm.size(); i++) {
+
+            const char_t &type = nonterm[i].type;
+            const c_size_t &first = nonterm[i].first;
+            const c_size_t &second = nonterm[i].second;
+
+            if(type == '0') {
+                ordered_nonterm[old_new_map[i]] = SLPNonterm('0', first, second);
+            }
+            else {
+                ordered_nonterm[old_new_map[i]] = SLPNonterm('1', old_new_map[first], old_new_map[second]);
+            }
+        }
+
+        // *****
+        // nonterm = move(ordered_nonterm);
+        assert(nonterm.size() == ordered_nonterm.size());
+        for(c_size_t i = 0; i < grammar_size; ++i) {
+            ordered_nonterm[i] = nonterm[i];
+        }
+
+        cout << "Ordered SLP!" << endl << endl;
+
+        return;
+    }
+
+    /*void order_slp() {
+
+        cout << "Ordering SLP" << endl;
+        const c_size_t grammar_size = nonterm.size();
         space_efficient_vector<vector<c_size_t>> graph(grammar_size, vector<c_size_t>());
         space_efficient_vector<uint8_t> inorder(grammar_size, 0);
         space_efficient_vector<c_size_t> old_new_map(grammar_size, 0);
@@ -217,7 +318,7 @@ private:
         cout << "Ordered SLP!" << endl << endl;
 
         return;
-    }
+    }*/
 };
 
 struct Node {

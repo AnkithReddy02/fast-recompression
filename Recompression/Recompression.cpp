@@ -214,12 +214,12 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
     space_efficient_vector<c_size_t> &global_rhs = slg->rhs;
 
     // // New SLG that needs to be created by applying BComp
-    // SLG *new_slg = new SLG();
+    SLG *new_slg = new SLG();
 
     // New SLG non-term list that new_slg needs.
-    space_efficient_vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
-    new_slg_nonterm_vec.reserve(slg_nonterm_vec.size() + 1);
-    space_efficient_vector<c_size_t> new_rhs;
+    space_efficient_vector<SLGNonterm> &new_slg_nonterm_vec = new_slg->nonterm;
+    //new_slg_nonterm_vec.reserve(slg_nonterm_vec.size() + 1);
+    space_efficient_vector<c_size_t> &new_rhs = new_slg->rhs;
 
     const c_size_t &grammar_size = slg_nonterm_vec.size();
 
@@ -235,7 +235,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
     // 'i' --> represents the variable.
     for(c_size_t i = 0; i < grammar_size; i++) {
         #ifdef DEBUG_LOG
-        cout << fixed << setprecision(2) << "Progress: " << ((i+1)*(long double)100)/grammar_size << '\r' << flush;
+        if (!(i & ((1 << 16) - 1)))
+          cout << fixed << setprecision(2) << "Progress: " << ((i+1)*(long double)100)/grammar_size << '\r' << flush;
         #endif
 
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
@@ -463,8 +464,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
 
     delete slg;
 
-    // return new_slg;
-    return new SLG(new_slg_nonterm_vec, new_rhs);
+    return new_slg;
+    // return new SLG(new_slg_nonterm_vec, new_rhs);
 }
 
 #if 0
@@ -724,7 +725,8 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     // Compute vOcc.
     for(c_size_t i = slg_nonterm_vec.size() - 1; i >= 0; i--) {
         #ifdef DEBUG_LOG
-        cout << fixed << setprecision(2) << "  VOcc Progress: " << (slg_nonterm_vec.size() - i) * (double)100/(slg_nonterm_vec.size()) << '\r';
+        if (!(i & ((1 << 16) - 1)))
+          cout << fixed << setprecision(2) << "  VOcc Progress: " << (slg_nonterm_vec.size() - i) * (double)100/(slg_nonterm_vec.size()) << '\r';
         #endif
         computeVOccHelper(edges, curr_index, have_edges, i, dp);
     }
@@ -1145,13 +1147,13 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
     space_efficient_vector<c_size_t> &global_rhs = slg->rhs;
 
     // New SLG that needs to be created by applying BComp
-    // SLG *new_slg = new SLG();
+    SLG *new_slg = new SLG();
 
     // New SLG non-term list that new_slg needs.
-    space_efficient_vector<SLGNonterm> new_slg_nonterm_vec; // = new_slg->nonterm;
-    new_slg_nonterm_vec.reserve(slg_nonterm_vec.size() + 1);
+    space_efficient_vector<SLGNonterm> &new_slg_nonterm_vec = new_slg->nonterm;
+    // new_slg_nonterm_vec.reserve(slg_nonterm_vec.size() + 1);
     // New RHS
-    space_efficient_vector<c_size_t> new_rhs;
+    space_efficient_vector<c_size_t> &new_rhs = new_slg->rhs;
 
     space_efficient_vector<c_size_t> LB(slg_nonterm_vec.size(), 0), RB(slg_nonterm_vec.size(), 0);
 
@@ -1386,8 +1388,8 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
     delete slg;
 
-    // return new_slg;
-    return new SLG(new_slg_nonterm_vec, new_rhs);
+    return new_slg;
+    // return new SLG(new_slg_nonterm_vec, new_rhs);
 }
 
 RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
@@ -1539,7 +1541,7 @@ c_size_t computeExplen(const c_size_t i, space_efficient_vector<RLSLPNonterm>& r
 InputSLP* getSLP(c_size_t grammar_size) {
 
     space_efficient_vector<SLPNonterm> nonterm;
-    
+
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     srand(seed);
 
@@ -1695,7 +1697,6 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_eff
 
 void start_compression(const string &input_file, const string &raw_input_text) {
 
-    initialize_stats();
 
     InputSLP *inputSLP = new InputSLP();
     inputSLP->read_from_file(input_file);
@@ -1741,9 +1742,18 @@ void start_compression(const string &input_file, const string &raw_input_text) {
     // cout << "****************" << endl;
     // cout << "Overall Peak RAM uage: " << get_peak_ram_allocation() << endl;
     // cout << "****************" << endl << endl;
+
+    // Clean up.
+    delete recompression_rlslp;
+
+    cout << "****************" << endl;
+    cout << "Current RAM usage for Construction: " <<
+      get_current_ram_allocation() << " bytes" << endl;
+    cout << "****************" << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
+    utils::initialize_stats();
 
     if(!(argc == 2 or argc == 4)) {
         cout << "Usage: " + string(argv[0]) + " [-t raw_input_text] input_slp" << endl;
