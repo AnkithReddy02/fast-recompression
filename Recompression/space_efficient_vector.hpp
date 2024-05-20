@@ -263,16 +263,23 @@ class space_efficient_vector {
     // Note: the size of the vector is zero after the call!
     // warning: it destroys current contents of the vector!
     //=========================================================================
-    /*void reserve(const std::uint64_t size_requested) {
+    void reserve(const std::uint64_t size_requested) {
+
+      // Full clear.
+      for (std::uint64_t block_id = 0;
+          block_id < m_allocated_blocks; ++block_id)
+        utils::deallocate(m_blocks[block_id]);
+      utils::deallocate(m_blocks);
+
       m_block_size = 1;
       m_block_size_log = 0;
       m_block_size_mask = 0;
-      while (m_block_size * max_blocks < initial_size) {
+      while (m_block_size * max_blocks < size_requested) {
         ++m_block_size_log;
         m_block_size <<= 1;
         m_block_size_mask = m_block_size - 1;
       }
-      m_allocated_blocks = (initial_size + m_block_size - 1) / m_block_size;
+      m_allocated_blocks = (size_requested + m_block_size - 1) / m_block_size;
       m_blocks = utils::allocate_array<value_type*>(max_blocks);
       for (std::uint64_t i = 0; i < m_allocated_blocks; ++i)
         m_blocks[i] = utils::allocate_array<value_type>(m_block_size);
@@ -280,7 +287,7 @@ class space_efficient_vector {
       m_cur_block_id = 0;
       m_cur_block_filled = 0;
       m_size = 0;
-    }*/
+    }
 
     inline value_type& front() {
       return m_blocks[0][0];
