@@ -345,6 +345,14 @@ struct __attribute__((packed)) AdjListElement {
     AdjListElement() {}
 
     AdjListElement(const c_size_t &first, const c_size_t &second, const bool_t &swapped, const c_size_t &vOcc) : first(first), second(second), swapped(swapped), vOcc(vOcc) {}
+
+    bool operator < (const AdjListElement &x) const {
+      return (first < x.first) || (first == x.first && second < x.second);
+    }
+
+    /*bool operator == (const AdjListElement &x) const {
+      return (first == x.first && second == x.second && swapped == x.swapped && vOcc == x.vOcc);
+    }*/
 };
 
 #endif

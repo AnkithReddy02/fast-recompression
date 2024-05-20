@@ -382,6 +382,89 @@ class space_efficient_vector {
       for (std::uint64_t i = 0; i < half; ++i)
         std::swap((*this)[i], (*this)[all - 1 - i]);
     }
+
+  private:
+
+    inline void swap(
+        const std::uint64_t i,
+        const std::uint64_t j) {
+      value_type ival = (*this)[i];
+      value_type jval = (*this)[j];
+      (*this)[i] = jval;
+      (*this)[j] = ival;
+    }
+
+    std::uint64_t partition(
+        const std::int64_t p,
+        const std::int64_t r) {
+      std::int64_t i = p - 1;
+      std::int64_t j = r + 1;
+      std::int64_t pivot_idx = utils::random_int<std::uint64_t>(
+          (std::uint64_t)p,
+          (std::uint64_t)r);
+      value_type pivot = (*this)[pivot_idx];
+      this->swap(p, pivot_idx);
+      while (i < j) {
+        while ((*this)[++i] < pivot);
+        while (pivot < (*this)[--j]);
+        if (i < j) this->swap(i, j);
+      }
+      return (std::uint64_t)j;
+    }
+
+    void sort(
+        const std::uint64_t p,
+        const std::uint64_t r) {
+      if (p < r) {
+        const std::uint64_t q = partition(p, r);
+        sort(p, q);
+        sort(q + 1, r);
+      }
+    }
+
+  public:
+
+    void sort() {
+#if 1
+      /*std::vector<value_type> before_sort;
+      for (std::uint64_t i = 0; i < m_size; ++i)
+        before_sort.push_back((*this)[i]);*/
+
+      if (m_size > 0)
+        sort(0, m_size - 1);
+
+      /*std::vector<value_type> after_sort;
+      for (std::uint64_t i = 0; i < m_size; ++i)
+        after_sort.push_back((*this)[i]);
+      std::sort(before_sort.begin(), before_sort.end());
+
+      bool sorted = true;
+      for (std::int64_t i = 0; i + 1 < m_size; ++i) {
+        if (after_sort[i + 1] < after_sort[i]) {
+          sorted = false;
+          break;
+        }
+      }
+
+      std::sort(after_sort.begin(), after_sort.end());
+      bool eq = (after_sort == before_sort);*/
+
+      /*if (!eq || !sorted) {
+        fprintf(stderr, "\nChecks failed:\n");
+        fprintf(stderr, "\teq = %lu\n", (std::uint64_t)eq);
+        fprintf(stderr, "\tsorted = %lu\n", (std::uint64_t)sorted);
+        std::exit(EXIT_FAILURE);
+      }*/
+#else
+      for (std::uint64_t i = 1; i < m_size; ++i) {
+        std::uint64_t j = i;
+        while (j > 0 && (*this)[j] < (*this)[j - 1]) {
+          this->swap(j - 1, j);
+          --j;
+        }
+      }
+#endif
+    }
 };
 
 #endif  // __SPACE_EFFICIENT_VECTOR_HPP_INCLUDED

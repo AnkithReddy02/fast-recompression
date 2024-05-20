@@ -248,7 +248,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
     // 'i' --> represents the variable.
     for(c_size_t i = 0; i < grammar_size; i++) {
         #ifdef DEBUG_LOG
-        if (!(i & ((1 << 16) - 1)))
+        if (!(i & ((1 << 19) - 1)))
           cout << fixed << setprecision(2) << "Progress: " << ((i+1)*(long double)100)/grammar_size << '\r' << flush;
         #endif
 
@@ -744,7 +744,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     // Compute vOcc.
     for(c_size_t i = slg_nonterm_vec.size() - 1; i >= 0; i--) {
         #ifdef DEBUG_LOG
-        if (!(i & ((1 << 16) - 1)))
+        if (!(i & ((1 << 19) - 1)))
           cout << fixed << setprecision(2) << "  VOcc Progress: " << (slg_nonterm_vec.size() - i) * (double)100/(slg_nonterm_vec.size()) << '\r';
         #endif
         computeVOccHelper(edges, curr_index, have_edges, i, dp);
@@ -784,7 +784,8 @@ void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
     }
 
     // Sort It.
-    radixSort(adjList);
+    //radixSort(adjList);
+    adjList.sort();
     // sort(adjList.begin(), adjList.end(), AdjListElementCompare);
 
 
