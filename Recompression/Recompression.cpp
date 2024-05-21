@@ -1037,7 +1037,64 @@ packed_pair<c_size_t, c_size_t> computeAdjListHelper(
 
         // return dp[var] = {rhs[0], rhs[0]};
     }
-    
+
+    pair_type first_lms_rms;
+    pair_type last_lms_rms;
+    pair_type prev_lms_rms;
+
+    for(c_size_t j = start_index; j <= end_index; ++j) {
+        const c_size_t &rhs_symbol = global_rhs[j];
+        pair_type lms_rms = computeAdjListHelper(rhs_symbol, slg, m0, m1, dp, vOcc);
+
+        if(j == start_index) {
+            first_lms_rms = lms_rms;
+        }
+
+        if(j == end_index) {
+            last_lms_rms = lms_rms;
+        }
+
+        if(j > start_index) {
+            c_size_t f = prev_lms_rms.second;
+            c_size_t s = lms_rms.first;
+
+            bool_t swapped = false;
+
+            if(abs(f) < abs(s)) {
+                swap(f, s);
+                swapped = true;
+            }
+
+            if(swapped) {
+                pair_type p(f, s);
+
+                c_size_t *val = m1.find(p);
+                if(!val) {
+                    m1.insert(p, vOcc[var]);
+                }
+                else {
+                    *val += vOcc[var];
+                }
+            }
+            else {
+                pair_type p(f, s);
+
+                c_size_t *val = m0.find(p);
+                if(!val) {
+                    m0.insert(p, vOcc[var]);
+                }
+                else {
+                    *val += vOcc[var];
+                }
+            }
+        }
+
+        prev_lms_rms = lms_rms;
+    }
+
+    return dp[var] = pair_type(first_lms_rms.first, last_lms_rms.second);
+
+    /*
     space_efficient_vector<pair_type> lms_rms_list;
 
     
@@ -1087,6 +1144,9 @@ packed_pair<c_size_t, c_size_t> computeAdjListHelper(
     //slg_nonterm.RMS = lms_rms_list.back().second;
 
     return dp[var] = pair_type(lms_rms_list.front().first, lms_rms_list.back().second);
+    */
+
+
 }
 
 void computeAdjList(
