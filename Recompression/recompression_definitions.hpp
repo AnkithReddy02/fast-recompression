@@ -238,7 +238,7 @@ private:
         // nonterm = move(ordered_nonterm);
         assert(nonterm.size() == ordered_nonterm.size());
         for(c_size_t i = 0; i < grammar_size; ++i) {
-            ordered_nonterm[i] = nonterm[i];
+            nonterm[i] = ordered_nonterm[i];
         }
 
         cout << "Ordered SLP!" << endl << endl;
