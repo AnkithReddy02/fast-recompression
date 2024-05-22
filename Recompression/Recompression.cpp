@@ -255,7 +255,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
         c_size_t start_index = slg_nonterm.start_index;
-        c_size_t end_index = (i == grammar_size-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
+        c_size_t end_index = (i == grammar_size-1) ? c_size_t(global_rhs.size())-1 : c_size_t(slg_nonterm_vec[i+1].start_index) - 1;
 
         if(start_index > end_index) {
             new_slg_nonterm_vec.push_back((c_size_t)new_rhs.size());
@@ -296,7 +296,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
             }
 
             c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[rhs_symbol].start_index;
-            c_size_t rhs_symbol_end_index = (rhs_symbol == (c_size_t)new_slg_nonterm_vec.size()-1) ? new_rhs.size()-1 : new_slg_nonterm_vec[rhs_symbol+1].start_index - 1;
+            c_size_t rhs_symbol_end_index = (rhs_symbol == (c_size_t)new_slg_nonterm_vec.size()-1) ? (c_size_t)new_rhs.size()-1 : new_slg_nonterm_vec[rhs_symbol+1].start_index - 1;
 
            
             // Cap is not empty --> in new SLG the variable(rhs_symbol) RHS is not empty --> then Cap is not empty.
@@ -457,7 +457,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
     }
 
     c_size_t start_var_start_index = new_slg_nonterm_vec[start_var].start_index;
-    c_size_t start_var_end_index = (start_var == (c_size_t)new_slg_nonterm_vec.size()-1) ? curr_new_rhs_size-1 : new_slg_nonterm_vec[start_var+1].start_index - 1;
+    c_size_t start_var_end_index = (start_var == (c_size_t)new_slg_nonterm_vec.size()-1) ? (c_size_t)curr_new_rhs_size-1 : new_slg_nonterm_vec[start_var+1].start_index - 1;
 
     if(start_var_start_index <= start_var_end_index) {
         new_rhs.push_back(start_var);
@@ -505,7 +505,7 @@ pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, vector<Adj
     const vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
 
     c_size_t start_index = slg_nonterm.start_index;
-    c_size_t end_index = (var == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[var+1].start_index - 1;
+    c_size_t end_index = (var == slg_nonterm_vec.size()-1) ? (c_size_t)global_rhs.size()-1 : slg_nonterm_vec[var+1].start_index - 1;
 
     c_size_t curr_rhs_size = end_index - start_index + 1;
 
@@ -628,7 +628,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
         c_size_t start_index = slg_nonterm.start_index;
-        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
+        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? (c_size_t)global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
 
         c_size_t curr_rhs_size = end_index - start_index + 1;
 
@@ -679,7 +679,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
         c_size_t start_index = slg_nonterm.start_index;
-        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
+        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? (c_size_t)global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
 
         c_size_t curr_rhs_size = end_index - start_index + 1;
 
@@ -882,8 +882,8 @@ createPartition(const space_efficient_vector<AdjListElement> & adjList) {
             swap(f, s);
         }
 
-        LRPairsCount += ((leftSet.find(f) /*!= leftSet.end()*/) && (rightSet.find(s) /*!= rightSet.end()*/)) ? arr.vOcc : 0;
-        RLPairsCount += ((rightSet.find(f) /*!= rightSet.end()*/) && (leftSet.find(s) /*!= leftSet.end()*/)) ? arr.vOcc : 0;
+        LRPairsCount += ((leftSet.find(f) /*!= leftSet.end()*/) && (rightSet.find(s) /*!= rightSet.end()*/)) ? arr.vOcc : (c_size_t)0;
+        RLPairsCount += ((rightSet.find(f) /*!= rightSet.end()*/) && (leftSet.find(s) /*!= leftSet.end()*/)) ? arr.vOcc : (c_size_t)0;
 
     }
 
@@ -970,8 +970,8 @@ array<set<c_size_t>, 2> createPartition(const vector<array<c_size_t, 4>> & adjLi
             swap(f, s);
         }
 
-        LRPairsCount += ((leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end())) ? arr[3] : 0;
-        RLPairsCount += ((rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end())) ? arr[3] : 0;
+        LRPairsCount += ((leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end())) ? arr[3] : (c_size_t)0;
+        RLPairsCount += ((rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end())) ? arr[3] : (c_size_t)0;
 
     }
 
@@ -1266,7 +1266,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
         // const vector<c_size_t> & rhs = slg_nonterm.rhs;
         c_size_t start_index = slg_nonterm.start_index;
-        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
+        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? (c_size_t)global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
 
         c_size_t curr_rhs_size = end_index - start_index + 1;
 
@@ -1333,7 +1333,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
                     }
 
                     c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[global_rhs[j]].start_index;
-                    c_size_t rhs_symbol_end_index = (global_rhs[j] == (c_size_t)new_slg_nonterm_vec.size()-1) ? new_rhs.size()-1 : new_slg_nonterm_vec[global_rhs[j]+1].start_index - 1;
+                    c_size_t rhs_symbol_end_index = (global_rhs[j] == (c_size_t)new_slg_nonterm_vec.size()-1) ? (c_size_t)new_rhs.size()-1 : new_slg_nonterm_vec[global_rhs[j]+1].start_index - 1;
 
                     // Check whether Cap is Empty in new_slg_nonterm_vec.
                     if(rhs_symbol_start_index <= rhs_symbol_end_index){
@@ -1434,7 +1434,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
                 LB[i] = LB[rhs_symbol];
 
                 c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[rhs_symbol].start_index;
-                c_size_t rhs_symbol_end_index = (rhs_symbol == (c_size_t)new_slg_nonterm_vec.size()-1) ? new_rhs.size()-1 : new_slg_nonterm_vec[rhs_symbol+1].start_index - 1;
+                c_size_t rhs_symbol_end_index = (rhs_symbol == (c_size_t)new_slg_nonterm_vec.size()-1) ? (c_size_t)new_rhs.size()-1 : new_slg_nonterm_vec[rhs_symbol+1].start_index - 1;
 
 
                 if(rhs_symbol_start_index <= rhs_symbol_end_index) {
@@ -1472,7 +1472,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
     }
 
     c_size_t rhs_symbol_start_index = new_slg_nonterm_vec[start_var].start_index;
-    c_size_t rhs_symbol_end_index = (start_var == (c_size_t)new_slg_nonterm_vec.size()-1) ? curr_new_rhs_size-1 : new_slg_nonterm_vec[start_var+1].start_index - 1;
+    c_size_t rhs_symbol_end_index = (start_var == (c_size_t)new_slg_nonterm_vec.size()-1) ? (c_size_t)curr_new_rhs_size-1 : new_slg_nonterm_vec[start_var+1].start_index - 1;
 
     if(rhs_symbol_start_index <= rhs_symbol_end_index) {
         new_rhs.push_back(start_var);
@@ -1561,7 +1561,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         c_size_t start_var = slg_nonterm_vec.size()-1;
 
         c_size_t start_index = slg_nonterm.start_index;
-        c_size_t end_index = (start_var == slg_nonterm_vec.size()-1) ? global_rhs.size()-1 : slg_nonterm_vec[start_var+1].start_index - 1;
+        c_size_t end_index = (start_var == slg_nonterm_vec.size()-1) ? c_size_t(global_rhs.size())-1 : c_size_t(slg_nonterm_vec[start_var+1].start_index) - 1;
 
         c_size_t start_var_rhs_size = end_index - start_index + 1;
 
