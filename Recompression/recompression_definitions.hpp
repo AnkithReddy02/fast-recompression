@@ -120,7 +120,7 @@ public:
         }
 
         // Check if we have read less than 5 bytes in the last chunk
-        c_size_t lastChunkSize = file.gcount();
+        c_size_t lastChunkSize = int64_t(file.gcount());
         if (lastChunkSize > 0) {
             cout << "Read " << lastChunkSize << " bytes in the last chunk, incomplete for a 64-bit value." << endl;
         }
