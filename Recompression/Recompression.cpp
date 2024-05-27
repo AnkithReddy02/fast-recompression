@@ -477,7 +477,11 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
     hash_table<c_size_t, bool> unique_var;
 
-    for(len_t i=0; i<slg_nonterm_vec.size(); i++) {
+    #ifdef DEBUG_LOG
+        cout << "  Computing Node OutDegree[Reverse Graph]..." << endl;
+        auto degree_start_time = std::chrono::high_resolution_clock::now();
+    #endif
+    for(len_t i = 0; i < slg_nonterm_vec.size(); ++i) {
 
         // Current SLGNonterm
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
@@ -493,7 +497,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
-        for(len_t j=start_index; j<=end_index; ++j) {
+        for(len_t j = start_index; j <= end_index; ++j) {
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
@@ -512,8 +516,16 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
         }
     }
 
+    #ifdef DEBUG_LOG
+        {
+            auto degree_end_time = std::chrono::high_resolution_clock::now();
+            auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(degree_end_time - degree_start_time).count();
+            cout << "    Time: " << duration_seconds << " seconds" << endl;
+        }
+        cout << "  Computing PrefixSum..." << endl;
+    #endif
     c_size_t prefix_sum = 0;
-    for(len_t i=0; i<curr_index.size(); ++i) {
+    for(len_t i = 0; i < curr_index.size(); ++i) {
         if(curr_index[i] > 0) {
             c_size_t temp = curr_index[i];
             curr_index[i] += prefix_sum;
@@ -527,8 +539,11 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
     hash_table<c_size_t, c_size_t, c_size_t> var_freq;
 
+    #ifdef DEBUG_LOG
+        cout << "  Preparing Edges..." << endl;
+    #endif
     // Enumerate Each Production Rule.
-    for(len_t i=0; i<slg_nonterm_vec.size(); ++i) {
+    for(len_t i = 0; i < slg_nonterm_vec.size(); ++i) {
         // Current SLGNonterm
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
@@ -543,7 +558,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
-        for(len_t j=start_index; j<=end_index; ++j) {
+        for(len_t j = start_index; j <= end_index; ++j) {
 
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
@@ -580,7 +595,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
     space_efficient_vector<bool_t> have_edges(curr_index.size(), false);
 
-    for(len_t i=curr_index.size()-1; i>=0; i--) {
+    for(len_t i = curr_index.size() - 1; i >= 0; --i) {
 
         if(curr_index[i] == -1) {
             have_edges[i] = false;
@@ -597,6 +612,9 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
     // Store VOcc.
     // dp.resize(slg_nonterm_vec.size(), -1);
+    #ifdef DEBUG_LOG
+        auto vOcc_start_time = std::chrono::high_resolution_clock::now();
+    #endif
 
     // Compute vOcc.
     for(len_t i = slg_nonterm_vec.size() - 1; i >= 0; --i) {
@@ -608,7 +626,11 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     }
 
     #ifdef DEBUG_LOG
-        cout << endl;
+        {
+            auto vOcc_end_time = std::chrono::high_resolution_clock::now();
+            auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(vOcc_end_time - vOcc_start_time).count();
+            cout << endl << "    vOcc time: " << duration_seconds << " seconds" << endl;
+        }
     #endif
 
     return;
@@ -760,60 +782,6 @@ packed_pair<c_size_t, c_size_t> computeAdjListHelper(
     }
 
     return dp[var] = pair_type(first_lms_rms.first, last_lms_rms.second);
-
-    /*
-    space_efficient_vector<pair_type> lms_rms_list;
-
-    
-
-    for(c_size_t j = start_index; j <= end_index; j++) {
-        const c_size_t &rhs_symbol = global_rhs[j];
-        pair_type lms_rms = computeAdjListHelper(rhs_symbol, slg, m0, m1, dp, vOcc);
-        lms_rms_list.push_back(lms_rms);
-    }
-
-    for(c_size_t i = 0; i < lms_rms_list.size() - 1; i++) {
-
-        c_size_t f = lms_rms_list[i].second;
-        c_size_t s = lms_rms_list[i+1].first;
-
-        bool_t swapped = false;
-
-        if(abs(f) < abs(s)) {
-            swap(f, s);
-            swapped = true;
-        }
-
-        if(swapped) {
-            // m1[{f, s}] += vOcc[var];
-            pair_type p(f, s);
-
-            if(!m1.find(p)) {
-                m1.insert(p, 0);
-            }
-
-            m1.insert(p, m1[p] + vOcc[var]);
-        }
-        else {
-            // m0[{f, s}] += vOcc[var];
-            pair_type p(f, s);
-
-            if(!m0.find(p)) {
-                m0.insert(p, 0);
-            }
-
-            m0.insert(p, m0[p] + vOcc[var]);
-        }
-        // adjList.push_back(AdjListElement(f, s, swapped, vOcc[var]));
-    }
-
-    //slg_nonterm.LMS = lms_rms_list.front().first;
-    //slg_nonterm.RMS = lms_rms_list.back().second;
-
-    return dp[var] = pair_type(lms_rms_list.front().first, lms_rms_list.back().second);
-    */
-
-
 }
 
 void computeAdjList(
@@ -919,15 +887,23 @@ createPartition(SLG *slg) {
     space_efficient_vector<c_size_t> vOcc(slg->nonterm.size(), -1);
 
     #ifdef DEBUG_LOG
-    cout << "Computing VOcc..." << endl;
+        cout << "Computing VOcc..." << endl;
+        auto vOcc_start_time = std::chrono::high_resolution_clock::now();
     #endif
 
     // Compute vOcc
     computeVOcc(slg, vOcc);
 
     #ifdef DEBUG_LOG
-    cout << "Computing AdjList..." << endl;
+        {
+            auto vOcc_end_time = std::chrono::high_resolution_clock::now();
+            auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(vOcc_end_time - vOcc_start_time).count();
+            cout << "  Overall vOcc Time: " << duration_seconds << " seconds" << endl;
+        }
+        cout << "Computing AdjList..." << endl;
+        auto adjList_start_time = std::chrono::high_resolution_clock::now();
     #endif
+
 
     // Compute AdjList
     typedef packed_pair<c_size_t, c_size_t> pair_type;
@@ -958,14 +934,28 @@ createPartition(SLG *slg) {
         adjList[index++] = AdjListElement(x.first.first, x.first.second, true, x.second);
     }
 
+    
     // m1.clear();
     #ifdef DEBUG_LOG
-    cout << "Sorting AdjList..." << endl;
+        {
+            auto adjList_end_time = std::chrono::high_resolution_clock::now();
+            auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(adjList_end_time - adjList_start_time).count();
+            cout << "  ComputeAdjList Time: " << duration_seconds << " seconds" << endl;
+        }
+        cout << "Sorting AdjList..." << endl;
+        auto sort_start_time = std::chrono::high_resolution_clock::now();
     #endif
+
     sortAdjList(adjList);
 
     #ifdef DEBUG_LOG
-    cout << "Computing Partition..." << endl;
+        {
+            auto sort_end_time = std::chrono::high_resolution_clock::now();
+            auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(sort_end_time - sort_start_time).count();
+            cout << "  Sort AdjList Time: " << duration_seconds << " seconds" << endl;
+        }
+        cout << "Computing Partition..." << endl;
+        auto partition_start_time = std::chrono::high_resolution_clock::now();
     #endif
 
     // Create Partition.
@@ -976,6 +966,14 @@ createPartition(SLG *slg) {
     typedef hash_table<key_type, value_type> hash_table_type;
 
     std::pair<hash_table_type*, hash_table_type*> partition = createPartition(adjList);
+
+    #ifdef DEBUG_LOG
+        {
+            auto partition_end_time = std::chrono::high_resolution_clock::now();
+            auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(partition_end_time - partition_start_time).count();
+            cout << "  Partition Time: " << duration_seconds << " seconds" << endl;
+        }
+    #endif
     
     return partition;
 }
@@ -994,6 +992,10 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
     #ifdef DEBUG_LOG
     cout << "Performing PComp..." << endl;
+    #endif
+
+    #ifdef DEBUG_LOG
+    auto start_time = std::chrono::high_resolution_clock::now();
     #endif
 
     // adjList.clear();  // Clear immediately
@@ -1024,9 +1026,15 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
     space_efficient_vector<c_size_t> rhs_expansion;
 
+    len_t grammar_size = slg_nonterm_vec.size();
+
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
-    for(len_t i=0; i<slg_nonterm_vec.size(); ++i) {
+    for(len_t i=0; i<grammar_size; ++i) {
+        #ifdef DEBUG_LOG
+        if (!(i & ((1 << 19) - 1)))
+          cout << fixed << setprecision(2) << "  Progress: " << ((i+1)*(long double)100)/grammar_size << '\r' << flush;
+        #endif
 
         // cout << i << " : ";
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
@@ -1044,7 +1052,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
             // cout << '\n';
             continue;
         }
-        if((c_size_t)curr_rhs_size >= 2) {
+        if(curr_rhs_size >= 2) {
 
             // space_efficient_vector<c_size_t> rhs_expansion;
             rhs_expansion.set_empty();
@@ -1134,7 +1142,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
             // vector<c_size_t> cap_rhs;
 
-            for(len_t j=0; j<(c_size_t)rhs_expansion.size()-1; ++j) {
+            for(len_t j=0; j<rhs_expansion.size()-1; ++j) {
                 if(rhs_expansion[j] < 0 && rhs_expansion[j+1] < 0) {
                     if(left_set.find(rhs_expansion[j]) /*!= left_set.end()*/ && right_set.find(rhs_expansion[j+1]) /*!= right_set.end()*/) {
                         // if(m.find({rhs_expansion[j], rhs_expansion[j+1]}) == m.end()) {
@@ -1216,6 +1224,10 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
         }
     }
 
+    #ifdef DEBUG_LOG
+        cout << endl;
+    #endif
+
     // arr[0].clear();
     // arr[1].clear();
     // set<c_size_t>().swap(arr[0]);
@@ -1252,6 +1264,14 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
     new_slg_nonterm_vec.push_back(curr_new_rhs_size);
 
     delete slg;
+
+    #ifdef DEBUG_LOG
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+
+    cout << "  Post Initialization PComp time: " << duration_seconds << " seconds" << endl;
+    #endif
 
     return new_slg;
     // return new SLG(new_slg_nonterm_vec, new_rhs);
