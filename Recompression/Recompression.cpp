@@ -47,82 +47,20 @@ std::string valToString(const bool &x) {
   return utils::intToStr((std::uint64_t)x);
 }
 
-#if 0
-void combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer, vector<pair<c_size_t, c_size_t>> &result) {
-    // Check if vector is empty
-    if (vec.empty() || lr_pointer > rr_pointer)
-        return;
-
-    // Iterate through the vector within the specified range
-    c_size_t currNum = vec[lr_pointer].first;
-    c_size_t currFreq = vec[lr_pointer].second;
-
-    for (size_t i = lr_pointer + 1; i <= rr_pointer && i < vec.size(); ++i) {
-        // Check if the current and previous elements have the same number
-        if (vec[i].first == currNum) {
-            // Merge frequencies
-            currFreq += vec[i].second;
-        } else {
-            // Add current pair to result vector
-            result.emplace_back(currNum, currFreq);
-            // Move to the next number
-            currNum = vec[i].first;
-            currFreq = vec[i].second;
-        }
-    }
-
-    // Add the last pair to result vector
-    result.emplace_back(currNum, currFreq);
-
-    return;
-}
-
-vector<pair<c_size_t, c_size_t>> combineFrequenciesInRange(const vector<pair<c_size_t, c_size_t>>& vec, const c_size_t &lr_pointer, const c_size_t &rr_pointer) {
-    vector<pair<c_size_t, c_size_t>> result;
-
-    // Check if vector is empty
-    if (vec.empty() || lr_pointer > rr_pointer)
-        return result;
-
-    // Iterate through the vector within the specified range
-    c_size_t currNum = vec[lr_pointer].first;
-    c_size_t currFreq = vec[lr_pointer].second;
-
-    for (size_t i = lr_pointer + 1; i <= rr_pointer && i < vec.size(); ++i) {
-        // Check if the current and previous elements have the same number
-        if (vec[i].first == currNum) {
-            // Merge frequencies
-            currFreq += vec[i].second;
-        } else {
-            // Add current pair to result vector
-            result.emplace_back(currNum, currFreq);
-            // Move to the next number
-            currNum = vec[i].first;
-            currFreq = vec[i].second;
-        }
-    }
-
-    // Add the last pair to result vector
-    result.emplace_back(currNum, currFreq);
-
-    return result;
-}
-#endif
-
 void combineFrequenciesInRange(
-      const space_efficient_vector<packed_pair<c_size_t, c_size_t>>& vec,
-      const c_size_t &lr_pointer,
-      const c_size_t &rr_pointer,
-      space_efficient_vector<SLGNonterm> &new_slg_nonterm_vec,
-      /* map<pair<c_size_t, c_size_t>, c_size_t> &m */
-      hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m,
-      RecompressionRLSLP *recompression_rlslp,
-      space_efficient_vector<c_size_t> &new_rhs) {
+    const space_efficient_vector<packed_pair<c_size_t, c_size_t>>& vec,
+    const c_size_t &lr_pointer,
+    const c_size_t &rr_pointer,
+    space_efficient_vector<SLGNonterm> &new_slg_nonterm_vec,
+    /* map<pair<c_size_t, c_size_t>, c_size_t> &m */
+    hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m,
+    RecompressionRLSLP *recompression_rlslp,
+    space_efficient_vector<c_size_t> &new_rhs) {
 
     typedef packed_pair<c_size_t, c_size_t> pair_type;
 
     // Check if vector is empty
-    if (vec.empty() || lr_pointer > rr_pointer) {
+    if(vec.empty() || lr_pointer > rr_pointer) {
         new_slg_nonterm_vec.push_back((c_size_t)new_rhs.size());
         return;
     }
@@ -133,12 +71,13 @@ void combineFrequenciesInRange(
     c_size_t currNum = vec[lr_pointer].first;
     c_size_t currFreq = vec[lr_pointer].second;
 
-    for (size_t i = lr_pointer + 1; i <= rr_pointer && i < vec.size(); ++i) {
+    for(size_t i = lr_pointer + 1; i <= rr_pointer && i < vec.size(); ++i) {
         // Check if the current and previous elements have the same number
-        if (vec[i].first == currNum) {
+        if(vec[i].first == currNum) {
             // Merge frequencies
             currFreq += vec[i].second;
-        } else {
+        } 
+        else {
             
             {
                 const pair_type p(currNum, currFreq);
@@ -209,7 +148,6 @@ c_size_t lower_bound(const space_efficient_vector<T> &vec, const T &search_eleme
 
     if(search_element <= vec[low]) return low;
     if(search_element <= vec[high]) return high;
-
 
     return vec.size();
 }
@@ -486,90 +424,6 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
     // return new SLG(new_slg_nonterm_vec, new_rhs);
 }
 
-#if 0
-pair<c_size_t, c_size_t> computeAdjListHelper(c_size_t var, SLG *slg, vector<AdjListElement> & adjList, vector<pair<c_size_t, c_size_t>> & dp, vector<c_size_t> &vOcc) {
-
-    if(var < 0) {
-        return {var, var};
-    }
-
-    if(dp[var].first != 1 && dp[var].second != 1) {
-        return dp[var];
-    }
-
-    // 1. Modifying LMS and RMS
-    // 2. Access rhs
-    SLGNonterm &slg_nonterm = slg->nonterm[var];
-
-    const vector<c_size_t> &global_rhs = slg->rhs;
-    const vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
-
-    c_size_t start_index = slg_nonterm.start_index;
-    c_size_t end_index = (var == slg_nonterm_vec.size()-1) ? (c_size_t)global_rhs.size()-1 : slg_nonterm_vec[var+1].start_index - 1;
-
-    c_size_t curr_rhs_size = end_index - start_index + 1;
-
-    // 
-    if(curr_rhs_size == 0) {
-        return {0, 0};
-    }
-    else if(curr_rhs_size == 1 && global_rhs[start_index] < 0) {
-        // Hopefully this should be always true when there is only 1 character to right
-        // assert(rhs[0] < 0);
-        return dp[var] = {global_rhs[start_index], global_rhs[start_index]};
-
-        // return dp[var] = {rhs[0], rhs[0]};
-    }
-    
-    vector<pair<c_size_t, c_size_t>> lms_rms_list;
-
-    for(c_size_t j=start_index; j<=end_index; j++) {
-        const c_size_t &rhs_symbol = global_rhs[j];
-        pair<c_size_t, c_size_t> lms_rms = computeAdjListHelper(rhs_symbol, slg, adjList, dp, vOcc);
-        lms_rms_list.push_back(lms_rms);
-    }
-
-    for(c_size_t i = 0; i < lms_rms_list.size() - 1; i++) {
-
-        c_size_t f = lms_rms_list[i].second;
-        c_size_t s = lms_rms_list[i+1].first;
-
-        bool_t swapped = false;
-
-        if(abs(f) < abs(s)) {
-            swap(f, s);
-            swapped = true;
-        }
-        adjList.push_back(AdjListElement(f, s, swapped, vOcc[var]));
-    }
-
-    //slg_nonterm.LMS = lms_rms_list.front().first;
-    //slg_nonterm.RMS = lms_rms_list.back().second;
-
-    return dp[var] = {lms_rms_list.front().first, lms_rms_list.back().second};
-}
-
-void computeAdjList(SLG *slg, vector<AdjListElement> &adjList, vector<c_size_t> &vOcc) {
-    vector<pair<c_size_t, c_size_t>> dp(slg->nonterm.size(), make_pair(1, 1));
-
-    computeAdjListHelper(slg->nonterm.size()-1, slg, adjList, dp, vOcc);
-    return;
-}
-
-vector<AdjListElement> computeAdjList(SLG *slg, vector<c_size_t> &vOcc) {
-
-    vector<AdjListElement> adjList;
-
-    vector<pair<c_size_t, c_size_t>> dp(slg->nonterm.size(), make_pair(1, 1));
-
-    for(c_size_t i = 0; i < slg->nonterm.size(); ++i) {
-        computeAdjListHelper(i, slg, adjList, dp, vOcc);
-    }
-
-    return adjList;
-}
-#endif
-
 c_size_t computeVOccHelper(space_efficient_vector<packed_pair<c_size_t, c_size_t>> & edges, space_efficient_vector<c_size_t> &curr_index, space_efficient_vector<bool_t> &have_edges, c_size_t u, space_efficient_vector<c_size_t> & dp) {
 
     // Base Case : Target is Reached / Target is Same as the current node.
@@ -804,193 +658,6 @@ void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
     }
 }
 
-// void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>, 2> &partition_set) {
-std::pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *>
-createPartition(const space_efficient_vector<AdjListElement> & adjList) {
-
-    // // Make Positive
-    // for(array<int, 4> & a : adjList) {
-    //  a[0] = -a[0];
-    //  a[1] = -a[1];
-    // }
-    
-    typedef c_size_t key_type;
-    typedef bool value_type;
-    typedef hash_table<key_type, value_type> hash_table_type;
-    // set<c_size_t>& leftSet = partition_set[0];
-    hash_table_type *leftSet_ptr = new hash_table_type();
-    // set<c_size_t>& rightSet = partition_set[1];
-    hash_table_type *rightSet_ptr = new hash_table_type();
-
-    hash_table_type &leftSet = *leftSet_ptr;
-    hash_table_type &rightSet = *rightSet_ptr;
-
-    c_size_t currentIndex = 0;
-    size_t n = adjList.size();
-
-    c_size_t c = adjList[currentIndex].first;
-
-    while(currentIndex < n) {
-        c_size_t leftSetFreq = 0;
-        c_size_t rightSetFreq = 0;
-        while (currentIndex < n && adjList[currentIndex].first == c) {
-            if(!rightSet.find(adjList[currentIndex].second) /*== rightSet.end()*/) {
-                leftSet.insert(adjList[currentIndex].second, true);
-            }
-
-            if (leftSet.find(adjList[currentIndex].second) /*!= leftSet.end()*/) {
-                leftSetFreq += adjList[currentIndex].vOcc;
-            } else {
-                rightSetFreq += adjList[currentIndex].vOcc;
-            }
-            currentIndex++;
-        }
-
-
-        if (leftSetFreq >= rightSetFreq) {
-            rightSet.insert(c, true);
-        } else {
-            leftSet.insert(c, true);
-        }
-
-        if(currentIndex < n) {
-            c = adjList[currentIndex].first;
-        }
-        
-    }
-    
-    c_size_t LRPairsCount = 0;
-    c_size_t RLPairsCount = 0;
-
-    /*
-        for (int i = 0; i < arr.size() - 1; i++) {
-
-
-            LRPairsCount += (leftSet.find(arr[i]) != leftSet.end()) && (rightSet.find(arr[i + 1]) != rightSet.end());
-            RLPairsCount += (rightSet.find(arr[i]) != rightSet.end()) && (leftSet.find(arr[i + 1]) != leftSet.end());
-        }
-    */
-
-    // for(const AdjListElement & arr : adjList) {
-    for(c_size_t i = 0; i < adjList.size(); ++i) {
-        const AdjListElement & arr = adjList[i];
-
-        c_size_t f = arr.first;
-        c_size_t s = arr.second;
-
-        if(arr.swapped == true) {
-            swap(f, s);
-        }
-
-        LRPairsCount += ((leftSet.find(f) /*!= leftSet.end()*/) && (rightSet.find(s) /*!= rightSet.end()*/)) ? arr.vOcc : (c_size_t)0;
-        RLPairsCount += ((rightSet.find(f) /*!= rightSet.end()*/) && (leftSet.find(s) /*!= leftSet.end()*/)) ? arr.vOcc : (c_size_t)0;
-
-    }
-
-    if (RLPairsCount < LRPairsCount) {
-        // swap(leftSet, rightSet);
-        swap(leftSet_ptr, rightSet_ptr);
-    }
-
-    // swap(rightSet, leftSet);
-    swap(rightSet_ptr, leftSet_ptr);
-
- //    // Revert to Negative
-    // for(array<int, 4> & a : adjList) {
-    //  a[0] = -a[0];
-    //  a[1] = -a[1];
-    // }
-
-    
-
-    return make_pair(leftSet_ptr, rightSet_ptr);
-}
-
-#if 0
-array<set<c_size_t>, 2> createPartition(const vector<array<c_size_t, 4>> & adjList) {
-
-    // // Make Positive
-    // for(array<int, 4> & a : adjList) {
-    //  a[0] = -a[0];
-    //  a[1] = -a[1];
-    // }
-    
-    set<c_size_t> leftSet, rightSet;
-    c_size_t currentIndex = 0;
-    size_t n = adjList.size();
-
-    c_size_t c = adjList[currentIndex][0];
-
-    while(currentIndex < n) {
-        c_size_t leftSetFreq = 0;
-        c_size_t rightSetFreq = 0;
-        while (currentIndex < n && adjList[currentIndex][0] == c) {
-            if(rightSet.find(adjList[currentIndex][1]) == rightSet.end()) {
-                leftSet.insert(adjList[currentIndex][1]);
-            }
-
-            if (leftSet.find(adjList[currentIndex][1]) != leftSet.end()) {
-                leftSetFreq += adjList[currentIndex][3];
-            } else {
-                rightSetFreq += adjList[currentIndex][3];
-            }
-            currentIndex++;
-        }
-
-
-        if (leftSetFreq >= rightSetFreq) {
-            rightSet.insert(c);
-        } else {
-            leftSet.insert(c);
-        }
-
-        if(currentIndex < n) {
-            c = adjList[currentIndex][0];
-        }
-        
-    }
-    
-    c_size_t LRPairsCount = 0;
-    c_size_t RLPairsCount = 0;
-
-    /*
-        for (c_size_t i = 0; i < arr.size() - 1; i++) {
-
-
-            LRPairsCount += (leftSet.find(arr[i]) != leftSet.end()) && (rightSet.find(arr[i + 1]) != rightSet.end());
-            RLPairsCount += (rightSet.find(arr[i]) != rightSet.end()) && (leftSet.find(arr[i + 1]) != leftSet.end());
-        }
-    */
-
-    for(const array<c_size_t, 4> & arr : adjList) {
-        c_size_t f = arr[0];
-        c_size_t s = arr[1];
-
-        if(arr[2] == 1) {
-            swap(f, s);
-        }
-
-        LRPairsCount += ((leftSet.find(f) != leftSet.end()) && (rightSet.find(s) != rightSet.end())) ? arr[3] : (c_size_t)0;
-        RLPairsCount += ((rightSet.find(f) != rightSet.end()) && (leftSet.find(s) != leftSet.end())) ? arr[3] : (c_size_t)0;
-
-    }
-
-    if (RLPairsCount < LRPairsCount) {
-        swap(leftSet, rightSet);
-    }
-
- //    // Revert to Negative
-    // for(array<int, 4> & a : adjList) {
-    //  a[0] = -a[0];
-    //  a[1] = -a[1];
-    // }
-
-    
-
-    return { rightSet, leftSet };
-}
-#endif
-
 // MAP USAGE
 packed_pair<c_size_t, c_size_t> computeAdjListHelper(
     c_size_t var,
@@ -1163,9 +830,92 @@ void computeAdjList(
     return;
 }
 
-// Pair-Wise Compression
-SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_size_t, c_size_t>, c_size_t> & m) { 
-    hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m) { 
+// void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>, 2> &partition_set) {
+std::pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *>
+createPartition(const space_efficient_vector<AdjListElement> & adjList) {
+    typedef c_size_t key_type;
+    typedef bool value_type;
+    typedef hash_table<key_type, value_type> hash_table_type;
+    // set<c_size_t>& leftSet = partition_set[0];
+    hash_table_type *leftSet_ptr = new hash_table_type();
+    // set<c_size_t>& rightSet = partition_set[1];
+    hash_table_type *rightSet_ptr = new hash_table_type();
+
+    hash_table_type &leftSet = *leftSet_ptr;
+    hash_table_type &rightSet = *rightSet_ptr;
+
+    c_size_t currentIndex = 0;
+    size_t n = adjList.size();
+
+    c_size_t c = adjList[currentIndex].first;
+
+    while(currentIndex < n) {
+        c_size_t leftSetFreq = 0;
+        c_size_t rightSetFreq = 0;
+        while (currentIndex < n && adjList[currentIndex].first == c) {
+            if(!rightSet.find(adjList[currentIndex].second) /*== rightSet.end()*/) {
+                leftSet.insert(adjList[currentIndex].second, true);
+            }
+
+            if (leftSet.find(adjList[currentIndex].second) /*!= leftSet.end()*/) {
+                leftSetFreq += adjList[currentIndex].vOcc;
+            } else {
+                rightSetFreq += adjList[currentIndex].vOcc;
+            }
+            currentIndex++;
+        }
+
+        if (leftSetFreq >= rightSetFreq) {
+            rightSet.insert(c, true);
+        } else {
+            leftSet.insert(c, true);
+        }
+
+        if(currentIndex < n) {
+            c = adjList[currentIndex].first;
+        }
+    }
+    
+    c_size_t LRPairsCount = 0;
+    c_size_t RLPairsCount = 0;
+
+    /*
+        for (int i = 0; i < arr.size() - 1; i++) {
+
+
+            LRPairsCount += (leftSet.find(arr[i]) != leftSet.end()) && (rightSet.find(arr[i + 1]) != rightSet.end());
+            RLPairsCount += (rightSet.find(arr[i]) != rightSet.end()) && (leftSet.find(arr[i + 1]) != leftSet.end());
+        }
+    */
+
+    // for(const AdjListElement & arr : adjList) {
+    for(c_size_t i = 0; i < adjList.size(); ++i) {
+        const AdjListElement & arr = adjList[i];
+
+        c_size_t f = arr.first;
+        c_size_t s = arr.second;
+
+        if(arr.swapped == true) {
+            swap(f, s);
+        }
+
+        LRPairsCount += ((leftSet.find(f) /*!= leftSet.end()*/) && (rightSet.find(s) /*!= rightSet.end()*/)) ? arr.vOcc : (c_size_t)0;
+        RLPairsCount += ((rightSet.find(f) /*!= rightSet.end()*/) && (leftSet.find(s) /*!= leftSet.end()*/)) ? arr.vOcc : (c_size_t)0;
+    }
+
+    if (RLPairsCount < LRPairsCount) {
+        // swap(leftSet, rightSet);
+        swap(leftSet_ptr, rightSet_ptr);
+    }
+
+    // swap(rightSet, leftSet);
+    swap(rightSet_ptr, leftSet_ptr);
+
+    return make_pair(leftSet_ptr, rightSet_ptr);
+}
+
+std::pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *>
+createPartition(SLG *slg) {
     space_efficient_vector<c_size_t> vOcc(slg->nonterm.size(), -1);
 
     #ifdef DEBUG_LOG
@@ -1224,7 +974,23 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
     typedef c_size_t key_type;
     typedef bool value_type;
     typedef hash_table<key_type, value_type> hash_table_type;
+
     std::pair<hash_table_type*, hash_table_type*> partition = createPartition(adjList);
+    
+    return partition;
+}
+
+// Pair-Wise Compression
+SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_size_t, c_size_t>, c_size_t> & m) { 
+    hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m) { 
+    
+    typedef c_size_t key_type;
+    typedef bool value_type;
+    typedef hash_table<key_type, value_type> hash_table_type;
+
+    typedef packed_pair<c_size_t, c_size_t> pair_type;
+
+    std::pair<hash_table_type*, hash_table_type*> partition = createPartition(slg);
 
     #ifdef DEBUG_LOG
     cout << "Performing PComp..." << endl;
@@ -1232,9 +998,10 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
     // adjList.clear();  // Clear immediately
     // vector<AdjListElement>().swap(adjList);  // Ensure memory is released
-    adjList.clear();
+    // adjList.clear();
 
     // const set<c_size_t> &left_set = arr[0], &right_set = arr[1];
+    
     const hash_table_type &left_set = *partition.first;
     const hash_table_type &right_set = *partition.second;
 
@@ -1694,7 +1461,6 @@ void get_random_queries(c_size_t text_size,
     }
 }
 
-
 void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec, const string &raw_input_text) {
 
     space_efficient_vector<c_size_t> arr;
@@ -1806,8 +1572,6 @@ void start_compression(const string &input_file, const string &raw_input_text) {
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    
-
     RecompressionRLSLP *recompression_rlslp = recompression_on_slp(inputSLP);
 
     space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
@@ -1815,7 +1579,6 @@ void start_compression(const string &input_file, const string &raw_input_text) {
     for(c_size_t i=rlslp_nonterm_vec.size()-1; i>=1; i--) {
         computeExplen(i, rlslp_nonterm_vec);
     }
-
 
     auto end_time = std::chrono::high_resolution_clock::now();
 
