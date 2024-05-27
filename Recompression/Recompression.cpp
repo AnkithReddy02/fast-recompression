@@ -49,8 +49,8 @@ std::string valToString(const bool &x) {
 
 void combineFrequenciesInRange(
     const space_efficient_vector<packed_pair<c_size_t, c_size_t>>& vec,
-    const c_size_t &lr_pointer,
-    const c_size_t &rr_pointer,
+    const len_t &lr_pointer,
+    const len_t &rr_pointer,
     space_efficient_vector<SLGNonterm> &new_slg_nonterm_vec,
     /* map<pair<c_size_t, c_size_t>, c_size_t> &m */
     hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m,
@@ -71,7 +71,7 @@ void combineFrequenciesInRange(
     c_size_t currNum = vec[lr_pointer].first;
     c_size_t currFreq = vec[lr_pointer].second;
 
-    for(size_t i = lr_pointer + 1; i <= rr_pointer && i < vec.size(); ++i) {
+    for(len_t i = lr_pointer + 1; i <= rr_pointer && i < (len_t)vec.size(); ++i) {
         // Check if the current and previous elements have the same number
         if(vec[i].first == currNum) {
             // Merge frequencies
@@ -184,7 +184,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
 
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
-    for(c_size_t i = 0; i < grammar_size; i++) {
+    for(len_t i = 0; i < grammar_size; ++i) {
         #ifdef DEBUG_LOG
         if (!(i & ((1 << 19) - 1)))
           cout << fixed << setprecision(2) << "Progress: " << ((i+1)*(long double)100)/grammar_size << '\r' << flush;
@@ -205,7 +205,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
         rhs_expansion.set_empty();
      
         // Compute the Expansion.
-        for(c_size_t j = start_index; j <= end_index; j++) {
+        for(len_t j = start_index; j <= end_index; ++j) {
 
             const c_size_t &rhs_symbol = global_rhs[j];
 
@@ -264,7 +264,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
         //vector<int>().swap(rhs);
 
         // Compute LR
-        c_size_t lr_pointer = 1;
+        len_t lr_pointer = 1;
 
         pair_type LR = rhs_expansion[0];
 
@@ -288,7 +288,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
         }
 
         // Compute RR
-        c_size_t rr_pointer = rhs_expansion.size()-2;
+        len_t rr_pointer = rhs_expansion.size()-2;
 
         pair_type RR = rhs_expansion.back();
 
@@ -313,7 +313,8 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_
                     break;
                 }
 
-                rr_pointer--;
+                // rr_pointer--;
+                --rr_pointer;
             }
 
             // set RR
@@ -476,7 +477,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
     hash_table<c_size_t, bool> unique_var;
 
-    for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
+    for(len_t i=0; i<slg_nonterm_vec.size(); i++) {
 
         // Current SLGNonterm
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
@@ -492,7 +493,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
-        for(c_size_t j=start_index; j<=end_index; j++) {
+        for(len_t j=start_index; j<=end_index; ++j) {
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
             if(var >= 0) {
@@ -503,17 +504,16 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
         // Construct Edges.
         // for(const auto & v : unique_var) {
-        for(c_size_t i = 0; i < unique_var.size(); ++i) {
+        for(len_t i = 0; i < unique_var.size(); ++i) {
             c_size_t v = unique_var.get(i).first;
             // Weighted Edge from v to u , v --> u
             if(curr_index[v]==-1) curr_index[v] = 0;
             curr_index[v]++;
-            
         }
     }
 
     c_size_t prefix_sum = 0;
-    for(c_size_t i=0; i<curr_index.size(); i++) {
+    for(len_t i=0; i<curr_index.size(); ++i) {
         if(curr_index[i] > 0) {
             c_size_t temp = curr_index[i];
             curr_index[i] += prefix_sum;
@@ -528,7 +528,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     hash_table<c_size_t, c_size_t, c_size_t> var_freq;
 
     // Enumerate Each Production Rule.
-    for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
+    for(len_t i=0; i<slg_nonterm_vec.size(); ++i) {
         // Current SLGNonterm
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
 
@@ -543,7 +543,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
         // Enumerate each character of RHS
         // Frequency calculation for reverse of the graph.
-        for(c_size_t j=start_index; j<=end_index; j++) {
+        for(len_t j=start_index; j<=end_index; ++j) {
 
             const c_size_t & var = global_rhs[j];
             // Only Non-Terminals
@@ -561,7 +561,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
         // Construct Edges.
         // for(const auto & x : var_freq) {
-        for(c_size_t j = 0; j < var_freq.size(); ++j) {
+        for(len_t j = 0; j < var_freq.size(); ++j) {
             auto x = var_freq.get(j); 
 
             // edge from v to u, u <-- v
@@ -580,7 +580,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
 
     space_efficient_vector<bool_t> have_edges(curr_index.size(), false);
 
-    for(c_size_t i=curr_index.size()-1; i>=0; i--) {
+    for(len_t i=curr_index.size()-1; i>=0; i--) {
 
         if(curr_index[i] == -1) {
             have_edges[i] = false;
@@ -599,7 +599,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     // dp.resize(slg_nonterm_vec.size(), -1);
 
     // Compute vOcc.
-    for(c_size_t i = slg_nonterm_vec.size() - 1; i >= 0; i--) {
+    for(len_t i = slg_nonterm_vec.size() - 1; i >= 0; --i) {
         #ifdef DEBUG_LOG
         if (!(i & ((1 << 19) - 1)))
           cout << fixed << setprecision(2) << "  VOcc Progress: " << (slg_nonterm_vec.size() - i) * (double)100/(slg_nonterm_vec.size()) << '\r';
@@ -635,7 +635,7 @@ void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
     //     a.second = -a.second;
     // }
 
-    for(c_size_t i = 0; i < adjList.size(); ++i) {
+    for(len_t i = 0; i < adjList.size(); ++i) {
         adjList[i].first = -adjList[i].first;
         adjList[i].second = -adjList[i].second;
     }
@@ -652,7 +652,7 @@ void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
     //     a.second = -a.second;
     // }
 
-    for(c_size_t i = 0; i < adjList.size(); ++i) {
+    for(len_t i = 0; i < adjList.size(); ++i) {
         adjList[i].first = -adjList[i].first;
         adjList[i].second = -adjList[i].second;
     }
@@ -709,7 +709,7 @@ packed_pair<c_size_t, c_size_t> computeAdjListHelper(
     pair_type last_lms_rms;
     pair_type prev_lms_rms;
 
-    for(c_size_t j = start_index; j <= end_index; ++j) {
+    for(len_t j = start_index; j <= end_index; ++j) {
         const c_size_t &rhs_symbol = global_rhs[j];
         pair_type lms_rms = computeAdjListHelper(rhs_symbol, slg, m0, m1, dp, vOcc);
 
@@ -844,7 +844,7 @@ createPartition(const space_efficient_vector<AdjListElement> & adjList) {
     hash_table_type &leftSet = *leftSet_ptr;
     hash_table_type &rightSet = *rightSet_ptr;
 
-    c_size_t currentIndex = 0;
+    len_t currentIndex = 0;
     size_t n = adjList.size();
 
     c_size_t c = adjList[currentIndex].first;
@@ -889,7 +889,7 @@ createPartition(const space_efficient_vector<AdjListElement> & adjList) {
     */
 
     // for(const AdjListElement & arr : adjList) {
-    for(c_size_t i = 0; i < adjList.size(); ++i) {
+    for(len_t i = 0; i < adjList.size(); ++i) {
         const AdjListElement & arr = adjList[i];
 
         c_size_t f = arr.first;
@@ -943,7 +943,7 @@ createPartition(SLG *slg) {
     // for(auto & x : m0) {
     //     adjList[index++] = AdjListElement(x.first.first, x.first.second, false, x.second);
     // }
-    for(c_size_t i = 0; i < m0.size(); i++) {
+    for(len_t i = 0; i < m0.size(); ++i) {
         std::pair<pair_type, c_size_t> x = m0.get(i);
         adjList[index++] = AdjListElement(x.first.first, x.first.second, false, x.second);
     }
@@ -953,7 +953,7 @@ createPartition(SLG *slg) {
     // for(auto & x : m1) {
     //     adjList[index++] = AdjListElement(x.first.first, x.first.second, true, x.second);
     // }
-    for(c_size_t i = 0; i < m1.size(); i++) {
+    for(len_t i = 0; i < m1.size(); ++i) {
         std::pair<pair_type, c_size_t> x = m1.get(i);
         adjList[index++] = AdjListElement(x.first.first, x.first.second, true, x.second);
     }
@@ -1026,7 +1026,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
     // We shall iterate throught each production rule in the increasing order of variable.
     // 'i' --> represents the variable.
-    for(c_size_t i=0; i<slg_nonterm_vec.size(); i++) {
+    for(len_t i=0; i<slg_nonterm_vec.size(); ++i) {
 
         // cout << i << " : ";
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
@@ -1050,7 +1050,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
             rhs_expansion.set_empty();
 
             // Expanding RHS.
-            for(c_size_t j=start_index; j<=end_index; j++) {
+            for(len_t j=start_index; j<=end_index; ++j) {
 
                 // cout << global_rhs[j] << ' ';
                 // RHS Terminal
@@ -1134,7 +1134,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
             // vector<c_size_t> cap_rhs;
 
-            for(c_size_t j=0; j<(c_size_t)rhs_expansion.size()-1; j++) {
+            for(len_t j=0; j<(c_size_t)rhs_expansion.size()-1; ++j) {
                 if(rhs_expansion[j] < 0 && rhs_expansion[j+1] < 0) {
                     if(left_set.find(rhs_expansion[j]) /*!= left_set.end()*/ && right_set.find(rhs_expansion[j+1]) /*!= right_set.end()*/) {
                         // if(m.find({rhs_expansion[j], rhs_expansion[j+1]}) == m.end()) {
@@ -1282,7 +1282,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     recompression_rlslp->nonterm.push_back(RLSLPNonterm());
 
     // Compute S0 from S and Initialize Recompression
-    for(c_size_t i=0; i<s->nonterm.size(); i++) {
+    for(len_t i=0; i<s->nonterm.size(); ++i) {
         const char_t &type = s->nonterm[i].type;
         const c_size_t &first = s->nonterm[i].first;
         const c_size_t &second = s->nonterm[i].second;
@@ -1307,7 +1307,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
     delete s;
 
-    c_size_t i = 0;
+    len_t i = 0;
 
     double max_BComp_time = 0;
     double max_PComp_time = 0;
@@ -1423,7 +1423,7 @@ InputSLP* getSLP(c_size_t grammar_size) {
     }
 
 
-    for (c_size_t i = num_terminals; i < grammar_size; ++i) {
+    for(c_size_t i = num_terminals; i < grammar_size; ++i) {
         c_size_t num1 = rand() % i; // Generate first number less than i
         c_size_t num2 = rand() % i; // Generate second number less than i
 
@@ -1454,7 +1454,7 @@ void get_random_queries(c_size_t text_size,
     uniform_int_distribution<> distrib(0, text_size - 1);
 
     // Generate 4096 pairs
-    for (c_size_t i = 0; i < 1000000; ++i) {
+    for(c_size_t i = 0; i < 1000000; ++i) {
         c_size_t first = distrib(gen);
         c_size_t second = distrib(gen);
         pairs.push_back(make_pair(first, second));
@@ -1576,7 +1576,7 @@ void start_compression(const string &input_file, const string &raw_input_text) {
 
     space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
 
-    for(c_size_t i=rlslp_nonterm_vec.size()-1; i>=1; i--) {
+    for(len_t i=rlslp_nonterm_vec.size()-1; i>=1; i--) {
         computeExplen(i, rlslp_nonterm_vec);
     }
 
