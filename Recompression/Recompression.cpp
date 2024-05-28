@@ -798,19 +798,54 @@ void computeAdjList(
     return;
 }
 
-// void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>, 2> &partition_set) {
-std::pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *>
-createPartition(const space_efficient_vector<AdjListElement> & adjList) {
-    typedef c_size_t key_type;
-    typedef bool value_type;
-    typedef hash_table<key_type, value_type> hash_table_type;
-    // set<c_size_t>& leftSet = partition_set[0];
-    hash_table_type *leftSet_ptr = new hash_table_type();
-    // set<c_size_t>& rightSet = partition_set[1];
-    hash_table_type *rightSet_ptr = new hash_table_type();
+c_size_t get_max_abs_terminal(SLG *slg) {
+    c_size_t max_abs_terminal = 0;
+    space_efficient_vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
+    const space_efficient_vector<c_size_t> &global_rhs = slg->rhs;
 
-    hash_table_type &leftSet = *leftSet_ptr;
-    hash_table_type &rightSet = *rightSet_ptr;
+    len_t grammar_size = slg_nonterm_vec.size();
+
+    // We shall iterate throught each production rule in the increasing order of variable.
+    // 'i' --> represents the variable.
+    for(len_t i = 0; i < grammar_size; ++i) {
+        SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
+
+        c_size_t start_index = slg_nonterm.start_index;
+        c_size_t end_index = (i == slg_nonterm_vec.size()-1) ? (c_size_t)global_rhs.size()-1 : slg_nonterm_vec[i+1].start_index - 1;
+
+        for(len_t j = start_index; j <= end_index; ++j) {
+            if(global_rhs[j] < 0) {
+                max_abs_terminal = max(max_abs_terminal, abs(global_rhs[j]));
+            }
+        }
+    }
+
+    return max_abs_terminal;
+}
+
+// void createPartition(const vector<AdjListElement> & adjList, array<set<c_size_t>, 2> &partition_set) {
+space_efficient_vector<bool> *
+// std::pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *>
+createPartition(
+    const space_efficient_vector<AdjListElement> & adjList,
+    c_size_t max_abs_terminal
+    ) {
+
+    space_efficient_vector<bool> *partition_vec_ptr = new space_efficient_vector<bool>(max_abs_terminal + 1, false);
+    space_efficient_vector<bool> &partition_vec = *partition_vec_ptr;
+
+    // typedef c_size_t key_type;
+    // typedef bool value_type;
+    // typedef hash_table<key_type, value_type> hash_table_type;
+    // // set<c_size_t>& leftSet = partition_set[0];
+    // hash_table_type *leftSet_ptr = new hash_table_type();
+    // // set<c_size_t>& rightSet = partition_set[1];
+    // hash_table_type *rightSet_ptr = new hash_table_type();
+
+    // hash_table_type &leftSet = *leftSet_ptr;
+    // hash_table_type &rightSet = *rightSet_ptr;
+    space_efficient_vector<bool> &leftSet = *partition_vec_ptr;
+    space_efficient_vector<bool> &rightSet = *partition_vec_ptr;
 
     len_t currentIndex = 0;
     size_t n = adjList.size();
@@ -821,22 +856,26 @@ createPartition(const space_efficient_vector<AdjListElement> & adjList) {
         c_size_t leftSetFreq = 0;
         c_size_t rightSetFreq = 0;
         while (currentIndex < n && adjList[currentIndex].first == c) {
-            if(!rightSet.find(adjList[currentIndex].second) /*== rightSet.end()*/) {
-                leftSet.insert(adjList[currentIndex].second, true);
+            // if(!rightSet.find(adjList[currentIndex].second) /*== rightSet.end()*/) {
+            //     leftSet.insert(adjList[currentIndex].second, true);
+            // }
+            if(!partition_vec[-adjList[currentIndex].second]) {
+                partition_vec[-adjList[currentIndex].second] = false;
             }
 
-            if (leftSet.find(adjList[currentIndex].second) /*!= leftSet.end()*/) {
+            if(leftSet[-adjList[currentIndex].second] == false) {
                 leftSetFreq += adjList[currentIndex].vOcc;
-            } else {
+            } 
+            else {
                 rightSetFreq += adjList[currentIndex].vOcc;
             }
             currentIndex++;
         }
 
         if (leftSetFreq >= rightSetFreq) {
-            rightSet.insert(c, true);
+            partition_vec[-c] = true;
         } else {
-            leftSet.insert(c, true);
+            partition_vec[-c] = false;
         }
 
         if(currentIndex < n) {
@@ -867,22 +906,38 @@ createPartition(const space_efficient_vector<AdjListElement> & adjList) {
             swap(f, s);
         }
 
-        LRPairsCount += ((leftSet.find(f) /*!= leftSet.end()*/) && (rightSet.find(s) /*!= rightSet.end()*/)) ? arr.vOcc : (c_size_t)0;
-        RLPairsCount += ((rightSet.find(f) /*!= rightSet.end()*/) && (leftSet.find(s) /*!= leftSet.end()*/)) ? arr.vOcc : (c_size_t)0;
+        // LRPairsCount += ((leftSet.find(f) /*!= leftSet.end()*/) && (rightSet.find(s) /*!= rightSet.end()*/)) ? arr.vOcc : (c_size_t)0;
+        // RLPairsCount += ((rightSet.find(f) /*!= rightSet.end()*/) && (leftSet.find(s) /*!= leftSet.end()*/)) ? arr.vOcc : (c_size_t)0;
+        LRPairsCount += ((!leftSet[-f] /*!= leftSet.end()*/) && (rightSet[-s] /*!= rightSet.end()*/)) ? arr.vOcc : (c_size_t)0;
+        RLPairsCount += ((rightSet[-f] /*!= rightSet.end()*/) && (!leftSet[-s] /*!= leftSet.end()*/)) ? arr.vOcc : (c_size_t)0;
     }
 
+    bool swap_required = false;
     if (RLPairsCount < LRPairsCount) {
         // swap(leftSet, rightSet);
-        swap(leftSet_ptr, rightSet_ptr);
+        // swap(leftSet_ptr, rightSet_ptr);
+        swap_required = !swap_required;
     }
 
     // swap(rightSet, leftSet);
-    swap(rightSet_ptr, leftSet_ptr);
+    // swap(rightSet_ptr, leftSet_ptr);
+    swap_required = !swap_required;
 
-    return make_pair(leftSet_ptr, rightSet_ptr);
+    if(swap_required) {
+        // for(bool &x : partition_vec) {
+        //     x = !x;
+        // }
+        for(len_t i = 0; i < partition_vec.size(); ++i) {
+            partition_vec[i] = !partition_vec[i];
+        }
+    }
+
+    // return make_pair(leftSet_ptr, rightSet_ptr);
+    return partition_vec_ptr;
 }
 
-std::pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *>
+// std::pair<hash_table<c_size_t, bool> *, hash_table<c_size_t, bool> *>
+space_efficient_vector<bool> *
 createPartition(SLG *slg) {
     space_efficient_vector<c_size_t> vOcc(slg->nonterm.size(), -1);
 
@@ -961,11 +1016,19 @@ createPartition(SLG *slg) {
     // Create Partition.
     // array<set<c_size_t>,2> arr;
     // createPartition(adjList, arr);
+    /*
     typedef c_size_t key_type;
     typedef bool value_type;
     typedef hash_table<key_type, value_type> hash_table_type;
 
     std::pair<hash_table_type*, hash_table_type*> partition = createPartition(adjList);
+    */
+
+    c_size_t max_abs_terminal = get_max_abs_terminal(slg);
+    #ifdef DEBUG_LOG
+        cout << "max_abs_terminal: " << max_abs_terminal << endl;
+    #endif
+    space_efficient_vector<bool> &partition_vec = *createPartition(adjList, max_abs_terminal);
 
     #ifdef DEBUG_LOG
         {
@@ -975,7 +1038,8 @@ createPartition(SLG *slg) {
         }
     #endif
     
-    return partition;
+    // return partition;
+    return &partition_vec;
 }
 
 // Pair-Wise Compression
@@ -988,7 +1052,10 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
     typedef packed_pair<c_size_t, c_size_t> pair_type;
 
-    std::pair<hash_table_type*, hash_table_type*> partition = createPartition(slg);
+    // std::pair<hash_table_type*, hash_table_type*> partition = createPartition(slg);
+    space_efficient_vector<bool> &partition_vec = *createPartition(slg);
+    space_efficient_vector<bool> &left_set = partition_vec;
+    space_efficient_vector<bool> &right_set = partition_vec;
 
     #ifdef DEBUG_LOG
     cout << "Performing PComp..." << endl;
@@ -1004,8 +1071,8 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
     // const set<c_size_t> &left_set = arr[0], &right_set = arr[1];
     
-    const hash_table_type &left_set = *partition.first;
-    const hash_table_type &right_set = *partition.second;
+    // const hash_table_type &left_set = *partition.first;
+    // const hash_table_type &right_set = *partition.second;
 
     // Current slg non-term list
     space_efficient_vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
@@ -1067,10 +1134,10 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
                     rhs_expansion.push_back(global_rhs[j]);
 
                     if(j==start_index) {
-                        if(left_set.find(global_rhs[j]) /*!= left_set.end()*/) {
+                        if(left_set[-(global_rhs[j])] == false /*!= left_set.end()*/) {
                             LB[i] = 0;
                         }
-                        else if(right_set.find(global_rhs[j]) /*!= right_set.end()*/) {
+                        else if(right_set[-global_rhs[j]] == true /*!= right_set.end()*/) {
                             LB[i] = global_rhs[j];
 
                             // Remove the pushed element
@@ -1078,13 +1145,13 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
                         }
                     }
                     else if(j == end_index) {
-                        if(left_set.find(global_rhs[j]) /*!= left_set.end()*/) {
+                        if(left_set[-global_rhs[j]] == false /*!= left_set.end()*/) {
                             RB[i] = global_rhs[j];
 
                             // Remove the pushed element
                             rhs_expansion.pop_back();
                         }
-                        else if(right_set.find(global_rhs[j]) /*!= right_set.end()*/) {
+                        else if(right_set[-(global_rhs[j])] == true /*!= right_set.end()*/) {
                             RB[i] = 0;
                         }
                     }
@@ -1144,7 +1211,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
 
             for(len_t j=0; j<rhs_expansion.size()-1; ++j) {
                 if(rhs_expansion[j] < 0 && rhs_expansion[j+1] < 0) {
-                    if(left_set.find(rhs_expansion[j]) /*!= left_set.end()*/ && right_set.find(rhs_expansion[j+1]) /*!= right_set.end()*/) {
+                    if(left_set[-rhs_expansion[j]] == false /*!= left_set.end()*/ && right_set[-(rhs_expansion[j+1])] == true /*!= right_set.end()*/) {
                         // if(m.find({rhs_expansion[j], rhs_expansion[j+1]}) == m.end()) {
                         if(!m.find(pair_type(rhs_expansion[j], rhs_expansion[j+1]))) {
                             // m[{rhs_expansion[j], rhs_expansion[j+1]}] = recompression_rlslp->nonterm.size();
@@ -1178,12 +1245,12 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
             // A --> a
             // B --> b
             if(global_rhs[start_index] < 0) {
-                if(left_set.find(global_rhs[start_index]) /*!= left_set.end()*/) {
+                if(left_set[-(global_rhs[start_index])] == false /*!= left_set.end()*/) {
                     LB[i] = 0;
                     new_slg_nonterm_vec.push_back(curr_new_rhs_size);
                     RB[i] = global_rhs[start_index];
                 }
-                else if(right_set.find(global_rhs[start_index]) /*!= right_set.end()*/) {
+                else if(right_set[-(global_rhs[start_index])] == true /*!= right_set.end()*/) {
                     LB[i] = global_rhs[start_index];
                     new_slg_nonterm_vec.push_back(curr_new_rhs_size);
                     RB[i] = 0;
@@ -1233,8 +1300,9 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
     // set<c_size_t>().swap(arr[0]);
     // set<c_size_t>().swap(arr[1]);
 
-    delete partition.first;
-    delete partition.second;
+    // delete partition.first;
+    // delete partition.second;
+    delete &partition_vec;
 
     const c_size_t &start_var = slg_nonterm_vec.size()-1;
 
@@ -1682,6 +1750,5 @@ int main(int argc, char *argv[]) {
 
     // Output the duration
     cout << "Total Time taken: " << duration_seconds << " seconds" << endl;
-
     return 0;
 }
