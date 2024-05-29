@@ -1390,7 +1390,6 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         }
 
         slg->nonterm.push_back(global_rhs_size);
-
     }
 
     delete s;
@@ -1494,7 +1493,8 @@ c_size_t computeExplen(const c_size_t i, space_efficient_vector<RLSLPNonterm>& r
 
 InputSLP* getSLP(c_size_t grammar_size) {
 
-    space_efficient_vector<SLPNonterm> nonterm;
+    InputSLP* slp = new InputSLP();
+    space_efficient_vector<SLPNonterm> &nonterm = slp->nonterm;
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     srand(seed);
@@ -1527,8 +1527,6 @@ InputSLP* getSLP(c_size_t grammar_size) {
             nonterm.push_back(SLPNonterm('1', num, i-1));
         }
     }
-
-    InputSLP* slp = new InputSLP(nonterm);
 
     return slp;
 }
@@ -1595,11 +1593,12 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_eff
 
         c_size_t i = x.first;
         c_size_t j = x.second;
-        // if(i!=7 or j!=11) continue;
+
+        if(i == j) continue;
+        if(i > j) swap(i, j);
 
         // cout << i << ' ' << j << endl;
 
-    
         Node v1, v2;
         stack<Node> v1_ancestors, v2_ancestors;
         // v1_ancestors.push(Node(grammar.size()-1, 0, 33));
@@ -1652,6 +1651,7 @@ void start_compression(const string &input_file, const string &raw_input_text) {
 
     InputSLP *inputSLP = new InputSLP();
     inputSLP->read_from_file(input_file);
+    // InputSLP *inputSLP = getSLP(50);
 
     c_size_t j = 0;
     cout << "Number of Non-Terminals : " << inputSLP->nonterm.size() << endl;
