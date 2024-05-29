@@ -1399,12 +1399,13 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     double max_BComp_time = 0;
     double max_PComp_time = 0;
 
-    typedef packed_pair<c_size_t, c_size_t> pair_type;
-    hash_table<pair_type, c_size_t, c_size_t> m;
-
     while(++i) {
         // map<pair<c_size_t, c_size_t>, c_size_t> m;
         // hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m;
+
+        typedef packed_pair<c_size_t, c_size_t> pair_type;
+        hash_table<pair_type, c_size_t, c_size_t> m;
+
 
         const space_efficient_vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
 
@@ -1454,7 +1455,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         }
 
         // m.clear();
-        m.reset();
+        // m.reset();
         // printRecompressionRLSLP(recompression_rlslp);
     }
 
