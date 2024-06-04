@@ -25,6 +25,10 @@ struct __attribute__((packed)) RLSLPNonterm {
 class RecompressionRLSLP {
 public:
     space_efficient_vector<RLSLPNonterm> nonterm;
+
+    uint64_t ram_use() const {
+      return nonterm.ram_use();
+    }
 };
 
 struct SLGNonterm {
@@ -47,6 +51,10 @@ public:
     
     space_efficient_vector<SLGNonterm> nonterm;
     space_efficient_vector<c_size_t> rhs;
+
+    uint64_t ram_use() const {
+      return nonterm.ram_use() + rhs.ram_use();
+    }
 };
 
 struct  __attribute__((packed)) SLPNonterm {
