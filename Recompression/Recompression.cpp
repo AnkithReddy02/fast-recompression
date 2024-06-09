@@ -47,7 +47,8 @@ std::string valToString(const bool &x) {
   return utils::intToStr((std::uint64_t)x);
 }
 
-int verbosity;
+uint64_t verbosity;
+uint64_t current_run;
 
 void combineFrequenciesInRange(
     const space_efficient_vector<packed_pair<c_size_t, c_size_t>>& vec,
@@ -1133,6 +1134,48 @@ createPartition(SLG *slg) {
     return &partition_vec;
 }
 
+space_efficient_vector<bool> * createRandomPartition(SLG *slg) {
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    random_device rd;
+    mt19937_64 gen(rd());
+    uniform_int_distribution<uint64_t> dis(0, UINT64_MAX);
+
+    c_size_t max_abs_terminal = get_max_abs_terminal(slg);
+    space_efficient_vector<bool> *partition_ptr = new space_efficient_vector<bool>(max_abs_terminal + 1, false);
+    space_efficient_vector<bool> &partition = *partition_ptr;
+
+    uint64_t current_random_number = 0;
+    uint64_t bit_position = 0;
+
+    for(len_t i = 0; i < partition.size(); ++i) {
+        if(bit_position == 0) {
+            current_random_number = dis(gen);
+            bit_position = 64;
+        }
+
+        if(current_random_number & 1) {
+            partition[i] = true;
+        }
+        else {
+            partition[i] = false;
+        }
+
+        current_random_number >>= 1;
+        --bit_position;
+    }
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+
+    if(verbosity >= 1) {
+        cout << " Randomized partition: Time = " << duration_seconds << 's' << endl;
+    }
+
+    return partition_ptr;
+}
+
 // Pair-Wise Compression
 SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_size_t, c_size_t>, c_size_t> & m) { 
     hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m) { 
@@ -1145,7 +1188,8 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_siz
     typedef packed_pair<c_size_t, c_size_t> pair_type;
 
     // std::pair<hash_table_type*, hash_table_type*> partition = createPartition(slg);
-    space_efficient_vector<bool> &partition_vec = *createPartition(slg);
+    // space_efficient_vector<bool> &partition_vec = *createPartition(slg);
+    space_efficient_vector<bool> &partition_vec = current_run % 4 == 2 ? *createPartition(slg) : *createRandomPartition(slg);
     space_efficient_vector<bool> &left_set = partition_vec;
     space_efficient_vector<bool> &right_set = partition_vec;
 
@@ -1534,6 +1578,8 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         if(start_var_rhs_size == 1 && global_rhs[end_index] < 0) {
             break;
         }
+
+        ++current_run;
 
         if(i&1) {
             #ifdef DEBUG_LOG
