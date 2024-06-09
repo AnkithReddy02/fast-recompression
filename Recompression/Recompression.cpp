@@ -881,7 +881,7 @@ c_size_t get_max_abs_terminal(SLG *slg) {
 
         for(len_t j = start_index; j <= end_index; ++j) {
             if(global_rhs[j] < 0) {
-                max_abs_terminal = max(max_abs_terminal, abs(global_rhs[j]));
+                max_abs_terminal = max(max_abs_terminal, c_size_t(abs(global_rhs[j])));
             }
         }
     }
