@@ -9,6 +9,7 @@
 #include "packed_pair.hpp"
 #include "hash_table.hpp"
 #include "utils.hpp"
+#include "simple_slp.hpp"
 
 // #define TEST_SAMPLE
 // #define DEBUG_LOG
@@ -1833,6 +1834,70 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_eff
     cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
 }
 
+bool test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_slp) {
+    space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
+    space_efficient_vector<pair<c_size_t, c_size_t>> random_queries;
+    get_random_queries(rlslp_nonterm_vec.back().explen, random_queries);
+
+    cout << input_slp << endl;
+    typedef simple_slp<std::uint8_t, c_size_t> simple_slp_type;
+    simple_slp_type *slp = new simple_slp_type(input_slp);
+
+    cout << input_slp << endl;
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    // for(auto x : random_queries) {
+    for(c_size_t k = 0; k < random_queries.size(); ++k) {
+        const auto& x = random_queries[k];
+
+        c_size_t i = x.first;
+        c_size_t j = x.second;
+
+        if(i == j) continue;
+        if(i > j) swap(i, j);
+
+        cout << i << ' ' << j << endl;
+
+        Node v1, v2;
+        stack<Node> v1_ancestors, v2_ancestors;
+        // v1_ancestors.push(Node(grammar.size()-1, 0, 33));
+        // v2_ancestors.push(Node(grammar.size()-1, 0, 33));
+        initialize_nodes(rlslp_nonterm_vec.size() - 1, i, 0, rlslp_nonterm_vec.back().explen - 1, v1_ancestors, rlslp_nonterm_vec, v1);
+        initialize_nodes(rlslp_nonterm_vec.size() - 1, j, 0, rlslp_nonterm_vec.back().explen - 1, v2_ancestors, rlslp_nonterm_vec, v2);
+
+
+        // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
+        // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
+
+        // cout << i << ' ' << j << endl;
+
+        c_size_t res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, rlslp_nonterm_vec);
+
+        c_size_t res2 = slp->lce(i, j);
+
+        c_size_t ii = i;
+        c_size_t jj = j;
+
+        if(res1 != res2) {
+            cerr << "Error: LCE Query didn't match for i: " << i << ", j: " << j << endl;
+            exit(1);
+        }
+
+
+    }
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+
+    cout << "LCE Queries Passed!" << endl;
+    // Output the duration
+    cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
+
+    return false;
+}
+
 void start_compression(const string &input_file, const string &raw_input_text) {
 
 
@@ -1873,7 +1938,8 @@ void start_compression(const string &input_file, const string &raw_input_text) {
 
     // TEST
     if(!raw_input_text.empty())
-    test(text_size, recompression_rlslp, rlslp_nonterm_vec, raw_input_text);
+    // test(text_size, recompression_rlslp, rlslp_nonterm_vec, raw_input_text);
+    test_queries(recompression_rlslp, input_file);
 
     // cout << "****************" << endl;
     // cout << "Overall Peak RAM uage: " << get_peak_ram_allocation() << endl;
