@@ -126,8 +126,6 @@ struct simple_slp {
     //=========================================================================
     simple_slp(const std::string slp_filename) {
 
-    cout << "simple_slp.hpp::simple_slp(slp_filename) : " << slp_filename << endl;
-
       // Open file with grammar.
       std::FILE *f = utils::file_open(slp_filename, "r");
 
@@ -189,8 +187,6 @@ struct simple_slp {
         const std::uint64_t root_id = get_root_id();
         m_text_length = get_exp_len(root_id);
       }
-
-      cout << "simple_slp.hpp::simple_slp(slp_filename) : " << slp_filename;
     }
 
     //=========================================================================

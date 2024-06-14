@@ -1834,16 +1834,14 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_eff
     cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
 }
 
-bool test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_slp) {
+void test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_slp) {
     space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
     space_efficient_vector<pair<c_size_t, c_size_t>> random_queries;
-    get_random_queries(rlslp_nonterm_vec.back().explen, random_queries);
 
-    cout << input_slp << endl;
     typedef simple_slp<std::uint8_t, c_size_t> simple_slp_type;
     simple_slp_type *slp = new simple_slp_type(input_slp);
 
-    cout << input_slp << endl;
+    get_random_queries(rlslp_nonterm_vec.back().explen, random_queries);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1856,8 +1854,6 @@ bool test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
 
         if(i == j) continue;
         if(i > j) swap(i, j);
-
-        cout << i << ' ' << j << endl;
 
         Node v1, v2;
         stack<Node> v1_ancestors, v2_ancestors;
@@ -1873,11 +1869,7 @@ bool test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
         // cout << i << ' ' << j << endl;
 
         c_size_t res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, rlslp_nonterm_vec);
-
         c_size_t res2 = slp->lce(i, j);
-
-        c_size_t ii = i;
-        c_size_t jj = j;
 
         if(res1 != res2) {
             cerr << "Error: LCE Query didn't match for i: " << i << ", j: " << j << endl;
@@ -1891,14 +1883,14 @@ bool test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
 
     auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
 
-    cout << "LCE Queries Passed!" << endl;
+    cout << endl <<  "LCE Queries Passed!" << endl;
     // Output the duration
-    cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
+    cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl << endl;
 
-    return false;
+    delete slp;
 }
 
-void start_compression(const string &input_file, const string &raw_input_text) {
+void start_compression(const string &input_file, const string &test_file) {
 
 
     InputSLP *inputSLP = new InputSLP();
@@ -1937,9 +1929,14 @@ void start_compression(const string &input_file, const string &raw_input_text) {
     cout << "****************" << endl << endl;
 
     // TEST
-    if(!raw_input_text.empty())
-    // test(text_size, recompression_rlslp, rlslp_nonterm_vec, raw_input_text);
-    test_queries(recompression_rlslp, input_file);
+    if(!test_file.empty()) {
+        if(test_file == input_file) {
+            test_queries(recompression_rlslp, test_file);
+        }
+        else {
+            test(text_size, recompression_rlslp, rlslp_nonterm_vec, test_file);
+        }
+    }
 
     // cout << "****************" << endl;
     // cout << "Overall Peak RAM uage: " << get_peak_ram_allocation() << endl;
@@ -1958,11 +1955,11 @@ int main(int argc, char *argv[]) {
     utils::initialize_stats();
 
     if(!(argc >= 2 and argc <= 5)) {
-        cout << "Usage: " + string(argv[0]) + " [-v or -vv] [-t raw_input_text] input_slp" << endl;
+        cout << "Usage: " + string(argv[0]) + " [-v or -vv] [-t [raw_input_text]] input_slp" << endl;
         exit(1);
     }
 
-    string raw_input_text;
+    string test_file;
     string input_slp;
 
     verbosity = 0;
@@ -1976,8 +1973,10 @@ int main(int argc, char *argv[]) {
                 exit(1);
             }
 
-            raw_input_text = string(argv[i+1]);
-            i++;
+            test_file = string(argv[i+1]);
+            if(i + 2 != argc) {
+                i++;
+            }
         }
         else if(curr_arg == "-v") {
             verbosity = 1;
@@ -1990,11 +1989,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if(!raw_input_text.empty()) {
-        ifstream file(raw_input_text);
+    if(!test_file.empty()) {
+        ifstream file(test_file);
 
         if (!file.is_open()) {
-            cerr << "Error: Unable to open the file - " + raw_input_text << endl;
+            cerr << "Error: Unable to open the file - " + test_file << endl;
             exit(1);
         }
 
@@ -2008,7 +2007,7 @@ int main(int argc, char *argv[]) {
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    start_compression(input_slp, raw_input_text);
+    start_compression(input_slp, test_file);
 
     auto end_time = std::chrono::high_resolution_clock::now();
 
