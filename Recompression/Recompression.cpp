@@ -1725,7 +1725,7 @@ void get_random_queries(c_size_t text_size,
 
     random_device rd; 
     mt19937 gen(rd());
-    uniform_int_distribution<> distrib(0, text_size - 1);
+    uniform_int_distribution<uint64_t> distrib(0, text_size - 1);
 
     // Generate 4096 pairs
     for(c_size_t i = 0; i < 1000000; ++i) {
