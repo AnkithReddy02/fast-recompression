@@ -197,7 +197,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp) {
 
         if(verbosity >= 1) {
             if (!(i & ((1 << 19) - 1)))
-            cout << fixed << setprecision(2) << "Progress: " << ((i+1)*(long double)100)/grammar_size << "%\r" << flush;
+            cout << fixed << setprecision(2) << "  Progress: " << ((i+1)*(long double)100)/grammar_size << "%\r" << flush;
         }
 
         SLGNonterm & slg_nonterm = slg_nonterm_vec[i];
@@ -345,7 +345,7 @@ SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp) {
     #endif
 
     if(verbosity >= 1) {
-        cout << " Progress: 100.0%" << endl;
+        cout << "  Progress: 100.0%" << endl;
     }
 
     // Add new Starting Variable to the new Grammar G'(G Prime).
@@ -499,14 +499,14 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     #endif
 
     if(verbosity >= 1) {
-        cout << "  Computing outdeg:" << endl;
+        cout << "    Computing outdeg:" << endl;
         start_time = std::chrono::high_resolution_clock::now();
     }
 
     for(len_t i = 0; i < slg_nonterm_vec.size(); ++i) {
         if(verbosity >= 1) {
             if (!(i & ((1 << 19) - 1)))
-                cout << fixed << setprecision(1) << "   Progress: " << (slg_nonterm_vec.size() - i) * (double)100/(slg_nonterm_vec.size()) << "%" << '\r' << flush;
+                cout << fixed << setprecision(1) << "      Progress: " << (slg_nonterm_vec.size() - i) * (double)100/(slg_nonterm_vec.size()) << "%" << '\r' << flush;
         }
 
         // Current SLGNonterm
@@ -551,11 +551,11 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     #endif
 
     if(verbosity >= 1) {
-        cout << "   Progress: 100.0%" << endl;
+        cout << "      Progress: 100.0%" << endl;
         end_time = std::chrono::high_resolution_clock::now();
         auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-        cout << "    Time = " << duration_seconds << 's' << endl;
-        cout << "  Prefix sum: " << flush;
+        cout << "      Time = " << duration_seconds << 's' << endl;
+        cout << "    Prefix sum: " << flush;
     }
 
     if(verbosity >= 1) {
@@ -575,7 +575,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
         end_time = std::chrono::high_resolution_clock::now();
         auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
         cout << "Time = " << duration_seconds << 's' << endl;
-        cout << "  Prepare edges: " << flush;
+        cout << "    Prepare edges: " << flush;
         start_time = std::chrono::high_resolution_clock::now();
     }
 
@@ -643,6 +643,9 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
         end_time = std::chrono::high_resolution_clock::now();
         auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
         cout << "Time = " << duration_seconds << 's' << endl;
+        
+        start_time = std::chrono::high_resolution_clock::now();
+        cout << "    Have Edges: ";
     }
 
     space_efficient_vector<bool_t> have_edges(curr_index.size(), false);
@@ -669,8 +672,12 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     #endif
 
     if(verbosity >= 1) {
+        end_time = std::chrono::high_resolution_clock::now();
+        auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+        cout << "Time = " << duration_seconds << 's' << endl;
+
         start_time = std::chrono::high_resolution_clock::now();
-        cout << "  Compute vocc:" << endl;
+        cout << "    Compute vocc:" << endl;
     }
 
     // Compute vOcc.
@@ -681,7 +688,7 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
         #endif
         if(verbosity >= 1) {
             if (!(i & ((1 << 19) - 1)))
-                cout << fixed << setprecision(1) << "   Progress: " << (slg_nonterm_vec.size() - i) * (double)100/(slg_nonterm_vec.size()) <<  "%" << '\r';
+                cout << fixed << setprecision(1) << "      Progress: " << (slg_nonterm_vec.size() - i) * (double)100/(slg_nonterm_vec.size()) <<  "%" << '\r';
         }
         computeVOccHelper(edges, curr_index, have_edges, i, dp);
     }
@@ -695,10 +702,10 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     #endif
 
      if(verbosity >= 1) {
-        cout << "   Progress: " << "100.0%" << endl;
+        cout << "      Progress: " << "100.0%" << endl;
         end_time = std::chrono::high_resolution_clock::now();
         auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-        cout << "   Time = " << duration_seconds << 's' << endl; 
+        cout << "      Time = " << duration_seconds << 's' << endl; 
     }
 
     return;
@@ -716,6 +723,9 @@ void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
     //     a.first = -a.first;
     //     a.second = -a.second;
     // }
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    cout << "    Sorting AdjList: ";
 
     for(len_t i = 0; i < adjList.size(); ++i) {
         adjList[i].first = -adjList[i].first;
@@ -738,6 +748,10 @@ void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
         adjList[i].first = -adjList[i].first;
         adjList[i].second = -adjList[i].second;
     }
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    cout << "Time = " << duration_seconds << 's' << endl;
 }
 
 // MAP USAGE
@@ -1003,7 +1017,7 @@ createPartition(SLG *slg) {
     auto partition_start_time = std::chrono::high_resolution_clock::now(), partition_end_time = partition_start_time;
     if(verbosity >= 1) {
         partition_start_time = std::chrono::high_resolution_clock::now();
-        cout << " Deterministic Partition:" << endl;
+        cout << "  Deterministic Partition:" << endl;
     }
 
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -1029,7 +1043,7 @@ createPartition(SLG *slg) {
     #endif
 
     if(verbosity >= 1) {
-        cout << "  Compute adj list: " << flush;
+        cout << "    Compute adj list: " << flush;
         start_time = std::chrono::high_resolution_clock::now();
     }
 
@@ -1074,6 +1088,12 @@ createPartition(SLG *slg) {
         auto sort_start_time = std::chrono::high_resolution_clock::now();
     #endif
 
+    if(verbosity >= 1) {
+        end_time = std::chrono::high_resolution_clock::now();
+        auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+        cout << "Time = " << duration_seconds << 's' << endl;
+    }
+
     sortAdjList(adjList);
 
     #ifdef DEBUG_LOG
@@ -1085,12 +1105,6 @@ createPartition(SLG *slg) {
         cout << "Computing Partition..." << endl;
         auto partition_start_time = std::chrono::high_resolution_clock::now();
     #endif
-
-    if(verbosity >= 1) {
-        end_time = std::chrono::high_resolution_clock::now();
-        auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-        cout << "Time = " << duration_seconds << 's' << endl;
-    }
 
     // Create Partition.
     // array<set<c_size_t>,2> arr;
@@ -1120,8 +1134,8 @@ createPartition(SLG *slg) {
     if(verbosity >= 1) {
         partition_end_time = std::chrono::high_resolution_clock::now();
         auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(partition_end_time - partition_start_time).count();
-        cout << "  Max terminal number = " << max_abs_terminal << endl;
-        cout << "  Time = " << duration_seconds << 's' << endl;
+        cout << "    Max terminal number = " << max_abs_terminal << endl;
+        cout << "    Time = " << duration_seconds << 's' << endl;
     }
     
     // return partition;
@@ -1164,7 +1178,7 @@ space_efficient_vector<bool> * createRandomPartition(SLG *slg) {
     auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
 
     if(verbosity >= 1) {
-        cout << " Randomized partition: Time = " << duration_seconds << 's' << endl;
+        cout << "  Randomized partition: Time = " << duration_seconds << 's' << endl;
     }
 
     return partition_ptr;
@@ -1196,7 +1210,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp) {
     #endif
 
     if(verbosity >= 1) {
-        cout << " Performing PComp:" << endl;
+        cout << "  Performing PComp:" << endl;
         start_time = std::chrono::high_resolution_clock::now();
     }
 
@@ -1240,7 +1254,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp) {
 
         if(verbosity >= 1) {
             if (!(i & ((1 << 19) - 1)))
-                cout << fixed << setprecision(1) << "  Progress: " << ((i+1)*(long double)100)/grammar_size << '%' << '\r' << flush;
+                cout << fixed << setprecision(1) << "    Progress: " << ((i+1)*(long double)100)/grammar_size << '%' << '\r' << flush;
         }
 
         // cout << i << " : ";
@@ -1432,7 +1446,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp) {
     }
 
     if(verbosity >= 1) {
-        cout << "  Progress: 100.0%" << endl;
+        cout << "    Progress: 100.0%" << endl;
     }
     #ifdef DEBUG_LOG
         cout << endl;
@@ -1487,7 +1501,7 @@ SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp) {
     if(verbosity >= 1) {
         end_time = std::chrono::high_resolution_clock::now();
         auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-        cout << "  Time = " << duration_seconds << 's' << endl;
+        cout << "   Time = " << duration_seconds << 's' << endl;
     }
 
     return new_slg;
@@ -1590,7 +1604,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             max_BComp_time = max(max_BComp_time, duration_seconds);
 
             if(verbosity >= 1) {
-                cout << " Time = " << duration_seconds << 's' << endl;
+                cout << "  Time = " << duration_seconds << 's' << endl;
             }
         }
         else {
@@ -1612,20 +1626,20 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             max_PComp_time = max(max_PComp_time, duration_seconds);
 
             if(verbosity >= 1) {
-                cout << " Time = " << duration_seconds << 's' << endl;
+                cout << "  Time = " << duration_seconds << 's' << endl;
             }
         }
 
         if(verbosity >= 2) {
             cout << "\nStats:" << endl;
-            cout << " Number of nonterms in recompression RLSLP = " << recompression_rlslp->nonterm.size() << endl;
-            cout << " Number of nonterms in SLG = " << slg->nonterm.size() << endl;
-            cout << fixed << setprecision(3) <<  " Avg expansion size in SLG = " << (long double)slg->rhs.size() / slg->nonterm.size() << endl;
+            cout << "  Number of nonterms in recompression RLSLP = " << recompression_rlslp->nonterm.size() << endl;
+            cout << "  Number of nonterms in SLG = " << slg->nonterm.size() << endl;
+            cout << fixed << setprecision(3) <<  "  Avg expansion size in SLG = " << (long double)slg->rhs.size() / slg->nonterm.size() << endl;
 
             cout << "\nRAM usage:" << endl;
-            cout << fixed << setprecision(3) << " Recompression RLSLP: " << recompression_rlslp->ram_use() / (1024.0 * 1024.0) << "MiB" << endl;
-            cout << fixed << setprecision(3) << " Current SLG: " << slg->ram_use() / (1024.0 * 1024.0) << "MiB" << endl;
-            cout << fixed << setprecision(3) << " Peak RAM usage so far: " << peak_ram_allocation / (1024.0 * 1024.0) << "MiB" << endl;
+            cout << fixed << setprecision(3) << "  Recompression RLSLP: " << recompression_rlslp->ram_use() / (1024.0 * 1024.0) << "MiB" << endl;
+            cout << fixed << setprecision(3) << "  Current SLG: " << slg->ram_use() / (1024.0 * 1024.0) << "MiB" << endl;
+            cout << fixed << setprecision(3) << "  Peak RAM usage so far: " << peak_ram_allocation / (1024.0 * 1024.0) << "MiB" << endl;
             cout << "\n\n";
         }
 
@@ -1675,8 +1689,6 @@ void start_compression(const string &input_file, const string &test_file) {
     // InputSLP *inputSLP = getSLP(50);
 
     c_size_t j = 0;
-    cout << "Number of Non-Terminals : " << inputSLP->nonterm.size() << endl;
-
     c_size_t i = -1;
 
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -1766,6 +1778,13 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if(input_slp.empty()) {
+        cerr << "Error: Input SLP file is empty!" << endl;
+        exit(1);
+    }
+
+    cout << "SLP File: " << input_slp << endl;
+
     if(!test_file.empty()) {
         ifstream file(test_file);
 
@@ -1775,11 +1794,10 @@ int main(int argc, char *argv[]) {
         }
 
         file.close();
-    }
 
-    if(input_slp.empty()) {
-        cerr << "Error: Input SLP file is empty!" << endl;
-        exit(1);
+        if(test_file != input_slp) {
+            cout << "Text File: " << test_file << endl;
+        }
     }
 
     auto start_time = std::chrono::high_resolution_clock::now();
