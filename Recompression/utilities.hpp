@@ -83,6 +83,46 @@ space_efficient_vector<c_size_t> expandRLSLP(const RecompressionRLSLP *recompres
     return result;
 }
 
+InputSLP* getSLP(c_size_t grammar_size) {
+
+    InputSLP* slp = new InputSLP();
+    space_efficient_vector<SLPNonterm> &nonterm = slp->nonterm;
+
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    srand(seed);
+
+
+
+    // Generate random number X < n/2
+    c_size_t num_terminals = rand() % ((c_size_t)((3*grammar_size)/4));
+
+    num_terminals++;
+
+    for(c_size_t i=1; i<=num_terminals; i++) {
+        nonterm.push_back(SLPNonterm('0', -i, 1));
+    }
+
+
+    for(c_size_t i = num_terminals; i < grammar_size; ++i) {
+        c_size_t num1 = rand() % i; // Generate first number less than i
+        c_size_t num2 = rand() % i; // Generate second number less than i
+
+
+        c_size_t bit1 = rand()%2;
+        c_size_t bit2 = rand()%2;
+
+        c_size_t num = (bit2 == 1 ? num2 : num1);
+
+        if(bit1 == 0)
+        nonterm.push_back(SLPNonterm('1', i-1, num));
+        else {
+            nonterm.push_back(SLPNonterm('1', num, i-1));
+        }
+    }
+
+    return slp;
+}
+
 // void expandSLG(c_size_t var, const space_efficient_vector<SLGNonterm> & slg_nonterm_vec, space_efficient_vector<c_size_t> & result) {
 //     if(var < 0) {
 //         result.push_back(abs(var));

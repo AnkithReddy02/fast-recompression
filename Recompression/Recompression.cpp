@@ -10,6 +10,7 @@
 #include "hash_table.hpp"
 #include "utils.hpp"
 #include "simple_slp.hpp"
+#include "test_queries.hpp"
 
 // #define TEST_SAMPLE
 // #define DEBUG_LOG
@@ -157,8 +158,8 @@ c_size_t lower_bound(const space_efficient_vector<T> &vec, const T &search_eleme
 }
 
 // Block Compression
-SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp, //map<pair<c_size_t, c_size_t>, c_size_t> & m) {
-    hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> & m) {
+SLG* BComp(SLG *slg, RecompressionRLSLP *recompression_rlslp) {
+    hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> m;
 
     // Current slg non-term list
     space_efficient_vector<SLGNonterm> & slg_nonterm_vec = slg->nonterm;
@@ -703,14 +704,6 @@ void computeVOcc(SLG *slg, space_efficient_vector<c_size_t> &dp) {
     return;
 }
 
-bool AdjListElementCompare(const AdjListElement &a, const AdjListElement &b) {
-    if(a.first != b.first) {
-        return a.first < b.first;
-    }
-
-    return a.second < b.second;
-}
-
 void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
 
     // Make Positive
@@ -1178,9 +1171,9 @@ space_efficient_vector<bool> * createRandomPartition(SLG *slg) {
 }
 
 // Pair-Wise Compression
-SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp,  //map<pair<c_size_t, c_size_t>, c_size_t> & m) { 
-    hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> &m) { 
+SLG * PComp(SLG *slg, RecompressionRLSLP *recompression_rlslp) {
     auto start_time = std::chrono::high_resolution_clock::now(), end_time = start_time;
+    hash_table<packed_pair<c_size_t, c_size_t>, c_size_t, c_size_t> m;
 
     typedef c_size_t key_type;
     typedef bool value_type;
@@ -1560,17 +1553,12 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
         // hash_table<pair<c_size_t, c_size_t>, c_size_t, c_size_t> m;
 
         typedef packed_pair<c_size_t, c_size_t> pair_type;
-        hash_table<pair_type, c_size_t, c_size_t> m;
-
 
         const space_efficient_vector<SLGNonterm> &slg_nonterm_vec = slg->nonterm;
-
         const space_efficient_vector<c_size_t> &global_rhs = slg->rhs;
-
         const SLGNonterm &slg_nonterm = slg_nonterm_vec.back();
 
         c_size_t start_var = slg_nonterm_vec.size()-1;
-
         c_size_t start_index = slg_nonterm.start_index;
         c_size_t end_index = (start_var == slg_nonterm_vec.size()-1) ? c_size_t(global_rhs.size())-1 : c_size_t(slg_nonterm_vec[start_var+1].start_index) - 1;
 
@@ -1593,7 +1581,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
             auto start_time = std::chrono::high_resolution_clock::now();
 
-            slg = BComp(slg, recompression_rlslp, m);
+            slg = BComp(slg, recompression_rlslp);
 
             auto end_time = std::chrono::high_resolution_clock::now();
 
@@ -1615,7 +1603,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
 
             auto start_time = std::chrono::high_resolution_clock::now();
 
-            slg = PComp(slg, recompression_rlslp, m);
+            slg = PComp(slg, recompression_rlslp);
 
             auto end_time = std::chrono::high_resolution_clock::now();
 
@@ -1632,12 +1620,12 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
             cout << "\nStats:" << endl;
             cout << " Number of nonterms in recompression RLSLP = " << recompression_rlslp->nonterm.size() << endl;
             cout << " Number of nonterms in SLG = " << slg->nonterm.size() << endl;
-            cout << " Avg expansion size in SLG = " << (long double)slg->rhs.size() / slg->nonterm.size() << endl;
+            cout << fixed << setprecision(3) <<  " Avg expansion size in SLG = " << (long double)slg->rhs.size() / slg->nonterm.size() << endl;
 
             cout << "\nRAM usage:" << endl;
-            cout << " Recompression RLSLP: " << recompression_rlslp->ram_use() / (1024.0 * 1024.0) << "MiB" << endl;
-            cout << " Current SLG: " << slg->ram_use() / (1024.0 * 1024.0) << "MiB" << endl;
-            cout << " Peak RAM usage so far: " << peak_ram_allocation / (1024.0 * 1024.0) << "MiB" << endl;
+            cout << fixed << setprecision(3) << " Recompression RLSLP: " << recompression_rlslp->ram_use() / (1024.0 * 1024.0) << "MiB" << endl;
+            cout << fixed << setprecision(3) << " Current SLG: " << slg->ram_use() / (1024.0 * 1024.0) << "MiB" << endl;
+            cout << fixed << setprecision(3) << " Peak RAM usage so far: " << peak_ram_allocation / (1024.0 * 1024.0) << "MiB" << endl;
             cout << "\n\n";
         }
 
@@ -1677,217 +1665,6 @@ c_size_t computeExplen(const c_size_t i, space_efficient_vector<RLSLPNonterm>& r
 
     // In case of unexpected type
     return 0; 
-}
-
-InputSLP* getSLP(c_size_t grammar_size) {
-
-    InputSLP* slp = new InputSLP();
-    space_efficient_vector<SLPNonterm> &nonterm = slp->nonterm;
-
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    srand(seed);
-
-
-
-    // Generate random number X < n/2
-    c_size_t num_terminals = rand() % ((c_size_t)((3*grammar_size)/4));
-
-    num_terminals++;
-
-    for(c_size_t i=1; i<=num_terminals; i++) {
-        nonterm.push_back(SLPNonterm('0', -i, 1));
-    }
-
-
-    for(c_size_t i = num_terminals; i < grammar_size; ++i) {
-        c_size_t num1 = rand() % i; // Generate first number less than i
-        c_size_t num2 = rand() % i; // Generate second number less than i
-
-
-        c_size_t bit1 = rand()%2;
-        c_size_t bit2 = rand()%2;
-
-        c_size_t num = (bit2 == 1 ? num2 : num1);
-
-        if(bit1 == 0)
-        nonterm.push_back(SLPNonterm('1', i-1, num));
-        else {
-            nonterm.push_back(SLPNonterm('1', num, i-1));
-        }
-    }
-
-    return slp;
-}
-
-void get_random_queries(c_size_t text_size,
-    space_efficient_vector<pair<c_size_t, c_size_t>> &pairs) {
-    // pairs.reserve(1000000); 
-
-    random_device rd; 
-    mt19937 gen(rd());
-    uniform_int_distribution<uint64_t> distrib(0, text_size - 1);
-
-    // Generate 4096 pairs
-    for(c_size_t i = 0; i < 1000000; ++i) {
-        c_size_t first = distrib(gen);
-        c_size_t second = distrib(gen);
-        pairs.push_back(make_pair(first, second));
-    }
-}
-
-void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec, const string &raw_input_text) {
-
-    space_efficient_vector<c_size_t> arr;
-    expandRLSLP(recompression_rlslp, arr);
-
-    ifstream file(raw_input_text);
-
-    if (!file.is_open()) {
-        cerr << "Error opening file - " + raw_input_text << endl;
-        exit(1);
-    }
-
-    space_efficient_vector<c_size_t> text;
-
-    char ch;
-    while (file.get(ch)) {
-        text.push_back(static_cast<unsigned char>(ch));
-    }
-
-    // Close the file
-    file.close();
-
-    assert(text.size()==arr.size());
-
-    cout << "Text Size Matched!" << endl;
-
-    for(c_size_t i=0; i<text.size(); i++) {
-        if(text[i] != arr[i]) {
-            cout << "Text didn't match : " << i << ' ' << text[i] << ' ' << arr[i] << endl;
-            exit(1);
-        }
-    }
-
-    cout << "Text Matched!" << endl;
-
-    space_efficient_vector<pair<c_size_t, c_size_t>> random_queries;
-    get_random_queries(text_size, random_queries);
-
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-    // for(auto x : random_queries) {
-    for(c_size_t k = 0; k < random_queries.size(); ++k) {
-        const auto& x = random_queries[k];
-
-        c_size_t i = x.first;
-        c_size_t j = x.second;
-
-        if(i == j) continue;
-        if(i > j) swap(i, j);
-
-        // cout << i << ' ' << j << endl;
-
-        Node v1, v2;
-        stack<Node> v1_ancestors, v2_ancestors;
-        // v1_ancestors.push(Node(grammar.size()-1, 0, 33));
-        // v2_ancestors.push(Node(grammar.size()-1, 0, 33));
-        initialize_nodes(rlslp_nonterm_vec.size() - 1, i, 0, rlslp_nonterm_vec.back().explen - 1, v1_ancestors, rlslp_nonterm_vec, v1);
-        initialize_nodes(rlslp_nonterm_vec.size() - 1, j, 0, rlslp_nonterm_vec.back().explen - 1, v2_ancestors, rlslp_nonterm_vec, v2);
-
-
-        // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
-        // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
-
-        // cout << i << ' ' << j << endl;
-
-        c_size_t res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, rlslp_nonterm_vec);
-
-        c_size_t res2 = 0;
-
-        c_size_t ii = i;
-        c_size_t jj = j;
-
-        while(jj < text_size && arr[ii] == arr[jj]) {
-            res2++;
-
-            jj++;
-            ii++;
-        }
-
-        // cout << i << ' ' << j << ' ' << res1 << ' ' << res2 << endl;
-        // assert(res1==res2);
-
-        if(res1 != res2) {
-            cerr << "Error: LCE Query didn't match with Naive!!" << endl;
-            exit(1);
-        }
-
-
-    }
-
-    auto end_time = std::chrono::high_resolution_clock::now();
-
-    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-
-    cout << "LCE Queries Passed!" << endl;
-    // Output the duration
-    cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
-}
-
-void test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_slp) {
-    space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
-    space_efficient_vector<pair<c_size_t, c_size_t>> random_queries;
-
-    typedef simple_slp<std::uint8_t, c_size_t> simple_slp_type;
-    simple_slp_type *slp = new simple_slp_type(input_slp);
-
-    get_random_queries(rlslp_nonterm_vec.back().explen, random_queries);
-
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-    // for(auto x : random_queries) {
-    for(c_size_t k = 0; k < random_queries.size(); ++k) {
-        const auto& x = random_queries[k];
-
-        c_size_t i = x.first;
-        c_size_t j = x.second;
-
-        if(i == j) continue;
-        if(i > j) swap(i, j);
-
-        Node v1, v2;
-        stack<Node> v1_ancestors, v2_ancestors;
-        // v1_ancestors.push(Node(grammar.size()-1, 0, 33));
-        // v2_ancestors.push(Node(grammar.size()-1, 0, 33));
-        initialize_nodes(rlslp_nonterm_vec.size() - 1, i, 0, rlslp_nonterm_vec.back().explen - 1, v1_ancestors, rlslp_nonterm_vec, v1);
-        initialize_nodes(rlslp_nonterm_vec.size() - 1, j, 0, rlslp_nonterm_vec.back().explen - 1, v2_ancestors, rlslp_nonterm_vec, v2);
-
-
-        // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
-        // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
-
-        // cout << i << ' ' << j << endl;
-
-        c_size_t res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, rlslp_nonterm_vec);
-        c_size_t res2 = slp->lce(i, j);
-
-        if(res1 != res2) {
-            cerr << "Error: LCE Query didn't match for i: " << i << ", j: " << j << endl;
-            exit(1);
-        }
-
-
-    }
-
-    auto end_time = std::chrono::high_resolution_clock::now();
-
-    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-
-    cout << endl <<  "LCE Queries Passed!" << endl;
-    // Output the duration
-    cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl << endl;
-
-    delete slp;
 }
 
 void start_compression(const string &input_file, const string &test_file) {
