@@ -725,7 +725,9 @@ void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
     // }
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    cout << "    Sorting AdjList: ";
+    if(verbosity >= 1) {
+        cout << "    Sorting AdjList: ";
+    }
 
     for(len_t i = 0; i < adjList.size(); ++i) {
         adjList[i].first = -adjList[i].first;
@@ -749,9 +751,11 @@ void sortAdjList(space_efficient_vector<AdjListElement> & adjList) {
         adjList[i].second = -adjList[i].second;
     }
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-    cout << "Time = " << duration_seconds << 's' << endl;
+    if(verbosity >= 1) {
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+        cout << "Time = " << duration_seconds << 's' << endl;
+    }
 }
 
 // MAP USAGE
@@ -1783,7 +1787,9 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    cout << "SLP File: " << input_slp << endl;
+    print_current_timestamp();
+
+    cout << "SLP File: " << input_slp << endl << endl;
 
     if(!test_file.empty()) {
         ifstream file(test_file);

@@ -5,6 +5,7 @@ void get_random_queries(c_size_t text_size,
     space_efficient_vector<pair<c_size_t, c_size_t>> &pairs) {
     // pairs.reserve(1000000); 
 
+    cout << "  Generating Random Queries..." << endl;
     random_device rd; 
     mt19937 gen(rd());
     uniform_int_distribution<uint64_t> distrib(0, text_size - 1);
@@ -117,6 +118,9 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_eff
 }
 
 void test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_slp) {
+
+    cout << "Testing Queries..." << endl;
+
     space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
     space_efficient_vector<pair<c_size_t, c_size_t>> random_queries;
 
@@ -129,6 +133,9 @@ void test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
 
     // for(auto x : random_queries) {
     for(c_size_t k = 0; k < random_queries.size(); ++k) {
+        if(!(k & ((1 << 7) - 1))) {
+            cout << fixed << setprecision(2) << "  Testing Progress: " << ((k + 1) * 100) / (double)random_queries.size() << "%\r";
+        }
         const auto& x = random_queries[k];
 
         c_size_t i = x.first;
@@ -161,13 +168,15 @@ void test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
 
     }
 
+    cout << fixed << setprecision(2) << "  Testing Progress: " << "100%" << endl;
+
     auto end_time = std::chrono::high_resolution_clock::now();
 
     auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
 
-    cout << endl <<  "LCE Queries Passed!" << endl;
+    cout <<  "  LCE Queries Passed!" << endl;
     // Output the duration
-    cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl << endl;
+    cout << "  Time: " << duration_seconds << "s" << endl << endl;
 
     delete slp;
 }

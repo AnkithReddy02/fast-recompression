@@ -123,6 +123,19 @@ InputSLP* getSLP(c_size_t grammar_size) {
     return slp;
 }
 
+void print_current_timestamp() {
+    // current date/time based on current system
+    time_t now = time(0);
+
+    // convert now to string form
+    char* dt = ctime(&now);
+
+    // convert now to tm struct for UTC
+    tm *gmtm = gmtime(&now);
+    dt = asctime(gmtm);
+    cout << endl << "Generated on [UTC Timestamp] "<< dt << endl;;
+}
+
 // void expandSLG(c_size_t var, const space_efficient_vector<SLGNonterm> & slg_nonterm_vec, space_efficient_vector<c_size_t> & result) {
 //     if(var < 0) {
 //         result.push_back(abs(var));

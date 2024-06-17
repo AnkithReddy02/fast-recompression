@@ -153,17 +153,19 @@ private:
 
     void order_slp() {
 
-        cout << "Ordering SLP" << endl;
+        cout << "Ordering SLP..." << endl;
         const c_size_t grammar_size = nonterm.size();
 
         space_efficient_vector<uint8_t> inorder(grammar_size, 0);
         space_efficient_vector<c_size_t> old_new_map(grammar_size, 0);
 
+        cout << "  Creating Reverse Graph..." << endl;
         // Create reversed graph.
         space_efficient_vector<c_size_t> vertex_ptr(grammar_size + 1, (c_size_t)0);
         space_efficient_vector<c_size_t> edges;
         {
 
+          cout << "    Computing Vertex Degress..." << endl;
           // Step 1: Compute vertex degrees.
           for (c_size_t i = 0; i < nonterm.size(); ++i) {
             if (nonterm[i].type == '1') {
@@ -172,6 +174,7 @@ private:
             }
           }
 
+          cout << "    Computing Prefix Sum..." << endl;
           // Step 2: turn vertex_ptr into exclusive prefix sum.
           c_size_t degsum = 0;
           for (c_size_t i = 0; i < grammar_size; ++i) {
@@ -181,9 +184,11 @@ private:
           }
           vertex_ptr[grammar_size] = degsum;
 
+          cout << "    Resizing edges vector..." << endl;
           // Step 3: resize `edges' to accomodate all edges.
           edges.resize(degsum);
 
+          cout << "    Computing Edges..." << endl;
           // Step 4: compute edges.
           for (c_size_t i = 0; i < nonterm.size(); ++i) {
             if (nonterm[i].type == '1') {
@@ -192,12 +197,14 @@ private:
             }
           }
 
+          cout << "    Restoring pointers to list begin..." << endl;
           // Step 5: restore pointers to adj list begin.
           for (c_size_t i = grammar_size; i > 0; --i)
             vertex_ptr[i] = vertex_ptr[i - 1];
           vertex_ptr[0] = 0;
         }
 
+        cout << "  Computing inorder and Initializing queue..." << endl;
         queue<c_size_t> q;
 
         // Note: graph is reversed!
@@ -210,6 +217,7 @@ private:
 
         c_size_t nonterminal_ptr = 0;
 
+        cout << "  Performing BFS..." << endl;
         while(!q.empty()) {
             c_size_t u = q.front();
             q.pop();
@@ -227,6 +235,7 @@ private:
         vertex_ptr.clear();
         inorder.clear();
 
+        cout << "  Creating Ordered Nonterm..." << endl;
         space_efficient_vector<SLPNonterm> ordered_nonterm(grammar_size);
 
         for(c_size_t i = 0; i < nonterm.size(); i++) {
@@ -246,6 +255,8 @@ private:
         // *****
         // nonterm = move(ordered_nonterm);
         assert(nonterm.size() == ordered_nonterm.size());
+
+        cout << "  Assigning ordered nonterm to the existing one..." << endl;
         for(c_size_t i = 0; i < grammar_size; ++i) {
             nonterm[i] = ordered_nonterm[i];
         }
