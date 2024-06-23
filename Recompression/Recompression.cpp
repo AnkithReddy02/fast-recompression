@@ -1662,30 +1662,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     return recompression_rlslp;
 }
 
-c_size_t computeExplen(const c_size_t i, space_efficient_vector<RLSLPNonterm>& rlslp_nonterm_vec) {
-    // Check if already computed
-    if (rlslp_nonterm_vec[i].explen != 0) {
-        return rlslp_nonterm_vec[i].explen;
-    }
-
-    switch (rlslp_nonterm_vec[i].type) {
-        case '0':  // Terminal case
-            return rlslp_nonterm_vec[i].explen = 1;
-
-        case '1':  // Binary non-terminal
-            return rlslp_nonterm_vec[i].explen = computeExplen(rlslp_nonterm_vec[i].first, rlslp_nonterm_vec) +
-                                                 computeExplen(rlslp_nonterm_vec[i].second, rlslp_nonterm_vec);
-
-        default:  // Repetition case or other types
-            return rlslp_nonterm_vec[i].explen = rlslp_nonterm_vec[i].second *
-                                                 computeExplen(rlslp_nonterm_vec[i].first, rlslp_nonterm_vec);
-    }
-
-    // In case of unexpected type
-    return 0; 
-}
-
-void start_compression(const string &input_file, const string &test_file) {
+void start_compression(const string &input_file, const string &test_file = "", const string &output_file = "") {
 
 
     InputSLP *inputSLP = new InputSLP();
@@ -1699,11 +1676,7 @@ void start_compression(const string &input_file, const string &test_file) {
 
     RecompressionRLSLP *recompression_rlslp = recompression_on_slp(inputSLP);
 
-    space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
-
-    for(len_t i=rlslp_nonterm_vec.size()-1; i>=1; i--) {
-        computeExplen(i, rlslp_nonterm_vec);
-    }
+    recompression_rlslp->computeExplen();
 
     auto end_time = std::chrono::high_resolution_clock::now();
 
@@ -1712,6 +1685,7 @@ void start_compression(const string &input_file, const string &test_file) {
     // Output the duration
     cout << "Time taken for Construction: " << duration_seconds << " seconds" << endl;
 
+    space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
     // // printRecompressionRLSLP(recompression_rlslp);
     c_size_t text_size = rlslp_nonterm_vec.back().explen;
 
@@ -1735,10 +1709,17 @@ void start_compression(const string &input_file, const string &test_file) {
     // cout << "Overall Peak RAM uage: " << get_peak_ram_allocation() << endl;
     // cout << "****************" << endl << endl;
 
+    // Write Recompression to the 'output_file'
+    if(!output_file.empty()) {
+        cout << "Writing to file: " << output_file << endl;
+        recompression_rlslp->write_to_file(output_file);
+        cout << "Done writing to file!" << endl;
+    }
+
     // Clean up.
     delete recompression_rlslp;
 
-    cout << "****************" << endl;
+    cout << endl << "****************" << endl;
     cout << "Current RAM usage for Construction: " <<
       get_current_ram_allocation() << " bytes" << endl;
     cout << "****************" << endl << endl;
@@ -1747,22 +1728,23 @@ void start_compression(const string &input_file, const string &test_file) {
 int main(int argc, char *argv[]) {
     utils::initialize_stats();
 
-    if(!(argc >= 2 and argc <= 5)) {
-        cout << "Usage: " + string(argv[0]) + " [-v or -vv] [-t [raw_input_text]] input_slp" << endl;
+    if(argc <= 1) {
+        cout << "Usage: " + string(argv[0]) + " [-v or -vv]  [-o output_file] [-t [raw_input_text]] input_slp" << endl;
         exit(1);
     }
 
     string test_file;
     string input_slp;
+    string output_file;
 
     verbosity = 0;
 
-    for(c_size_t i=1; i<argc; i++) {
+    for(len_t i = 1; i < argc; ++i) {
         string curr_arg(argv[i]);
 
         if(curr_arg == "-t") {
             if(i+1 == argc || string(argv[i+1]) == "-v") {
-                cout << "Usage: " + string(argv[0]) + "[-v or -vv] [-t raw_input_text] input_slp" << endl;
+                cout << "Usage: " + string(argv[0]) + "[-v or -vv]  [-o output_file] [-t raw_input_text] input_slp" << endl;
                 exit(1);
             }
 
@@ -1770,6 +1752,9 @@ int main(int argc, char *argv[]) {
             if(i + 2 != argc) {
                 i++;
             }
+        }
+        else if(curr_arg == "-o") {
+            output_file = string(argv[++i]);
         }
         else if(curr_arg == "-v") {
             verbosity = 1;
@@ -1806,9 +1791,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    cout << "Output File: " << output_file << endl << endl;
+
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    start_compression(input_slp, test_file);
+    start_compression(input_slp, test_file, output_file);
 
     auto end_time = std::chrono::high_resolution_clock::now();
 

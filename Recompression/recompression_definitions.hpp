@@ -5,10 +5,14 @@
 #include <iostream>
 #include <fstream>
 #include <queue>
+#include <stack>
+#include <cassert>
 #include "typedefs.hpp"
 #include "space_efficient_vector.hpp"
 
 using namespace std;
+
+struct Node;
 
 struct __attribute__((packed)) RLSLPNonterm {
     char_t type;
@@ -17,8 +21,7 @@ struct __attribute__((packed)) RLSLPNonterm {
     c_size_t explen;
 
     RLSLPNonterm(const char_t &type, const c_size_t &first, const c_size_t &second) : type(type), first(first), second(second), explen(0) {}
-    RLSLPNonterm() : type('0'), first(0), second(0), explen(0) {
-    }
+    RLSLPNonterm() : type('0'), first(0), second(0), explen(0) {}
     RLSLPNonterm(const char_t &type, const c_size_t &first, const c_size_t &second, const c_size_t &explen) : type(type), first(first), second(second), explen(explen) {}
 };
 
@@ -26,35 +29,39 @@ class RecompressionRLSLP {
 public:
     space_efficient_vector<RLSLPNonterm> nonterm;
 
-    uint64_t ram_use() const {
-      return nonterm.ram_use();
-    }
+    uint64_t ram_use() const;
+    void write_to_file(const string &filename);
+    void read_from_file(const string &filename);
+    void computeExplen();
+    c_size_t lce(c_size_t i, c_size_t j);
+
+private:
+    void initialize_nodes(c_size_t node, const c_size_t& i, c_size_t left, c_size_t right, stack<Node>& ancestors, const space_efficient_vector<RLSLPNonterm>& grammar, Node& v);
+    Node getLeftMostChild(Node v, const space_efficient_vector<RLSLPNonterm> & grammar);
+    c_size_t getChildCount(const Node &parent, const space_efficient_vector<RLSLPNonterm> &grammar);
+    c_size_t getChildIndex(const Node &parent, const Node &v, const space_efficient_vector<RLSLPNonterm> &grammar);
+    Node getKthSibling(const Node &parent, const Node &v, c_size_t k);
+    Node replaceWithHighestStartingAtPosition(const Node &v, stack<Node> &ancestors, const space_efficient_vector<RLSLPNonterm> &grammar);
+    c_size_t LCE(Node &v1, Node &v2, c_size_t i, stack<Node> & v1_ancestors, stack<Node> & v2_ancestors, const space_efficient_vector<RLSLPNonterm> &grammar);
+    c_size_t computeExplen(const c_size_t i);
 };
 
 struct SLGNonterm {
     c_size_t start_index;
 
-    SLGNonterm(const c_size_t &start_index) : start_index(start_index) {
+    SLGNonterm(const c_size_t &start_index) : start_index(start_index) {}
 
-    }
-
-    SLGNonterm() {
-
-    }
+    SLGNonterm() {}
 };
 
 class SLG {
 public:
-    SLG() {
-
-    }
+    SLG();
     
     space_efficient_vector<SLGNonterm> nonterm;
     space_efficient_vector<c_size_t> rhs;
 
-    uint64_t ram_use() const {
-      return nonterm.ram_use() + rhs.ram_use();
-    }
+    uint64_t ram_use() const;
 };
 
 struct  __attribute__((packed)) SLPNonterm {
@@ -62,26 +69,17 @@ struct  __attribute__((packed)) SLPNonterm {
     c_size_t first;
     c_size_t second;
 
-    SLPNonterm(const char_t &type, const c_size_t &first, const c_size_t &second) : type(type), first(first), second(second) {
-
-    }
-
-    SLPNonterm() : type('0'), first(0), second(0) {
-
-    }
+    SLPNonterm(const char_t &type, const c_size_t &first, const c_size_t &second) : type(type), first(first), second(second) {}
+    SLPNonterm() : type('0'), first(0), second(0) {}
 };
 
 class InputSLP {
 public:
     space_efficient_vector<SLPNonterm> nonterm;
 
-    InputSLP() {
+    InputSLP() {}
 
-    }
-
-    InputSLP(const space_efficient_vector<SLPNonterm>& nonterm) : nonterm(nonterm) {
-
-    }
+    InputSLP(const space_efficient_vector<SLPNonterm>& nonterm) : nonterm(nonterm) {}
 
     void read_from_file(const string &file_name) {
         ifstream file(file_name, ios::binary);
@@ -348,12 +346,8 @@ struct Node {
     c_size_t l;
     c_size_t r;
 
-    Node() {
-        
-    }
-    Node(const c_size_t &var, const c_size_t &l, const c_size_t &r) : var(var), l(l), r(r) {
-
-    }
+    Node() {}
+    Node(const c_size_t &var, const c_size_t &l, const c_size_t &r) : var(var), l(l), r(r) {}
 };
 
 struct __attribute__((packed)) AdjListElement {

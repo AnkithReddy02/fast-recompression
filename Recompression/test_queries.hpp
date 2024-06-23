@@ -141,23 +141,7 @@ void test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
         c_size_t i = x.first;
         c_size_t j = x.second;
 
-        if(i == j) continue;
-        if(i > j) swap(i, j);
-
-        Node v1, v2;
-        stack<Node> v1_ancestors, v2_ancestors;
-        // v1_ancestors.push(Node(grammar.size()-1, 0, 33));
-        // v2_ancestors.push(Node(grammar.size()-1, 0, 33));
-        initialize_nodes(rlslp_nonterm_vec.size() - 1, i, 0, rlslp_nonterm_vec.back().explen - 1, v1_ancestors, rlslp_nonterm_vec, v1);
-        initialize_nodes(rlslp_nonterm_vec.size() - 1, j, 0, rlslp_nonterm_vec.back().explen - 1, v2_ancestors, rlslp_nonterm_vec, v2);
-
-
-        // cout << v1.var << ' ' << v1.l << ' ' << v1.r << endl;
-        // cout << v2.var << ' ' << v2.l << ' ' << v2.r << endl;
-
-        // cout << i << ' ' << j << endl;
-
-        c_size_t res1 = LCE(v1, v2, i, v1_ancestors, v2_ancestors, rlslp_nonterm_vec);
+        c_size_t res1 = recompression_rlslp->lce(i, j);
         c_size_t res2 = slp->lce(i, j);
 
         if(res1 != res2) {
