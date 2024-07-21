@@ -35,7 +35,7 @@
 #include <cstdint>
 #include <algorithm>
 
-#include "utils.hpp"
+#include "../../include/utils/utils.hpp"
 
 //=============================================================================
 // Class used to represent the lazy AVL grammar. Forward declaration.

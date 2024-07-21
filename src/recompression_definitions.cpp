@@ -1,4 +1,25 @@
-#include "recompression_definitions.hpp"
+#include "../include/recompression_definitions.hpp"
+#include "../include/lce_queries.hpp"
+
+Node::Node() {
+
+}
+
+Node::Node(const c_size_t &var, const c_size_t &l, const c_size_t &r) : var(var), l(l), r(r) {
+
+}
+
+RLSLPNonterm::RLSLPNonterm(const char_t &type, const c_size_t &first, const c_size_t &second) : type(type), first(first), second(second), explen(0) {
+
+}
+
+RLSLPNonterm::RLSLPNonterm() : type('0'), first(0), second(0), explen(0) {
+
+}
+
+RLSLPNonterm::RLSLPNonterm(const char_t &type, const c_size_t &first, const c_size_t &second, const c_size_t &explen) : type(type), first(first), second(second), explen(explen) {
+
+}
 
 uint64_t RecompressionRLSLP::ram_use() const {
     return nonterm.ram_use();
@@ -87,12 +108,6 @@ void RecompressionRLSLP::computeExplen() {
         computeExplen(i);
     }
 }
-
-uint64_t SLG::ram_use() const {
-    return nonterm.ram_use() + rhs.ram_use();
-}
-
-SLG::SLG() {}
 
 void RecompressionRLSLP::initialize_nodes(c_size_t node, const c_size_t& i, c_size_t left, c_size_t right, stack<Node>& ancestors, const space_efficient_vector<RLSLPNonterm>& grammar, Node& v) {
     if (left > right || i < left || i > right)
@@ -279,4 +294,228 @@ c_size_t RecompressionRLSLP::lce(c_size_t i, c_size_t j) {
     initialize_nodes(nonterm.size() - 1, j, 0, nonterm.back().explen - 1, v2_ancestors, nonterm, v2);
 
     return LCE(v1, v2, i, v1_ancestors, v2_ancestors, nonterm);
+}
+
+
+SLGNonterm::SLGNonterm(const c_size_t& start_index) : start_index(start_index) {
+
+}
+
+SLGNonterm::SLGNonterm() {
+
+}
+
+uint64_t SLG::ram_use() const {
+    return nonterm.ram_use() + rhs.ram_use();
+}
+
+SLG::SLG() {
+
+}
+
+SLPNonterm::SLPNonterm(const char_t& type, const c_size_t& first, const c_size_t& second)
+    : type(type), first(first), second(second) {
+
+    }
+
+SLPNonterm::SLPNonterm() : type('0'), first(0), second(0) {
+
+}
+
+InputSLP::InputSLP() {
+
+}
+
+InputSLP::InputSLP(const space_efficient_vector<SLPNonterm>& nonterm) : nonterm(nonterm) {
+
+}
+
+void InputSLP::read_from_file(const string &file_name) {
+    ifstream file(file_name, ios::binary);
+
+    if (!file.is_open()) {
+        cerr << "Error: Unable to open the file - " + file_name << endl;
+        exit(1);
+    }
+
+    file.seekg(0, ios::end);
+    size_t file_size = file.tellg();
+    file.seekg(0, ios::beg);
+    cout << "Number of Non-Terminals : " << file_size/10 << endl;
+    cout << "File size: " << file_size << " bytes" << endl;
+
+    unsigned char buffer[10]; // Buffer to hold 10 bytes (5 bytes read two times)
+
+    // ****
+    // nonterm.resize(file_size/10);
+    for(c_size_t i = 0; i < (file_size/10); ++i) {
+        nonterm.push_back(SLPNonterm());
+    }
+
+
+    c_size_t i = 0;
+
+    while (file.read(reinterpret_cast<char*>(buffer), sizeof(buffer))) {
+        // Process the first 5-byte integer
+        uint64_t value1 = 0;
+        for (c_size_t i = 0; i < 5; ++i) { // First 5 bytes
+            value1 |= static_cast<uint64_t>(buffer[i]) << (i * 8);
+        }
+
+        // Process the second 5-byte integer
+        uint64_t value2 = 0;
+        for (c_size_t i = 5; i < 10; ++i) { // Next 5 bytes
+            value2 |= static_cast<uint64_t>(buffer[i]) << ((i - 5) * 8);
+        }
+
+        if (value1 == 0) {
+            nonterm[i++] = SLPNonterm('0', value2, 0);
+        } else {
+            nonterm[i++] = SLPNonterm('1', value1 - 1, value2 - 1);
+        }
+    }
+
+    // Check if we have read less than 5 bytes in the last chunk
+    c_size_t lastChunkSize = int64_t(file.gcount());
+    if (lastChunkSize > 0) {
+        cout << "Read " << lastChunkSize << " bytes in the last chunk, incomplete for a 64-bit value." << endl;
+    }
+
+    if (file.eof()) {
+        cout << "File successfully read and stored SLP" << endl;
+    } else {
+        cout << "Error in reading file!" << endl;
+    }
+
+    file.close();
+
+    order_slp();
+}
+
+void InputSLP::order_slp() {
+
+    cout << "Ordering SLP..." << endl;
+    const c_size_t grammar_size = nonterm.size();
+
+    space_efficient_vector<uint8_t> inorder(grammar_size, 0);
+    space_efficient_vector<c_size_t> old_new_map(grammar_size, 0);
+
+    cout << "  Creating Reverse Graph..." << endl;
+    // Create reversed graph.
+    space_efficient_vector<c_size_t> vertex_ptr(grammar_size + 1, (c_size_t)0);
+    space_efficient_vector<c_size_t> edges;
+    {
+
+        cout << "    Computing Vertex Degress..." << endl;
+        // Step 1: Compute vertex degrees.
+        for (c_size_t i = 0; i < nonterm.size(); ++i) {
+        if (nonterm[i].type == '1') {
+            ++vertex_ptr[nonterm[i].first];
+            ++vertex_ptr[nonterm[i].second];
+        }
+        }
+
+        cout << "    Computing Prefix Sum..." << endl;
+        // Step 2: turn vertex_ptr into exclusive prefix sum.
+        c_size_t degsum = 0;
+        for (c_size_t i = 0; i < grammar_size; ++i) {
+        c_size_t newsum = degsum + vertex_ptr[i];
+        vertex_ptr[i] = degsum;
+        degsum = newsum;
+        }
+        vertex_ptr[grammar_size] = degsum;
+
+        cout << "    Resizing edges vector..." << endl;
+        // Step 3: resize `edges' to accomodate all edges.
+        edges.resize(degsum);
+
+        cout << "    Computing Edges..." << endl;
+        // Step 4: compute edges.
+        for (c_size_t i = 0; i < nonterm.size(); ++i) {
+        if (nonterm[i].type == '1') {
+            edges[vertex_ptr[nonterm[i].first]++] = i;
+            edges[vertex_ptr[nonterm[i].second]++] = i;
+        }
+        }
+
+        cout << "    Restoring pointers to list begin..." << endl;
+        // Step 5: restore pointers to adj list begin.
+        for (c_size_t i = grammar_size; i > 0; --i)
+        vertex_ptr[i] = vertex_ptr[i - 1];
+        vertex_ptr[0] = 0;
+    }
+
+    cout << "  Computing inorder and Initializing queue..." << endl;
+    queue<c_size_t> q;
+
+    // Note: graph is reversed!
+    for(c_size_t i = 0; i < nonterm.size(); i++) {
+        if(nonterm[i].type == '1')
+            inorder[i] += 2;
+        else
+            q.push(i);
+    }
+
+    c_size_t nonterminal_ptr = 0;
+
+    cout << "  Performing BFS..." << endl;
+    while(!q.empty()) {
+        c_size_t u = q.front();
+        q.pop();
+        old_new_map[u] = nonterminal_ptr++;
+
+        for (c_size_t i = vertex_ptr[u]; i < vertex_ptr[u+1]; ++i) {
+            const c_size_t v = edges[i];
+            inorder[v]--;
+            if(inorder[v] == 0)
+                q.push(v);
+        }
+    }
+
+    edges.clear();
+    vertex_ptr.clear();
+    inorder.clear();
+
+    cout << "  Creating Ordered Nonterm..." << endl;
+    space_efficient_vector<SLPNonterm> ordered_nonterm(grammar_size);
+
+    for(c_size_t i = 0; i < nonterm.size(); i++) {
+
+        const char_t &type = nonterm[i].type;
+        const c_size_t &first = nonterm[i].first;
+        const c_size_t &second = nonterm[i].second;
+
+        if(type == '0') {
+            ordered_nonterm[old_new_map[i]] = SLPNonterm('0', first, second);
+        }
+        else {
+            ordered_nonterm[old_new_map[i]] = SLPNonterm('1', old_new_map[first], old_new_map[second]);
+        }
+    }
+
+    // *****
+    // nonterm = move(ordered_nonterm);
+    assert(nonterm.size() == ordered_nonterm.size());
+
+    cout << "  Assigning ordered nonterm to the existing one..." << endl;
+    for(c_size_t i = 0; i < grammar_size; ++i) {
+        nonterm[i] = ordered_nonterm[i];
+    }
+
+    cout << "Ordered SLP!" << endl << endl;
+
+    return;
+}
+
+AdjListElement::AdjListElement() {
+
+}
+
+AdjListElement::AdjListElement(const c_size_t& first, const c_size_t& second, const bool_t& swapped, const c_size_t& vOcc)
+    : first(first), second(second), swapped(swapped), vOcc(vOcc) {
+
+}
+
+bool AdjListElement::operator<(const AdjListElement& x) const {
+    return (first < x.first) || (first == x.first && second < x.second);
 }

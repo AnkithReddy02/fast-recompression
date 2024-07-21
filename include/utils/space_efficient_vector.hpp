@@ -297,6 +297,29 @@ class space_efficient_vector {
       return m_blocks[0][0];
     }
 
+    // TODO: Can add functionality to search in a range.
+    uint64_t lower_bound(value_type& search_element)
+    {
+      uint64_t low = 0;
+      uint64_t high = size() - 1;
+
+      while(high - low > 1) {
+          uint64_t mid = low + (high - low)/2;
+
+          if((*this)[mid] < search_element) {
+              low = mid + 1;
+          }
+          else {
+              high = mid;
+          }
+      }
+
+      if(search_element <= (*this)[low]) return low;
+      if(search_element <= (*this)[high]) return high;
+
+      return size();
+    }
+
     //=========================================================================
     // Return the reference to the last element.
     //=========================================================================

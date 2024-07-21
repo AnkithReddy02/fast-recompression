@@ -1,6 +1,13 @@
 #ifndef TEST_QUERIES_HPP
 #define TEST_QUERIES_HPP
 
+#include "simple_slp.hpp"
+#include "../../include/typedefs.hpp"
+#include "../../include/recompression_definitions.hpp"
+#include "../../include/utils/space_efficient_vector.hpp"
+
+using namespace std;
+
 void get_random_queries(c_size_t text_size,
     space_efficient_vector<pair<c_size_t, c_size_t>> &pairs) {
     // pairs.reserve(1000000); 
@@ -18,6 +25,8 @@ void get_random_queries(c_size_t text_size,
     }
 }
 
+#if 0
+// Naive Test
 void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec, const string &raw_input_text) {
 
     space_efficient_vector<c_size_t> arr;
@@ -116,8 +125,9 @@ void test(c_size_t text_size, RecompressionRLSLP *recompression_rlslp, space_eff
     // Output the duration
     cout << "Time taken for LCE Queries: " << duration_seconds << " seconds" << endl;
 }
+#endif
 
-void test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_slp) {
+bool test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_slp) {
 
     cout << "Testing Queries..." << endl;
 
@@ -146,7 +156,8 @@ void test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
 
         if(res1 != res2) {
             cerr << "Error: LCE Query didn't match for i: " << i << ", j: " << j << endl;
-            exit(1);
+            cerr << "Output: " << res1 << ", Expected: " << res2 << endl;
+            return false;
         }
 
 
@@ -163,6 +174,8 @@ void test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
     cout << "  Time: " << duration_seconds << "s" << endl << endl;
 
     delete slp;
+
+    return true;
 }
 
 #endif

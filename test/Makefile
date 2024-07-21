@@ -7,7 +7,7 @@ CFLAGS = -funroll-loops -O3 -DNDEBUG -march=native -std=c++17 -pthread
 all: recomp
 
 recomp:
-	$(CC) $(CFLAGS) $(WARNINGS) -o recomp ./src/*.cpp
+	$(CC) $(CFLAGS) $(WARNINGS) -o test ../src/utils.cpp ../src/recompression_definitions.cpp ./src/*.cpp
 
 clean:
 	/bin/rm -f *.o
