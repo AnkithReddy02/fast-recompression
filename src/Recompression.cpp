@@ -1,15 +1,14 @@
 #include <bits/stdc++.h>
 
-#include "../radix_sort.h"
-#include "../io.h"
+#include "../include/recompression_definitions.hpp"
+#include "../include/typedefs.hpp"
+
 #include "../include/utils/utilities.hpp"
 #include "../include/utils/hash_pair.hpp"
 #include "../include/utils/packed_pair.hpp"
 #include "../include/utils/hash_table.hpp"
 #include "../include/utils/utils.hpp"
 
-#include "../include/recompression_definitions.hpp"
-#include "../include/typedefs.hpp"
 #include "../include/BComp.hpp"
 #include "../include/PComp.hpp"
 
