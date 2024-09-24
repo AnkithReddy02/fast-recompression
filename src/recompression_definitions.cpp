@@ -59,6 +59,8 @@ void RecompressionRLSLP::read_from_file(const string &filename) {
 
     nonterm.clear();
 
+    cout << "Reading from file: " << filename << endl;
+
     while(ifs.peek() != EOF) {
         RLSLPNonterm rlslpNonterm;
 

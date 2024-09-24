@@ -135,6 +135,7 @@ bool test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
     space_efficient_vector<pair<c_size_t, c_size_t>> random_queries;
 
     typedef simple_slp<std::uint8_t, c_size_t> simple_slp_type;
+    cout << "  Initiating simple_slp..." << endl;
     simple_slp_type *slp = new simple_slp_type(input_slp);
 
     get_random_queries(rlslp_nonterm_vec.back().explen, random_queries);
