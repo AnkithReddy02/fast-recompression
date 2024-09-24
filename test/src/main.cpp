@@ -6,7 +6,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     if(argc != 3) {
-        cerr << "Usage: ./random_lce_test input_rlslp input_slp" << endl;
+        cerr << "Usage: ./test input_rlslp input_slp" << endl;
         return 1;
     }
 
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     RecompressionRLSLP* rlslp = new RecompressionRLSLP();
     rlslp->read_from_file(input_rlslp);
 
-    if (!test_queries(rlslp, input_slp)) {
+    if (!test_queries(rlslp, utils::absolute_path(input_slp))) {
         cerr << "LCE Tests Failed!" << endl;
         return 1;
     }
