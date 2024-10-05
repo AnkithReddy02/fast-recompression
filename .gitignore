@@ -1,2 +1,16 @@
 *.in
+*.txt
+*.csv
+*.rlslp
+*.log
+*.out
+*.png
+*_queries
+*.lz77
+*.slp-pruned
+recomp
+test
+env
+genqueries
+bench
 
