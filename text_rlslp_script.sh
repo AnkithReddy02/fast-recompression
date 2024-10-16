@@ -89,7 +89,7 @@ awk '/peak =|Peak RAM usage for Construction/ {
             # printf $i
             # printf "\n"
 
-            value = substr($i, 1, length($i)-3)
+            value = substr($i, 1, length($i)-3) + 0 # convert to numeric
             if(res < value) {
                 res = value
             }
@@ -97,7 +97,8 @@ awk '/peak =|Peak RAM usage for Construction/ {
         else if(i < NF && $i ~ /^[0-9.]+$/ && $(i+1) == "MB") {
             # printf $i
             # printf "\n"
-
+            
+            value = $i + 0 # convert to numeric
             if(res < value) {
                 res = value
             }
