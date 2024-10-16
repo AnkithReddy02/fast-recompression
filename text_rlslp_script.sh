@@ -27,7 +27,7 @@ LZ77_TO_SLP_DIR="slp-queries/lz77-to-slp"
 SLG_TO_SLP_DIR="slp-queries/slg-to-slp"
 PRUNE_SLP_DIR="slp-queries/prune-slp"
 
-
+echo ""
 echo "Building in $TEXT_TO_LZ77_DIR"
 make -C "$TEXT_TO_LZ77_DIR" nuclear 
 make -C "$TEXT_TO_LZ77_DIR" clean
@@ -38,6 +38,7 @@ yes | "$TEXT_TO_LZ77_DIR"/text_to_lz "$INPUT_FILE"
 
 echo "Completed text_to_lz."
 
+echo ""
 echo "Building in $LZ77_TO_SLP_DIR"
 make -C "$LZ77_TO_SLP_DIR" nuclear
 make -C "$LZ77_TO_SLP_DIR" clean
@@ -47,6 +48,7 @@ echo "Running convert with output file: $LZ77_FILE"
 "$LZ77_TO_SLP_DIR"/lz_to_grammar "$LZ77_FILE"
 echo "Completed convert."
 
+echo ""
 echo "Building in $SLG_TO_SLP_DIR"
 
 make -C "$SLG_TO_SLP_DIR" nuclear
@@ -56,6 +58,7 @@ make -C "$SLG_TO_SLP_DIR" 2>/dev/null
 echo "Running convert with SLG file: $SLG_FILE"
 "$SLG_TO_SLP_DIR"/convert "$SLG_FILE" "$SLP_FILE" 
 
+echo ""
 echo "Building in $PRUNE_SLP_DIR"
 
 make -C "$PRUNE_SLP_DIR" nuclear
@@ -79,28 +82,30 @@ echo "All Done!"
 printf "\n"
 
 
-awk '/peak =/ {
-    gsub(/.*peak = /, "", $0);
+awk '/peak =|Peak RAM usage for Construction/ {
+    # print $0
+    for(i = 1; i <= NF; i++) {
+        if($i ~ /[0-9.]+MiB/) {
+            # printf $i
+            # printf "\n"
 
-    value = substr($0, 1, length($0) - 3); 
-    unit = substr($0, length($0) - 2);
+            value = substr($i, 1, length($i)-3)
+            if(res < value) {
+                res = value
+            }
+        }
+        else if(i < NF && $i ~ /^[0-9.]+$/ && $(i+1) == "MB") {
+            # printf $i
+            # printf "\n"
 
-    if(value > max) {
-        max = value;
-    }
-} 
-/Peak RAM usage for Construction:/ {
-    gsub(/.*Peak RAM usage for Construction: /, "", $0);
-    
-    value = substr($0, 1, length($0) - 3);
-    unit = substr($0, length($0) - 2);
-
-    if(value > max) {
-        max = value;
+            if(res < value) {
+                res = value
+            }
+        }
     }
 } 
 END { 
-    print "*** Overall Peak RAM usage:", max, "MiB ***"; 
+    print "*** Overall Peak RAM usage:", res, "MiB ***"; 
 }' $LOG_FILE
 
 awk '

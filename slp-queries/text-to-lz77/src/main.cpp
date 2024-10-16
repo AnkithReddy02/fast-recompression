@@ -131,7 +131,7 @@ void compute_lz77_and_write_to_file(
   delete[] sa;
   delete[] text;
 
-  fprintf(stderr, "peak: %.2fMiB", utils::get_peak_ram_allocation()/((1024) * (1024)));
+  fprintf(stderr, "peak = %.2fMiB", utils::get_peak_ram_allocation()/((1024) * (1024)));
 
 
   // Print final message.
