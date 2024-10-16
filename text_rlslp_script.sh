@@ -1,11 +1,11 @@
 #!/bin/bash
 
-LOG_FILE="script.log"
+LOG_FILE="text_rlslp_script.log"
 > $LOG_FILE
 exec > >(tee -a $LOG_FILE) 2>&1
 
 if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 <input_slp> <lz77_path> [<rlslp_path>]"
+    echo "Usage: $0 <input_text>"
     exit 1
 fi
 
@@ -100,6 +100,32 @@ awk '/peak =/ {
     }
 } 
 END { 
-    print "Peak RAM usage:", max, "MiB"; 
-}' script.log
+    print "*** Overall Peak RAM usage:", max, "MiB ***"; 
+}' $LOG_FILE
 
+awk '
+# By default awk splits the line by spaces. NF = number of fields/tokens/words
+/Compute SA|Compute LZ77|Conversion time|Read SLG from file and convert to SLP|Read SLP from file|Time taken for Construction/ {
+    # print $0
+    for(i = 1; i <= NF; i++) {
+        if($i ~ /[0-9.]+s/) {
+            # printf $i
+            # printf "\n"
+
+            time = substr($i, 1, length($i)-1)
+            totalTime += time
+            # printf "%.3f\n", time
+        }
+        else if(i < NF && $i ~ /^[0-9.]+$/ && $(i+1) == "seconds") {
+            # printf $i
+            # printf "\n"
+
+            time = substr($i, 1, length($i)-1)
+            totalTime += time
+            # printf "%.3f\n", time
+        }
+    }
+}
+END {
+    printf "*** Total time to convert Text to RLSLP: %.3fs ***\n", totalTime
+}' $LOG_FILE
