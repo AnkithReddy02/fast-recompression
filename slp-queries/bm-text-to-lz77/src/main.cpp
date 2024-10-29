@@ -132,10 +132,8 @@ public:
 
                 if(list_ptr != NULL) {
                     uint64_t list_start_index = list_ptr->head;
-                    // cout << position << ' ' << list_start_index << endl;
                     while(list_start_index != -1) {
                         const Block* block = &blocks[list_start_index];
-                        // cout << block->position << endl;
                         if(block->position >= position) {
                             break;
                         }
@@ -158,15 +156,13 @@ public:
                             continue;
                         }
 
-                        // cout << "Pos: " << position << ' ' << " | StringsEqual: " << stringsEqual << endl;
-
                         // const Block* block = hash_block[current_hash];
                         if(block != NULL && block->position != position) {
                             // Note the difference
-                            uint64_t block_end_position = block->position + block->length;
+                            uint64_t block_end_position = (block->position )+ (block->length);
                             uint64_t current_end_position = position + block_size;
 
-                            uint64_t block_begin_position = block->position - 1;
+                            uint64_t block_begin_position = (block->position) - 1;
                             uint64_t current_begin_position = position - 1;
 
                             // Forward Match.
@@ -195,7 +191,7 @@ public:
                                     break;
                                 }
                                 parsing.pop_back();
-                                begin_index++;
+                                ++begin_index;
                             }
 
                             begin_len = begin_index;
@@ -203,34 +199,27 @@ public:
 
                             match.position = block->position - begin_index;
                             match.length = block->length + begin_index + end_index;
+                            // ** Missed this **
+                            break;
                         }
 
                         list_start_index = block->next;
-
-                        // cout << "Pos: " << position << " | lis_start_index: " << list_start_index << endl;
                     }
                 }
 
                 
             }
 
-            // cout << "match.length: " << match.length << endl;
             if(match.length > 0) {
                 parsing.push_back(make_pair(match.position, match.length));
-                // cout << "Line 151" <<  position << ' ' << match.position << ' ' << match.length << endl;
                 current_hash = 0;
                 position = position - begin_len + match.length;
-                // cout << "Line 154: " << match.position << ' ' << match.length << endl;
             }
             else {
+              
                 parsing.push_back(make_pair(text[position], 0));
-                // cout << position << ' ' << position << ' ' << 0 << endl;
                 ++position;
             }
-
-            // cout << "position: " << position << endl;
-
-            // cout << position << endl;
         }
 
         // Remaining text.
@@ -240,6 +229,7 @@ public:
         }
 
         #ifdef DEBUG
+        cout << endl << endl;
         for(uint64_t i = 0; i < parsing.size(); ++i) {
             cout << parsing[i].first << ' ' << parsing[i].second << endl;
         }
@@ -280,7 +270,7 @@ int main() {
             Extend backward only if there is a alone character?
         2. zxQPYxQYPzab block_size = 2
     */
-    const char* sample_text = "zxQPYxQYPzab";
+    const char* sample_text = "zxQPYxQYPzabXyZqStUrpqLMntuVWxtuVWxxYzPQrStUqmnPQXZXyabnXQPmrStUqxYzPQaZyXbmnQXPmnPQXrStUqabXyZtuVWxpqLMnrStUqrStUqpqLMnmnPQXrtUSqabXyZmnPQXpqLMnabXyZrStUqQzxYPxYzPQmnPQXrStUqpqLMnqLpMnqpnMLtuVxWabXyZmnPQXmnPQXuxWtVrStUqmnPQXmnPQXrStUqzxQYPxYzPQrStUqmnPQXqrSUtabXyZmXQnPxYzPQpqLMnmnPQXabXyZxYzPQabXyZxYzPQabXyZpqLMntuVWxrStUqrUqStrStUqtuVWxmnPQXabXyZxYzPQpqLMnrStUqrStUqxYzPQmnPQXrStUqxYzPQtuVWxzPQxYmnPQXQmnPXbaXyZxYzPQVWuxtmnPQXmnPQXxYzPQtuVWxpLMnqrStUqxYzPQybZaXrStUqtuVWxabXyZxYzPQxYzPQabXyZabXyZzxQPYSqUrtxYzPQQxzYPmnPQXxtWuVtuVWxmnPQXtVxWuxYzPQqUtrSabXyZLqMnppqLMnLMnpqqtSrUPnQmXpqLMnrStUqrStUqtuVWxpqLMnqSrUtpqLMnabXyZtuVWxmnPQXXPQnmpqLMnxYPQztSUrqabXyZUtqSrtuVWxrStUqmnPQXtuVWxUrStqtuVWxabXyZxPQYzpqLMnmnPQXmnPQXPXmnQrStUqtuVWxSqUtrxYzPQtuVWxayZbXtuVWxtWVuxmnPQXxYzPQrStUqxYzPQxYzPQpqLMnmnPQXabXyZpqLMnnpMqLrStUqrStUqpqLMnrStUqrStUqabXyZxYzPQrStUqmnPQXabXyZMqLpnpqLMnabXyZxYzPQxYzPQqMnpLmnPQXpqLMnmnPQXzQPYxPQYxztuVWxxYzPQrStUqabXyZPQYxzpqLMnmnPQXxYzPQWuxVtZyXbaZXabyrStUqtuVWxmnPQXxYzPQpqLMn";
     uint64_t block_size = 2;
     BM bm(sample_text, block_size);
 
@@ -293,7 +283,6 @@ int main() {
     cout << ((string(sample_text) == decompressed_string) ? "Equal" : "Mismatch!!") << endl;
     cout << "Parsing Size: " << parsing.size() << endl;
     cout << "String length: " << strlen(sample_text) << endl;
-
 
     return 0;
 }
