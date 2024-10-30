@@ -21,4 +21,4 @@ lz_to_grammar
 convert 
 *.slp_prune
 text_to_lz
-bm-text-to-lz77
+bm-compression
