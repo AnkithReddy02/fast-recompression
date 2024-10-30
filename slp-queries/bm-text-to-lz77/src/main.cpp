@@ -2,10 +2,15 @@
 #include "../include/utils/hash_table.hpp"
 #include "../include/utils/space_efficient_vector.hpp"
 #include "../include/utils/packed_pair.hpp"
+#include "../include/utils/utils.hpp"
+#include "../../../include/typedefs.hpp"
+#include "../include/utils/karp_rabin_hashing.hpp"
 
 // #define DEBUG 
 
 using namespace std;
+using namespace karp_rabin_hashing;
+using namespace utils;
 
 template<>
 std::uint64_t get_hash(const packed_pair<uint64_t, uint64_t> &x) {
@@ -55,7 +60,7 @@ private:
     hash_table<uint64_t, ListPtr> hash_block;
     space_efficient_vector<Block> blocks;
    
-    const char* text;
+    char_t* text;
     uint64_t block_size;
     uint64_t text_length;
 
@@ -67,8 +72,17 @@ public:
     }
 
 
-    BM(const char* text, uint64_t block_size): text(text), block_size(block_size) {
-        text_length = strlen(text);
+    BM(char_t* text, uint64_t block_size): text(text), block_size(block_size) {
+        text_length = strlen(reinterpret_cast<const char*>(text));
+        karp_rabin_hashing::init();
+    }
+
+    BM(string text_file_name, uint64_t block_size): block_size(block_size) {
+        text_file_name = utils::absolute_path(text_file_name); 
+        text_length = utils::file_size(text_file_name);
+        text = allocate_array<char_t>(text_length);
+        utils::read_from_file(text, text_length, text_file_name);
+        karp_rabin_hashing::init();
     }
 
     space_efficient_vector<pair<uint64_t, uint64_t>> compress() {
@@ -90,23 +104,39 @@ public:
             // PENDING - INTEGRATE KARP-RABIN
             if(current_hash == 0) {
                 // THIS IS SAMPLE CODE.
-                string curr;
-                for(int i = position; i < position + block_size; i++) {
-                    curr.push_back(text[i]);
-                }
+                // string curr;
+                // for(int i = position; i < position + block_size; i++) {
+                //     curr.push_back(text[i]);
+                // }
 
-                current_hash = stringToHash(curr);
+                // current_hash = stringToHash(curr);
+
+                char_t* curr_str = allocate_array<char_t>(block_size);
+                for(int i = position; i < position + block_size; i++) {
+                    curr_str[i - position] = (text[i]);
+                }
+                current_hash = hash_string<char_t>(curr_str, block_size);
+
+                deallocate(curr_str);
                 // Compute hash from [text + position, text + position + block_size)
             }
             // PENDING - INTEGRATE KARP-RABIN
             else {
-                string curr;
-                // compute next_hash;
-                for(int i = position; i < position + block_size; i++) {
-                    curr.push_back(text[i]);
-                }
+                // string curr;
+                // // compute next_hash;
+                // for(int i = position; i < position + block_size; i++) {
+                //     curr.push_back(text[i]);
+                // }
 
-                current_hash = stringToHash(curr);
+                // current_hash = stringToHash(curr);
+
+                uint64_t left_hash = hash_char<char_t>(text[position - 1]);
+                uint64_t combined_hash = current_hash;
+                uint64_t remaining_left_hash = unconcat(left_hash, combined_hash, block_size - 1);
+
+                uint64_t right_hash = hash_char<char_t>(text[position + block_size - 1]);
+
+                current_hash = concat(remaining_left_hash, right_hash, 1);
             }
 
             if(position % block_size == 0) {
@@ -257,6 +287,23 @@ public:
         }
         return result;
     }
+
+    void printStats() {
+        cout << "Hash_Table size: " << hash_block.size() << endl;
+    }
+
+    void test() {
+        space_efficient_vector<pair<uint64_t, uint64_t>> parsing = compress();
+        cout << "Compression complete." << endl;
+        string decompressed_string = decompress(parsing);
+        cout << "Decompression complete." << endl;
+        // cout << "Original String: " << string(reinterpret_cast<const char*>(text)) << endl;
+        // cout << "Decompressed String: " << decompressed_string << endl;
+        cout << ((string(reinterpret_cast<const char*>(text)) == decompressed_string) ? "Equal" : "Mismatch!!") << endl;
+        cout << "Parsing Size: " << parsing.size() << endl;
+        cout << "String length: " << strlen(reinterpret_cast<const char*>(text)) << endl;
+        cout << "Reduction: " << 100 - (double)(parsing.size()) * 100 / (strlen(reinterpret_cast<const char*>(text))) << '%' << endl;
+    }
 };
 
 int main() {
@@ -270,19 +317,34 @@ int main() {
             Extend backward only if there is a alone character?
         2. zxQPYxQYPzab block_size = 2
     */
-    const char* sample_text = "zxQPYxQYPzabXyZqStUrpqLMntuVWxtuVWxxYzPQrStUqmnPQXZXyabnXQPmrStUqxYzPQaZyXbmnQXPmnPQXrStUqabXyZtuVWxpqLMnrStUqrStUqpqLMnmnPQXrtUSqabXyZmnPQXpqLMnabXyZrStUqQzxYPxYzPQmnPQXrStUqpqLMnqLpMnqpnMLtuVxWabXyZmnPQXmnPQXuxWtVrStUqmnPQXmnPQXrStUqzxQYPxYzPQrStUqmnPQXqrSUtabXyZmXQnPxYzPQpqLMnmnPQXabXyZxYzPQabXyZxYzPQabXyZpqLMntuVWxrStUqrUqStrStUqtuVWxmnPQXabXyZxYzPQpqLMnrStUqrStUqxYzPQmnPQXrStUqxYzPQtuVWxzPQxYmnPQXQmnPXbaXyZxYzPQVWuxtmnPQXmnPQXxYzPQtuVWxpLMnqrStUqxYzPQybZaXrStUqtuVWxabXyZxYzPQxYzPQabXyZabXyZzxQPYSqUrtxYzPQQxzYPmnPQXxtWuVtuVWxmnPQXtVxWuxYzPQqUtrSabXyZLqMnppqLMnLMnpqqtSrUPnQmXpqLMnrStUqrStUqtuVWxpqLMnqSrUtpqLMnabXyZtuVWxmnPQXXPQnmpqLMnxYPQztSUrqabXyZUtqSrtuVWxrStUqmnPQXtuVWxUrStqtuVWxabXyZxPQYzpqLMnmnPQXmnPQXPXmnQrStUqtuVWxSqUtrxYzPQtuVWxayZbXtuVWxtWVuxmnPQXxYzPQrStUqxYzPQxYzPQpqLMnmnPQXabXyZpqLMnnpMqLrStUqrStUqpqLMnrStUqrStUqabXyZxYzPQrStUqmnPQXabXyZMqLpnpqLMnabXyZxYzPQxYzPQqMnpLmnPQXpqLMnmnPQXzQPYxPQYxztuVWxxYzPQrStUqabXyZPQYxzpqLMnmnPQXxYzPQWuxVtZyXbaZXabyrStUqtuVWxmnPQXxYzPQpqLMn";
-    uint64_t block_size = 2;
-    BM bm(sample_text, block_size);
+    string text_filename = "repcorpus";
+    uint64_t block_size = 1000;
+    
+    BM bm(text_filename, block_size);
 
-    space_efficient_vector<pair<uint64_t, uint64_t>> parsing = bm.compress();
-    cout << "Compression complete." << endl;
-    string decompressed_string = bm.decompress(parsing);
-    cout << "Decompression complete." << endl;
-    cout << "Original String: " << string(sample_text) << endl;
-    cout << "Decompressed String: " << decompressed_string << endl;
-    cout << ((string(sample_text) == decompressed_string) ? "Equal" : "Mismatch!!") << endl;
-    cout << "Parsing Size: " << parsing.size() << endl;
-    cout << "String length: " << strlen(sample_text) << endl;
+    bm.test();
+    bm.printStats();
+    // {
+    //     karp_rabin_hashing::init();
+
+    //     cout << hash_string<char_t>(sample_text, 3) << endl;
+
+    //     uint64_t left_hash = hash_char<char_t>(sample_text[0]);
+    //     uint64_t combined_hash = hash_string<char_t>(sample_text, 3);
+    //     uint64_t right_length = 3;
+
+    //     cout << unconcat(left_hash, combined_hash, right_length) << endl;
+
+    //     const char_t* st = reinterpret_cast<const char_t*>("bcd");
+
+    //     cout << hash_string<char_t>(st, 3) << endl;
+
+    //     left_hash = unconcat(left_hash, combined_hash, right_length);
+    //     uint64_t right_hash = hash_char<char_t>(sample_text[3]);
+
+    //     cout << concat(left_hash, right_hash, 1) << endl;
+    // }
+
 
     return 0;
 }
