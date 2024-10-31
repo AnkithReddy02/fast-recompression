@@ -67,13 +67,6 @@ private:
     uint64_t text_length;
 
 public:
-    unsigned int stringToHash(string& s) {
-        // Lot of Collsions.
-        // TODO: Integrate Karp-Rabin
-        return 0;
-    }
-
-
     BM(char_t* text, uint64_t block_size, const string& output_file_name): text(text), block_size(block_size), output_file_name(output_file_name) {
         text_length = strlen(reinterpret_cast<const char*>(text));
         karp_rabin_hashing::init();
@@ -82,7 +75,7 @@ public:
     BM(string text_file_name, uint64_t block_size, const string& output_file_name): block_size(block_size), output_file_name(output_file_name){
         text_file_name = utils::absolute_path(text_file_name); 
         text_length = utils::file_size(text_file_name);
-        cout << "text+length: " << text_length << endl;
+        cout << "text length: " << text_length << endl;
         text = allocate_array<char_t>(text_length);
         utils::read_from_file(text, text_length, text_file_name);
         karp_rabin_hashing::init();
@@ -267,8 +260,11 @@ public:
             cout << parsing[i].first << ' ' << parsing[i].second << endl;
         }
         #endif
+        
+        return;
+    }
 
-        cout << "Compression complete." << endl;
+    void write_to_file() {
         cout << "Writing to file... " << endl;
         parsing.write_to_file(output_file_name);
         return;
@@ -296,6 +292,37 @@ public:
 
     void printStats() {
         cout << "Hash table size: " << hash_block.size() << endl;
+        cout << "Parsing Size: " << parsing.size() << endl;
+        cout << "String length: " << strlen(reinterpret_cast<const char*>(text)) << endl;
+        cout << "Num Blocks: " << blocks.size() << endl;
+        cout << "Reduction: " << 100 - (double)(parsing.size() * 16) * 100 / (strlen(reinterpret_cast<const char*>(text))) << '%' << endl;
+    }
+
+    uint64_t set_opt_block_size() {
+        uint64_t low = 1;
+        uint64_t high = min((uint64_t)2000, text_length);
+
+        while(high - low > 2) {
+            uint64_t block_size_1 = low + (high - low) / 3;
+            uint64_t block_size_2 = high - (high - low) / 3;
+
+            block_size = block_size_1;
+            compress();
+            uint64_t parsing_size_1 = parsing.size();
+            block_size = block_size_2;
+            compress();
+            uint64_t parsing_size_2 = parsing.size();
+
+            if(parsing_size_1 < parsing_size_2) {
+                high = block_size_2;
+            }
+            else {
+                low = block_size_1;
+            }
+        }
+
+        block_size = low + 1;
+        return min(low + 1, text_length);
     }
 
     void test() {

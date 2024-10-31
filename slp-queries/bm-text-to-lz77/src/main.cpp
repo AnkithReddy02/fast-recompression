@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     cout << "Input text: " << text_file_name << endl;
     cout << "Output: " << output_file_name << endl;
 
-    uint64_t block_size = 500;
+    uint64_t block_size = 100;
 
     cout << "Block Size: " << block_size << endl;
     
@@ -35,11 +35,15 @@ int main(int argc, char* argv[]) {
         BM bm(text_file_name, block_size, output_file_name);
 
         auto compress_start = std::chrono::high_resolution_clock::now();
-        bm.compress();
+        cout << "Computing Optimal Block Size..." << endl;
+        cout << "Optimal Block Size: " << bm.set_opt_block_size() << endl;
         auto compress_end = std::chrono::high_resolution_clock::now();
+        cout << "Compressing text using BM..." << endl;
+        bm.compress();
+        cout << "Compression complete." << endl;
         std::chrono::duration<double> elapsed = compress_end - compress_start;
         cout << "time = " << elapsed.count() << " seconds" << endl;
-        // bm.printStats();
+        bm.printStats();
         // bm.test();
     }
     cout << "peak = " << get_peak_ram_allocation() / (1024.0 * 1024.0) << "MiB" << endl;
