@@ -5,7 +5,7 @@
 #include "space_efficient_vector.hpp"
 #include "packed_pair.hpp"
 #include "utils.hpp"
-#include "../../../../include/typedefs.hpp"
+#include "../typedefs.hpp"
 #include "karp_rabin_hashing.hpp"
 
 using namespace std;
@@ -59,7 +59,7 @@ class BM {
 private:
     hash_table<uint64_t, ListPtr> hash_block;
     space_efficient_vector<Block> blocks;
-    space_efficient_vector<pair<uint64_t, uint64_t>> parsing;
+    space_efficient_vector<pair<c_size_t, c_size_t>> parsing;
     string output_file_name;
    
     char_t* text;
@@ -212,7 +212,7 @@ public:
                             // uint64_t parsingIndex = parsing.size(); 
 
                             while(block_begin_position - begin_index >= 0 && current_begin_position - begin_index >= 0 && begin_index < block_size - 1
-                            && parsing.size() > 0 && parsing.back().second == 0) {
+                            && parsing.size() > 0 && parsing.back().second == (uint40)0) {
                                 if(text[block_begin_position - begin_index] != text[current_begin_position - begin_index]) {
                                     break;
                                 }
@@ -270,11 +270,11 @@ public:
         return;
     }
 
-    string decompress(space_efficient_vector<pair<uint64_t, uint64_t>>& parsing) {
+    string decompress(space_efficient_vector<pair<c_size_t, c_size_t>>& parsing) {
         string result;
 
         for(uint64_t i = 0; i < parsing.size(); ++i) {
-            if(parsing[i].second == 0) {
+            if(parsing[i].second == (uint40)0) {
                 result.push_back(parsing[i].first);
             }
             else {
@@ -296,6 +296,10 @@ public:
         cout << "String length: " << strlen(reinterpret_cast<const char*>(text)) << endl;
         cout << "Num Blocks: " << blocks.size() << endl;
         cout << "Reduction: " << 100 - (double)(parsing.size() * 16) * 100 / (strlen(reinterpret_cast<const char*>(text))) << '%' << endl;
+
+        for(int i = 0; i < parsing.size(); ++i) {
+            // cout << parsing[i].first << ' ' << parsing[i].second << endl;
+        }
     }
 
     uint64_t set_opt_block_size() {

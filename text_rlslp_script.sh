@@ -23,20 +23,28 @@ if [ ! -f "$INPUT_FILE" ]; then
 fi
 
 TEXT_TO_LZ77_DIR="slp-queries/text-to-lz77"
+BM_COMPRESSION_DIR="slp-queries/bm-text-to-lz77"
 LZ77_TO_SLP_DIR="slp-queries/lz77-to-slp"
 SLG_TO_SLP_DIR="slp-queries/slg-to-slp"
 PRUNE_SLP_DIR="slp-queries/prune-slp"
 
+# echo ""
+# echo "Building in $TEXT_TO_LZ77_DIR"
+# make -C "$TEXT_TO_LZ77_DIR" nuclear 
+# make -C "$TEXT_TO_LZ77_DIR" clean
+# make -C "$TEXT_TO_LZ77_DIR" 
+
 echo ""
-echo "Building in $TEXT_TO_LZ77_DIR"
-make -C "$TEXT_TO_LZ77_DIR" nuclear 
-make -C "$TEXT_TO_LZ77_DIR" clean
-make -C "$TEXT_TO_LZ77_DIR" 
+echo "Building in $BM_COMPRESSION_DIR"
+make -C "$BM_COMPRESSION_DIR" nuclear 
+make -C "$BM_COMPRESSION_DIR" clean
+make -C "$BM_COMPRESSION_DIR" 
 
-echo "Running text_to_lz with input file: $INPUT_FILE"
-yes | "$TEXT_TO_LZ77_DIR"/text_to_lz "$INPUT_FILE"
+echo "Running bm_text_to_lz with input file: $INPUT_FILE"
+# yes | "$TEXT_TO_LZ77_DIR"/text_to_lz "$INPUT_FILE"
+"$BM_COMPRESSION_DIR"/bm-compression "$INPUT_FILE" -o "$LZ77_FILE"
 
-echo "Completed text_to_lz."
+echo "Completed bm_text_to_lz."
 
 echo ""
 echo "Building in $LZ77_TO_SLP_DIR"
@@ -111,7 +119,7 @@ END {
 
 awk '
 # By default awk splits the line by spaces. NF = number of fields/tokens/words
-/Compute SA|Compute LZ77|Conversion time|Read SLG from file and convert to SLP|Read SLP from file|Time taken for Construction/ {
+/Compute SA|Compute LZ77|Conversion time|Read SLG from file and convert to SLP|Read SLP from file|time =|Time taken for Construction/ {
     # print $0
     for(i = 1; i <= NF; i++) {
         if($i ~ /[0-9.]+s/) {
