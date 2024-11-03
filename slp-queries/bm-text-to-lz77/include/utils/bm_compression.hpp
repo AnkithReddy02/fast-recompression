@@ -72,13 +72,14 @@ public:
         karp_rabin_hashing::init();
     }
 
-    BM(string text_file_name, uint64_t block_size, const string& output_file_name): block_size(block_size), output_file_name(output_file_name){
+    BM(string text_file_name, uint64_t block_size, const string& output_file_name): output_file_name(output_file_name){
         text_file_name = utils::absolute_path(text_file_name); 
         text_length = utils::file_size(text_file_name);
         cout << "text length: " << text_length << endl;
         text = allocate_array<char_t>(text_length);
         utils::read_from_file(text, text_length, text_file_name);
         karp_rabin_hashing::init();
+        this->block_size = min(block_size, text_length/2);
     }
 
     ~BM() {
