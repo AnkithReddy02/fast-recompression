@@ -238,7 +238,9 @@ public:
             }
 
             if(match.length > 0) {
-                parsing.push_back(make_pair(match.position, match.length));
+                c_size_t first = match.position;
+                c_size_t second = match.length;
+                parsing.push_back(make_pair(first, second));
                 current_hash = 0;
                 position = position - begin_len + match.length;
             }
