@@ -13,4 +13,4 @@ clean:
 	/bin/rm -f *.o
 
 nuclear:
-	/bin/rm -f bm-text-to-lz77 *.o
+	/bin/rm -f bm-compression *.o
