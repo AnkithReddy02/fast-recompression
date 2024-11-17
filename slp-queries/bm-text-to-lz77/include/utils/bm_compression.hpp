@@ -257,6 +257,29 @@ public:
             ++position;
         }
 
+        space_efficient_vector<uint64_t> charStartPos;
+        charStartPos.resize(256, -1);
+
+        uint64_t curr_len = 0;
+
+        for(uint64_t i = 0; i < parsing.size(); ++i) {
+            if(parsing[i].second == (c_size_t)0) {
+                if(charStartPos[parsing[i].first] != -1) {
+                    parsing[i].first = charStartPos[parsing[i].first];
+                    parsing[i].second = 1;
+                }
+                else {
+                    charStartPos[parsing[i].first] = curr_len;
+                }
+
+                curr_len += 1;
+            }
+            else {
+                curr_len += parsing[i].second;
+            }
+
+        }
+
         #ifdef DEBUG
         cout << endl << endl;
         for(uint64_t i = 0; i < parsing.size(); ++i) {
