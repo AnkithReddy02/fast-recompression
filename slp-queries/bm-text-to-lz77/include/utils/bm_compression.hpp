@@ -152,8 +152,11 @@ public:
             }
 
             Block match;
+            Block maxLenMatch;
             uint64_t begin_len = 0;
             uint64_t end_len = 0;
+            uint64_t maxLenMatch_begin_len = 0;
+            uint64_t maxLenMatch_end_len = 0;
             {
                 const ListPtr* list_ptr = hash_block.find(current_hash);
 
@@ -212,12 +215,15 @@ public:
                             uint64_t begin_index = 0;
                             // uint64_t parsingIndex = parsing.size(); 
 
+                            uint64_t parsing_size = parsing.size();
+
                             while(block_begin_position - begin_index >= 0 && current_begin_position - begin_index >= 0 && begin_index < block_size - 1
-                            && parsing.size() > 0 && parsing.back().second == (uint40)0) {
+                            && parsing_size > 0 && parsing[parsing_size - 1].second == (uint40)0) {
                                 if(text[block_begin_position - begin_index] != text[current_begin_position - begin_index]) {
                                     break;
                                 }
-                                parsing.pop_back();
+                                // parsing.pop_back();
+                                --parsing_size;
                                 ++begin_index;
                             }
 
@@ -226,6 +232,14 @@ public:
 
                             match.position = block->position - begin_index;
                             match.length = block->length + begin_index + end_index;
+
+                            if(maxLenMatch.length <= match.length) {
+                                maxLenMatch.position  = match.position;
+                                maxLenMatch.length = match.length;
+                                maxLenMatch_begin_len = begin_len;
+                                maxLenMatch_end_len = end_len;
+                            }
+
                             // ** Missed this **
                             break;
                         }
@@ -235,6 +249,10 @@ public:
                 }
 
                 
+            }
+
+            for(uint64_t j = 0; j < maxLenMatch_begin_len; ++j) {
+                parsing.pop_back();
             }
 
             if(match.length > 0) {
