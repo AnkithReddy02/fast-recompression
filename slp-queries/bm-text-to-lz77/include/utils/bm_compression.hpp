@@ -241,7 +241,7 @@ public:
                             }
 
                             // ** Missed this **
-                            break;
+                            // break;
                         }
 
                         list_start_index = block->next;
@@ -255,12 +255,19 @@ public:
                 parsing.pop_back();
             }
 
-            if(match.length > 0) {
-                c_size_t first = match.position;
-                c_size_t second = match.length;
+            // if(match.length > 0) {
+            //     c_size_t first = match.position;
+            //     c_size_t second = match.length;
+            //     parsing.push_back(make_pair(first, second));
+            //     current_hash = 0;
+            //     position = position - begin_len + match.length;
+            // }
+            if(maxLenMatch.length > 0) {
+                c_size_t first = maxLenMatch.position;
+                c_size_t second = maxLenMatch.length;
                 parsing.push_back(make_pair(first, second));
                 current_hash = 0;
-                position = position - begin_len + match.length;
+                position = position - maxLenMatch_begin_len + match.length;
             }
             else {
               
