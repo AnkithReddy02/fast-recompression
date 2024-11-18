@@ -267,7 +267,7 @@ public:
                 c_size_t second = maxLenMatch.length;
                 parsing.push_back(make_pair(first, second));
                 current_hash = 0;
-                position = position - maxLenMatch_begin_len + match.length;
+                position = position - maxLenMatch_begin_len + maxLenMatch.length;
             }
             else {
               
