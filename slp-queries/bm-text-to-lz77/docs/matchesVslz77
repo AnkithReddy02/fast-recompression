@@ -1,0 +1,10 @@
+File: einstein.en.txt
+Algorithm: Bentley-McIlroy Compression
+#Matches        Time(s)     LZ77 Size(bytes)
+1               0.43         7073210
+2               0.47         7029390
+3               0.44         7024360
+4               0.40         7026440
+5               0.40         7026800
+6               0.44         7026790
+all_matches     0.44         7026790
