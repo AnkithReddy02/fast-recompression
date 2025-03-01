@@ -5,7 +5,7 @@
 #include "../../../include/types/int40.hpp"
 #include "../../../include/types/uint40.hpp"
 
-typedef uint40 c_size_t;
+typedef uint64_t c_size_t;
 typedef uint32_t uc_size_t;
 typedef int64_t len_t;
 typedef uint8_t char_t;
