@@ -10,18 +10,28 @@ private:
     double mutation_rate;
     uint64_t targetFileSize;
     uint64_t copies;
-    string OUTPUT_FILE = "mutated_genome.1GiB.0m_r";
+    string OUTPUT_FILE;
 
     const vector<char> nucleotides_upper = {'A', 'T', 'C', 'G'};
     const vector<char> nucleotides_lower = {'a', 't', 'c', 'g'};
     mt19937 gen;
+
+    string removeTrailingZeroes(double value) {
+	ostringstream oss;
+ 	oss << value;
+	return oss.str();
+    }
     
 public:
-    MutateChromosome(const string& fasta_file, double mutation_rate = 0.0001, uint64_t targetFileSize = (uint64_t)3 * 1024 * 1024 * 1024) : fasta_file(fasta_file), mutation_rate(mutation_rate), targetFileSize(targetFileSize), gen(random_device{}()) {
-        OUTPUT_FILE = fasta_file + "." + to_string(targetFileSize/(1024 * 1024 * 1024)) + "GiB." + to_string(mutation_rate)+"mr";
+    MutateChromosome(const string& fasta_file, double mutation_rate = 0.001, uint64_t targetFileSize = (uint64_t)8 * 1024 * 1024 * 1024) : fasta_file(fasta_file), mutation_rate(mutation_rate), targetFileSize(targetFileSize), gen(random_device{}()) {
+        OUTPUT_FILE = fasta_file + "." + to_string(targetFileSize/(1024 * 1024 * 1024)) + "GiB." + removeTrailingZeroes(mutation_rate)+"mr";
 	readChromosomeFromFASTA();
+        cout << "Input: " << fasta_file << endl;
+	cout << "Output: " << OUTPUT_FILE << endl;
         cout << "Chromosome Size: " << chromosome.length() << endl;
         sleep(2);
+        // cout << mutation_rate << endl;
+	// cout << removeTrailingZeroes(mutation_rate) << endl;
         copies = targetFileSize / chromosome.length();
         // copies = 2;
         generateLargeMutatedFile();
@@ -71,10 +81,11 @@ public:
         }
 
         for(uint64_t i = 0; i < copies; ++i) {
-            cout << "COPY: " << i + 1 << endl;
+            cout << "Progress: " << ((i + 1) * 100) / copies << '%' << '\r';
             string mutated_seq = mutateSequence();
             file << mutated_seq;
         }
+	cout << endl;
         file.close();
         cout << "Mutated genome file generated successfully." << endl;
     }
@@ -108,12 +119,14 @@ public:
 };
 
 int main(int argc, char** argv) {
-    if(argc < 1) {
-	cerr << "./GenFile input_file";
+    if(argc < 4) {
+	cerr << "./GenFile input_file mutation_rate output_file_size\n";
         exit(1);
     }
     string input_file(argv[1]);
-    MutateChromosome mc(input_file);
+    string mutationRate_str(argv[2]);
+    string output_file_size_str(argv[3]);
+    MutateChromosome mc(input_file, stod(mutationRate_str), stoull(output_file_size_str));
 
 }
 
