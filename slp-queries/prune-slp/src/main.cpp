@@ -39,7 +39,7 @@
 #include "../include/types/uint40.hpp"
 #include "../include/utils/utils.hpp"
 #include "../include/slp_pruner.hpp"
-
+#include "../include/typedefs.hpp"
 
 //=============================================================================
 // Read the text and compare to the text encoded by the grammar.
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 
   // Declare types.
   typedef std::uint8_t char_type;
-  typedef uint40 text_offset_type;
+  typedef c_size_t text_offset_type;
 
   // Obtain filenames.
   std::string slp_filename = argv[1];

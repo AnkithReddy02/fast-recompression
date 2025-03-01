@@ -39,7 +39,7 @@
 #include "../include/types/uint40.hpp"
 #include "../include/utils/utils.hpp"
 #include "../include/slg_to_slp_converter.hpp"
-
+#include "../include/typedefs.hpp"
 
 //=============================================================================
 // Convert SLG to SLP.
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 
   // Declare types.
   typedef std::uint8_t char_type;
-  typedef uint40 text_offset_type;
+  typedef c_size_t text_offset_type;
 
   // Obtain filenames.
   std::string slg_filename = argv[1];

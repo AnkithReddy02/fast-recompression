@@ -47,7 +47,7 @@
 #include "../include/utils/utils.hpp"
 #include "../include/lazy_avl_grammar/lazy_avl_grammar.hpp"
 #include "../include/lazy_avl_grammar/lz_to_lazy_avl_grammar.hpp"
-
+#include "../include/typedefs.hpp"
 
 //=============================================================================
 // Decode text from streamed LZ77 parsing, and
@@ -377,7 +377,7 @@ int main(int argc, char **argv) {
 
   // Declare types.
   typedef std::uint8_t char_type;
-  typedef uint40 text_offset_type;
+  typedef c_size_t text_offset_type;
 
   // Obtain filenames.
   std::string parsing_filename = argv[1];
