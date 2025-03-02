@@ -202,7 +202,7 @@ RecompressionRLSLP* recompression_on_slp(InputSLP* s) {
     return recompression_rlslp;
 }
 
-void start_compression(const string &input_file, const string &output_file = "") {
+void start_compression(const string &input_file, const string &output_file = "", const string &input_text = "") {
 
 
     InputSLP *inputSLP = new InputSLP();
@@ -224,7 +224,7 @@ void start_compression(const string &input_file, const string &output_file = "")
 
     // Output the duration
     cout << "Time taken for Construction: " << duration_seconds << " seconds" << endl;
-
+    cout << "Total Time taken: " << duration_seconds << " seconds" << endl;
     space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
     // // printRecompressionRLSLP(recompression_rlslp);
     c_size_t text_size = rlslp_nonterm_vec.back().explen;
@@ -246,6 +246,41 @@ void start_compression(const string &input_file, const string &output_file = "")
         cout << "Done writing to file!" << endl;
     }
 
+    // RLSLP expansion test.
+    {
+        if(!input_text.empty()) {
+            cout << "Testing RLSLP expansion..." << endl;
+	    space_efficient_vector<c_size_t> expansion;
+            expandRLSLP(recompression_rlslp, expansion);
+
+            string input_text_name = utils::absolute_path(input_text);
+            c_size_t text_length = utils::file_size(input_text_name);
+            cout << "text length: " << text_length << endl;
+            char_t *text = allocate_array<char_t>(text_length);
+            utils::read_from_file(text, text_length, input_text_name);
+
+            if(expansion.size() != text_length) {
+                cerr << "Text and Expansion length didn't match!!" << endl;
+            }
+	    else {
+                bool correct_expansion = true;
+                for(uint64_t i = 0; i < text_length; ++i) {
+                    if(text[i] != expansion[i]) {
+                        cerr << "Mismtach -- RLSLP Expansion and text at Index: " << i << endl;
+                        correct_expansion = false;
+			break;
+                    }
+                }
+
+	        if(correct_expansion) {
+	            cout << "Correct Extract!" << endl;
+                }
+	    }
+
+            deallocate(text);
+        }
+    }
+
     // Clean up.
     delete recompression_rlslp;
 
@@ -259,12 +294,13 @@ int main(int argc, char *argv[]) {
     utils::initialize_stats();
 
     if(argc <= 1) {
-        cout << "Usage: " + string(argv[0]) + " [-v or -vv] input_slp -o output_file" << endl;
+        cout << "Usage: " + string(argv[0]) + " [-v or -vv] input_slp -o output_file -t input_text" << endl;
         exit(1);
     }
 
     string input_slp;
     string output_file;
+    string input_text;
 
     verbosity = 0;
 
@@ -279,6 +315,9 @@ int main(int argc, char *argv[]) {
         }
         else if(curr_arg == "-vv") {
             verbosity = 2;
+        }
+        else if(curr_arg == "-t") {
+            input_text = string(argv[++i]);
         }
         else {
             input_slp = string(argv[i]);
@@ -295,15 +334,6 @@ int main(int argc, char *argv[]) {
     cout << "SLP File: " << input_slp << endl;
     cout << "Output File: " << output_file << endl;
 
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-    start_compression(input_slp, output_file);
-
-    auto end_time = std::chrono::high_resolution_clock::now();
-
-    auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-
-    // Output the duration
-    cout << "Total Time taken: " << duration_seconds << " seconds" << endl;
+    start_compression(input_slp, output_file, input_text);
     return 0;
 }
