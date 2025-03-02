@@ -90,10 +90,12 @@ public:
         parsing.clear();
         uint64_t current_hash = 0;
         uint64_t position = 0;
+        uint64_t max_len = 0;
 
         
 
         while(position < text_length) {
+            // cout << "MaxLen: " << max_len << " --  " << "Position: " << position <<  " -- Progress: " << fixed << setprecision(2) << ((double)position * 100/text_length) << "%\r";
             if(text_length - position < block_size) {
                 break;
             }
@@ -167,7 +169,7 @@ public:
                         if(block->position >= position) {
                             break;
                         }
-
+			/*
                         bool stringsEqual = true;
 
                         uint64_t block_start = block->position;
@@ -185,7 +187,7 @@ public:
                             list_start_index = block->next;
                             continue;
                         }
-
+			*/
                         // const Block* block = hash_block[current_hash];
                         if(block != NULL && block->position != position) {
                             // Note the difference
@@ -218,7 +220,7 @@ public:
                             uint64_t parsing_size = parsing.size();
 
                             while(block_begin_position - begin_index >= 0 && current_begin_position - begin_index >= 0 && begin_index < block_size - 1
-                            && parsing_size > 0 && parsing[parsing_size - 1].second == (uint40)0) {
+                            && parsing_size > 0 && parsing[parsing_size - 1].second == (c_size_t)0) {
                                 if(text[block_begin_position - begin_index] != text[current_begin_position - begin_index]) {
                                     break;
                                 }
@@ -266,6 +268,7 @@ public:
                 c_size_t first = maxLenMatch.position;
                 c_size_t second = maxLenMatch.length;
                 parsing.push_back(make_pair(first, second));
+		max_len = max(max_len, (uint64_t)second);
                 current_hash = 0;
                 position = position - maxLenMatch_begin_len + maxLenMatch.length;
             }
@@ -311,7 +314,7 @@ public:
             cout << parsing[i].first << ' ' << parsing[i].second << endl;
         }
         #endif
-        
+        cout << "\nMax phrase len: " << max_len << endl;
         return;
     }
 
@@ -325,7 +328,7 @@ public:
         string result;
 
         for(uint64_t i = 0; i < parsing.size(); ++i) {
-            if(parsing[i].second == (uint40)0) {
+            if(parsing[i].second == (c_size_t)0) {
                 result.push_back(parsing[i].first);
             }
             else {
