@@ -22,11 +22,11 @@ if [ ! -f "$INPUT_FILE" ]; then
     exit 1
 fi
 
-TEXT_TO_LZ77_DIR="slp-queries/text-to-lz77"
-BM_COMPRESSION_DIR="slp-queries/bm-text-to-lz77"
-LZ77_TO_SLP_DIR="slp-queries/lz77-to-slp"
-SLG_TO_SLP_DIR="slp-queries/slg-to-slp"
-PRUNE_SLP_DIR="slp-queries/prune-slp"
+TEXT_TO_LZ77_DIR="../code/slp-queries/text-to-lz77"
+BM_COMPRESSION_DIR="../code/slp-queries/bm-text-to-lz77"
+LZ77_TO_SLP_DIR="../code/slp-queries/lz77-to-slp"
+SLG_TO_SLP_DIR="../code/slp-queries/slg-to-slp"
+PRUNE_SLP_DIR="../code/slp-queries/prune-slp"
 
 # echo ""
 # echo "Building in $TEXT_TO_LZ77_DIR"
@@ -79,11 +79,11 @@ make -C "$PRUNE_SLP_DIR" 2>/dev/null
 
 echo "Building in Recompression"
 
-make nuclear
-make clean
-make 2>/dev/null
+make -C "../code/" nuclear
+make -C "../code/" clean
+make -C "../code/" 2>/dev/null
 
-./recomp "$PRUNE_SLP_FILE" "-o" "$RSLP_FILE" # "-t" "$INPUT_FILE"
+../code/recomp "$PRUNE_SLP_FILE" "-o" "$RSLP_FILE" # "-t" "$INPUT_FILE"
 
 printf "\n"
 echo "All Done!"
