@@ -83,7 +83,7 @@ make nuclear
 make clean
 make 2>/dev/null
 
-./recomp "$PRUNE_SLP_FILE" "-o" "$RSLP_FILE"
+./recomp "$PRUNE_SLP_FILE" "-o" "$RSLP_FILE" # "-t" "$INPUT_FILE"
 
 printf "\n"
 echo "All Done!"
