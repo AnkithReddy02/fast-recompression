@@ -216,8 +216,6 @@ void start_compression(const string &input_file, const string &output_file = "",
 
     RecompressionRLSLP *recompression_rlslp = recompression_on_slp(inputSLP);
 
-    recompression_rlslp->computeExplen();
-
     auto end_time = std::chrono::high_resolution_clock::now();
 
     auto duration_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
@@ -225,6 +223,9 @@ void start_compression(const string &input_file, const string &output_file = "",
     // Output the duration
     cout << "Time taken for Construction: " << duration_seconds << " seconds" << endl;
     cout << "Total Time taken: " << duration_seconds << " seconds" << endl;
+
+    recompression_rlslp->computeExplen();
+
     space_efficient_vector<RLSLPNonterm> & rlslp_nonterm_vec = recompression_rlslp->nonterm;
     // // printRecompressionRLSLP(recompression_rlslp);
     c_size_t text_size = rlslp_nonterm_vec.back().explen;
@@ -281,6 +282,15 @@ void start_compression(const string &input_file, const string &output_file = "",
         }
     }
 
+    space_efficient_vector<RLSLPNonterm>& nontermVec = recompression_rlslp->nonterm;
+    uint64_t productions = 0;
+
+    for(uint64_t i = 0; i < nontermVec.size(); ++i) {
+	if(nontermVec[i].type != '0') {
+	    productions++;
+	}
+    }
+
     // Clean up.
     delete recompression_rlslp;
 
@@ -288,6 +298,11 @@ void start_compression(const string &input_file, const string &output_file = "",
     cout << "Current RAM usage for Construction: " <<
       get_current_ram_allocation() << " bytes" << endl;
     cout << "****************" << endl << endl;
+
+
+
+    cout << "Productions = " << productions << endl; //  << " + 256 = " << productions + 256 << endl;
+    return;
 }
 
 int main(int argc, char *argv[]) {
