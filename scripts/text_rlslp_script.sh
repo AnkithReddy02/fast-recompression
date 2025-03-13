@@ -4,6 +4,8 @@ LOG_FILE="text_rlslp_script.log"
 > $LOG_FILE
 exec > >(tee -a $LOG_FILE) 2>&1
 
+echo "Current timestamp: $(date)"
+
 if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <input_text>"
     exit 1
