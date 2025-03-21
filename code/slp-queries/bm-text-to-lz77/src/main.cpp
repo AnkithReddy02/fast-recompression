@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     */
 
     if(argc < 4) {
-        cerr << "Usage: " << argv[0] << " text_file_name -o output_file_name" << endl;
+        cerr << "Usage: " << argv[0] << " text_file_name -o output_file_name [block_size]" << endl;
         return 1;
     }
 
@@ -26,6 +26,10 @@ int main(int argc, char* argv[]) {
     cout << "Output: " << output_file_name << endl;
 
     uint64_t block_size = 50;
+
+    if(argc == 5) {
+        block_size = stoi(string(argv[4]));
+    }
 
     cout << "Block Size: " << block_size << endl;
     
