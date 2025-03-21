@@ -132,6 +132,7 @@ awk '
 /Compute SA|Compute LZ77|Conversion time|Read SLG from file and convert to SLP|Read SLP from file|time =|Time taken for Construction/ {
     # print $0
     for(i = 1; i <= NF; i++) {
+        gsub(/[()=]/, "", $i)
         if($i ~ /[0-9.]+s/) {
             # printf $i
             # printf "\n"

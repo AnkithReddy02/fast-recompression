@@ -233,7 +233,7 @@ void start_compression(const string &input_file, const string &output_file = "",
     cout << "Text Size : " << text_size << endl << endl;
 
     cout << "****************" << endl;
-    cout << "Peak RAM usage for Construction: " << get_peak_ram_allocation()/(1024.0 * 1024.0) << " MB" << endl;
+    cout << "RAM usage for Construction: peak = " << get_peak_ram_allocation()/(1024.0 * 1024.0) << "MiB" << endl;
     cout << "****************" << endl << endl;
 
     // cout << "****************" << endl;
