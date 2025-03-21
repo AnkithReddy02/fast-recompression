@@ -1,5 +1,12 @@
 #!/bin/bash
 
+print_usage() {
+    echo "Usage: ./text_rlslp_script.sh <input_text> [block_size]"
+    echo
+    echo "<input_text>  : Path to the input text file (required)"
+    echo "[block_size]  : Integer block size -- (text to lz77 -> BM Compression) (optional, default: 50)"
+}
+
 LOG_FILE="text_rlslp_script.log"
 > $LOG_FILE
 exec > >(tee -a $LOG_FILE) 2>&1
@@ -7,11 +14,12 @@ exec > >(tee -a $LOG_FILE) 2>&1
 echo "Current timestamp: $(date)"
 
 if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 <input_text>"
+    print_usage
     exit 1
 fi
 
 INPUT_FILE=$1
+BLOCK_SIZE=${2:-50}
 LZ77_FILE="${INPUT_FILE}.lz77"
 SLG_FILE="${INPUT_FILE}.lz77.slg"
 SLP_FILE="${INPUT_FILE}.lz77.slp"
@@ -44,7 +52,7 @@ make -C "$BM_COMPRESSION_DIR"
 
 echo "Running bm_text_to_lz with input file: $INPUT_FILE"
 # yes | "$TEXT_TO_LZ77_DIR"/text_to_lz "$INPUT_FILE"
-"$BM_COMPRESSION_DIR"/bm-compression "$INPUT_FILE" -o "$LZ77_FILE"
+"$BM_COMPRESSION_DIR"/bm-compression "$INPUT_FILE" -o "$LZ77_FILE" "$BLOCK_SIZE"
 
 echo "Completed bm_text_to_lz."
 
