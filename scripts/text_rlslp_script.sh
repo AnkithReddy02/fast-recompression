@@ -99,8 +99,33 @@ printf "\n"
 echo "All Done!"
 printf "\n"
 
+echo
+echo "--------------- SUMMARY -----------------"
+echo
 
-awk '/peak =|Peak RAM usage for Construction/ {
+awk '
+BEGIN {
+    stages[1] = "text_lz77"
+    stages[2] = "lz77_slg"
+    stages[3] = "slg_slp"
+    stages[4] = "slp_prunedslp"
+    stages[5] = "prunedslp_rlslp"
+
+    pattern_map["Block Size:"] = "block_size"
+    pattern_map["text length:"] = "text_length"
+    pattern_map["Parsing Size:"] = "lz77_phrases"
+    pattern_map["Number of nonterminals ="] = "slg_size"
+    pattern_map["Size of original SLP ="] = "slp_size"
+    pattern_map["Size of pruned SLP ="] = "prunedslp_size"
+    pattern_map["Productions ="] = "rlslp_size"
+
+    time_index = 1
+    ram_index = 1
+}
+
+
+
+/peak =|Peak RAM usage for Construction/ {
     # print $0
     for(i = 1; i <= NF; i++) {
         if($i ~ /[0-9.]+MiB/) {
@@ -108,37 +133,42 @@ awk '/peak =|Peak RAM usage for Construction/ {
             # printf "\n"
 
             value = substr($i, 1, length($i)-3) + 0 # convert to numeric
-            if(res < value) {
-                res = value
-            }
         }
         else if(i < NF && $i ~ /^[0-9.]+$/ && $(i+1) == "MB") {
             # printf $i
             # printf "\n"
             
             value = $i + 0 # convert to numeric
-            if(res < value) {
-                res = value
-            }
         }
+        else {
+            continue
+        }
+
+        if(ram_index <= 5) {
+            stage = stages[ram_index]
+            rams[stage] = value
+            if(value > peakRAM) {
+                peakRAM = value
+            }
+            ram_index++
+        }
+        break
+
     }
 } 
-END { 
-    print "*** Overall Peak RAM usage:", res, "MiB ***"; 
-}' $LOG_FILE
 
-awk '
 # By default awk splits the line by spaces. NF = number of fields/tokens/words
 /Compute SA|Compute LZ77|Conversion time|Read SLG from file and convert to SLP|Read SLP from file|time =|Time taken for Construction/ {
     # print $0
     for(i = 1; i <= NF; i++) {
         gsub(/[()=]/, "", $i)
+        # printf $i, "\n"
         if($i ~ /[0-9.]+s/) {
             # printf $i
             # printf "\n"
 
             time = substr($i, 1, length($i)-1)
-            totalTime += time
+            # totalTime += time
             # printf "%.3f\n", time
         }
         else if(i < NF && $i ~ /^[0-9.]+$/ && $(i+1) == "seconds") {
@@ -146,11 +176,57 @@ awk '
             # printf "\n"
 
             time = substr($i, 1, length($i)-1)
-            totalTime += time
+            # totalTime += time
             # printf "%.3f\n", time
+        }
+        else {
+            continue
+        }
+
+        # printf time, "\n"
+        if(time_index <= 5) {
+            stage = stages[time_index]
+            times[stage] = time
+            # printf time_index, times[stage], "\n"
+            totalTime += time
+            time_index++
+        }
+
+        break
+    }
+}
+
+{
+    for(p in pattern_map) {
+        # printf p, "\n"
+        if(index($0, p) && !seen[pattern_map[p]]) {
+            for(i = 1; i <= NF; i++) {
+                if($i ~ /^[0-9]+$/) {
+                    label = pattern_map[p]
+                    if(label ~ /block_size|text_length/) {
+                        printf "%s = %d", label, $i + 0
+                        printf "\n"
+                    }
+                    else {
+                        printf "%s = %d", label, $i + 0
+                        printf "\n"
+                    }
+                    seen[label] = 1
+                    break
+                }
+            }
         }
     }
 }
 END {
-    printf "*** Total time to convert Text to RLSLP: %.3fs ***\n", totalTime
-}' $LOG_FILE
+    printf "\n"
+    for(i = 1; i <= 5; i++) {
+        stage = stages[i]
+        printf "%s_time = %.2fs\n", stage, times[stage]
+        printf "%s_ram = %.2fMiB\n", stage, rams[stage]
+    }
+
+    printf "\n"
+    printf "*** Total time to convert Text to RLSLP -- total_time = %.2fs ***\n", totalTime
+    printf "*** Overall Peak RAM usage -- overall_peak = %.2f MiB ***\n", peakRAM
+}' "$LOG_FILE"
