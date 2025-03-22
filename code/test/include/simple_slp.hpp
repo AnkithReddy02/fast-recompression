@@ -130,6 +130,11 @@ std::uint64_t get_hash(const int40 &x) {
   return (std::uint64_t)x * (std::uint64_t)4972548694736365;
 }
 
+template<>
+std::uint64_t get_hash(const int64_t &x) {
+  return (std::uint64_t)x * (std::uint64_t)4972548694736365;
+}
+
 //=============================================================================
 // Implementation of the slp class.
 //=============================================================================
