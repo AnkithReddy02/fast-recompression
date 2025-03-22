@@ -343,14 +343,14 @@ void InputSLP::read_from_file(const string &file_name) {
     file.seekg(0, ios::end);
     size_t file_size = file.tellg();
     file.seekg(0, ios::beg);
-    cout << "Number of Non-Terminals : " << file_size/10 << endl;
+    cout << "Number of Non-Terminals : " << file_size/(2 * sizeof(c_size_t)) << endl;
     cout << "File size: " << file_size << " bytes" << endl;
 
     unsigned char buffer[2 * sizeof(c_size_t)]; // Buffer to hold 10 bytes (5 bytes read two times)
 
     // ****
     // nonterm.resize(file_size/10);
-    for(uint64_t i = 0; i < (file_size/10); ++i) {
+    for(uint64_t i = 0; i < (file_size/(2 * sizeof(c_size_t))); ++i) {
         nonterm.push_back(SLPNonterm());
     }
 
