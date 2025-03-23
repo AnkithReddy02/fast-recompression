@@ -227,6 +227,6 @@ END {
     }
 
     printf "\n"
-    printf "*** Total time to convert Text to RLSLP -- total_time = %.2fs ***\n", totalTime
-    printf "*** Overall Peak RAM usage -- overall_peak = %.2f MiB ***\n", peakRAM
+    printf "total_time = %.2fs\n", totalTime
+    printf "overall_peak = %.2fMiB\n", peakRAM
 }' "$LOG_FILE"
