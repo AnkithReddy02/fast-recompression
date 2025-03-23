@@ -99,6 +99,8 @@ printf "\n"
 echo "All Done!"
 printf "\n"
 
+sleep 1
+
 echo
 echo "--------------- SUMMARY -----------------"
 echo
