@@ -27,4 +27,4 @@ text_to_lz
 bm-compression
 !issues_assumptions.txt
 !tc.txt
-!logs/
+!logs/**/*.log
