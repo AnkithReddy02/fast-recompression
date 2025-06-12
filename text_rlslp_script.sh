@@ -32,11 +32,11 @@ if [ ! -f "$INPUT_FILE" ]; then
     exit 1
 fi
 
-TEXT_TO_LZ77_DIR="../code/slp-queries/text-to-lz77"
-BM_COMPRESSION_DIR="../code/slp-queries/bm-text-to-lz77"
-LZ77_TO_SLP_DIR="../code/slp-queries/lz77-to-slp"
-SLG_TO_SLP_DIR="../code/slp-queries/slg-to-slp"
-PRUNE_SLP_DIR="../code/slp-queries/prune-slp"
+TEXT_TO_LZ77_DIR="./tools/text-to-lz77"
+BM_COMPRESSION_DIR="./tools/bm-text-to-lz77"
+LZ77_TO_SLG_DIR="./tools/lz77-to-slg"
+SLG_TO_SLP_DIR="./tools/slg-to-slp"
+PRUNE_SLP_DIR="./tools/prune-slp"
 
 # echo ""
 # echo "Building in $TEXT_TO_LZ77_DIR"
@@ -57,13 +57,13 @@ echo "Running bm_text_to_lz with input file: $INPUT_FILE"
 echo "Completed bm_text_to_lz."
 
 echo ""
-echo "Building in $LZ77_TO_SLP_DIR"
-make -C "$LZ77_TO_SLP_DIR" nuclear
-make -C "$LZ77_TO_SLP_DIR" clean
-make -C "$LZ77_TO_SLP_DIR" 2>/dev/null
+echo "Building in $LZ77_TO_SLG_DIR"
+make -C "$LZ77_TO_SLG_DIR" nuclear
+make -C "$LZ77_TO_SLG_DIR" clean
+make -C "$LZ77_TO_SLG_DIR" 2>/dev/null
 
 echo "Running convert with output file: $LZ77_FILE"
-"$LZ77_TO_SLP_DIR"/lz_to_grammar "$LZ77_FILE"
+"$LZ77_TO_SLG_DIR"/lz_to_grammar "$LZ77_FILE"
 echo "Completed convert."
 
 echo ""
@@ -89,11 +89,11 @@ make -C "$PRUNE_SLP_DIR" 2>/dev/null
 
 echo "Building in Recompression"
 
-make -C "../code/" nuclear
-make -C "../code/" clean
-make -C "../code/" 2>/dev/null
+make -C "." nuclear
+make -C "." clean
+make -C "." 2>/dev/null
 
-../code/recomp "$PRUNE_SLP_FILE" "-o" "$RSLP_FILE" # "-t" "$INPUT_FILE"
+./recomp "$PRUNE_SLP_FILE" "-o" "$RSLP_FILE" # "-t" "$INPUT_FILE"
 
 printf "\n"
 echo "All Done!"
