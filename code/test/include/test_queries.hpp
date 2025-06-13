@@ -164,7 +164,7 @@ bool test_queries(RecompressionRLSLP *recompression_rlslp, const string &input_s
 
     }
 
-    cout << fixed << setprecision(2) << "  Testing Progress: " << "100%" << endl;
+    cout << fixed << setprecision(2) << "  Testing Progress: " << "100.00%" << endl;
 
     auto end_time = std::chrono::high_resolution_clock::now();
 
