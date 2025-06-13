@@ -309,7 +309,7 @@ int main(int argc, char *argv[]) {
     utils::initialize_stats();
 
     if(argc <= 1) {
-        cout << "Usage: " + string(argv[0]) + " [-v or -vv] input_slp -o output_file -t input_text" << endl;
+        cout << "Usage: " + string(argv[0]) + " [-v or -vv] input_slp -o output_file [-t input_text]" << endl;
         exit(1);
     }
 
