@@ -89,7 +89,7 @@ Here, `input.slp` is the grammar input to `recomp`, and `input.rlslp` is its rec
 
 ## References
 
-[1] Ankith Reddy Adudodla, Dominik Kempa. *Fast Construction of Locally-Consistent Grammars in Compressed Time*. 2025.<br>
+[1] Ankith Reddy Adudodla, Dominik Kempa. *Engineering Fast and Space-Efficient Recompression from SLP-Compressed Text*. 2025.<br>
 [2] Artur Jez. *Recompression: A Simple and Powerful Technique for Word Equations*. J. ACM 63(1): 4:1–4:51 (2016).<br>
 [3] Dominik Kempa, Tomasz Kociumaka. *Collapsing the Hierarchy of Compressed Data Structures: Suffix Arrays in Optimal Compressed Space*. FOCS 2023: 1877–1886.
 
