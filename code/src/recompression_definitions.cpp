@@ -39,10 +39,10 @@ void RecompressionRLSLP::write_to_file(const string &filename) {
         // Write type
         ofs.write(reinterpret_cast<const char*>(&rlslpNonterm.type), sizeof(rlslpNonterm.type));
 
-        // Write first - 5 bytes
+        // Write first
         ofs.write(reinterpret_cast<const char*>(&rlslpNonterm.first), sizeof(c_size_t));
 
-        // Write second - 5 bytes
+        // Write second
         ofs.write(reinterpret_cast<const char*>(&rlslpNonterm.second), sizeof(c_size_t));
     }
 
@@ -67,10 +67,10 @@ void RecompressionRLSLP::read_from_file(const string &filename) {
         // Read type
         ifs.read(reinterpret_cast<char*>(&rlslpNonterm.type), sizeof(rlslpNonterm.type));
 
-        // Read first - 5 bytes
+        // Read first
         ifs.read(reinterpret_cast<char*>(&rlslpNonterm.first), sizeof(c_size_t));
 
-        // Read second - 5 bytes
+        // Read second
         ifs.read(reinterpret_cast<char*>(&rlslpNonterm.second), sizeof(c_size_t));
 
         nonterm.push_back(rlslpNonterm);
@@ -346,10 +346,9 @@ void InputSLP::read_from_file(const string &file_name) {
     cout << "Number of Non-Terminals : " << file_size/(2 * sizeof(c_size_t)) << endl;
     cout << "File size: " << file_size << " bytes" << endl;
 
-    unsigned char buffer[2 * sizeof(c_size_t)]; // Buffer to hold 10 bytes (5 bytes read two times)
+    unsigned char buffer[2 * sizeof(c_size_t)];
 
     // ****
-    // nonterm.resize(file_size/10);
     for(uint64_t i = 0; i < (file_size/(2 * sizeof(c_size_t))); ++i) {
         nonterm.push_back(SLPNonterm());
     }
@@ -359,14 +358,14 @@ void InputSLP::read_from_file(const string &file_name) {
 
     while (file.read(reinterpret_cast<char*>(buffer), sizeof(buffer))) {
         // Process the first x-byte integer
-        uint64_t value1 = 0;
-        for (uint64_t i = 0; i < sizeof(c_size_t); ++i) { // First 5 bytes
+        c_size_t value1 = 0;
+        for (uint64_t i = 0; i < sizeof(c_size_t); ++i) {
             value1 |= static_cast<uint64_t>(buffer[i]) << (i * 8);
         }
 
         // Process the second x-byte integer
-        uint64_t value2 = 0;
-        for (uint64_t i = sizeof(c_size_t); i < 2 * sizeof(c_size_t); ++i) { // Next 5 bytes
+        c_size_t value2 = 0;
+        for (uint64_t i = sizeof(c_size_t); i < 2 * sizeof(c_size_t); ++i) {
             value2 |= static_cast<uint64_t>(buffer[i]) << ((i - sizeof(c_size_t)) * 8);
         }
 
@@ -377,8 +376,8 @@ void InputSLP::read_from_file(const string &file_name) {
         }
     }
 
-    // Check if we have read less than 5 bytes in the last chunk
-    c_size_t lastChunkSize = int64_t(file.gcount());
+    // Check if we have read less than c_size_t bytes in the last chunk
+    c_size_t lastChunkSize = c_size_t(file.gcount());
     if (lastChunkSize > 0) {
         cout << "Read " << lastChunkSize << " bytes in the last chunk, incomplete for a 64-bit value." << endl;
     }
