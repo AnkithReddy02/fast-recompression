@@ -20,10 +20,10 @@ fi
 
 INPUT_FILE=$1
 BLOCK_SIZE=${2:-50}
-LZ77_FILE="${INPUT_FILE}.lz77"
-SLG_FILE="${INPUT_FILE}.lz77.slg"
-SLP_FILE="${INPUT_FILE}.lz77.slp"
-PRUNE_SLP_FILE="${INPUT_FILE}.lz77.prune_slp"
+LZ77_FILE="${INPUT_FILE}.approx_lz77"
+SLG_FILE="${INPUT_FILE}.approx_lz77.slg"
+SLP_FILE="${INPUT_FILE}.slp"
+PRUNE_SLP_FILE="${INPUT_FILE}.prune_slp"
 RSLP_FILE="${INPUT_FILE}.rlslp"
 
 
