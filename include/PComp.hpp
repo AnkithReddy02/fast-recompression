@@ -1,6 +1,8 @@
 #ifndef PCOMP_HPP
 #define PCOMP_HPP
 
+#include <random>
+
 extern uint64_t verbosity;
 extern uint64_t current_run;
 
