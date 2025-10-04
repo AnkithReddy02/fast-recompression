@@ -1,16 +1,16 @@
 #include <bits/stdc++.h>
 
-#include "../include/recompression_definitions.hpp"
-#include "../include/typedefs.hpp"
+#include "recompression_definitions.hpp"
+#include "typedefs.hpp"
 
-#include "../include/utils/utilities.hpp"
-#include "../include/utils/hash_pair.hpp"
-#include "../include/utils/packed_pair.hpp"
-#include "../include/utils/hash_table.hpp"
-#include "../include/utils/utils.hpp"
+#include "utils/utilities.hpp"
+#include "utils/hash_pair.hpp"
+#include "utils/packed_pair.hpp"
+#include "utils/hash_table.hpp"
+#include "utils/utils.hpp"
 
-#include "../include/BComp.hpp"
-#include "../include/PComp.hpp"
+#include "BComp.hpp"
+#include "PComp.hpp"
 
 // #define TEST_SAMPLE
 // #define DEBUG_LOG

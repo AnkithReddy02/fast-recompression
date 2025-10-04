@@ -7,8 +7,9 @@
 #include <queue>
 #include <stack>
 #include <cassert>
-#include "../include/typedefs.hpp"
-#include "../include/utils/space_efficient_vector.hpp"
+
+#include "typedefs.hpp"
+#include "utils/space_efficient_vector.hpp"
 
 using namespace std;
 

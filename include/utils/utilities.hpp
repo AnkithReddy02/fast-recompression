@@ -1,7 +1,7 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-#include "../typedefs.hpp"
+#include "typedefs.hpp"
 #include "space_efficient_vector.hpp"
 
 // void printRecompressionRLSLP(const RecompressionRLSLP *recompression_rlslp) {

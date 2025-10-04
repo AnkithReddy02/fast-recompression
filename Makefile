@@ -4,10 +4,12 @@ CC = g++
 CFLAGS = -funroll-loops -O3 -DNDEBUG -march=native -std=c++17 -pthread
 #CFLAGS = -g2 -std=c++17 -pthread
 
+INCLUDES = -Iinclude
+
 all: recomp
 
 recomp:
-	$(CC) $(CFLAGS) $(WARNINGS) -o recomp ./src/*.cpp
+	$(CC) $(CFLAGS) $(INCLUDES) $(WARNINGS) -o recomp ./src/*.cpp
 
 clean:
 	/bin/rm -f *.o

@@ -5,7 +5,8 @@
 #include <stack>
 #include <iostream>
 #include <algorithm>
-#include "../include/recompression_definitions.hpp"
+
+#include "recompression_definitions.hpp"
 #include "typedefs.hpp"
 #include "utils/space_efficient_vector.hpp"
 

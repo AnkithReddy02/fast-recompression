@@ -1,5 +1,5 @@
-#include "../include/recompression_definitions.hpp"
-#include "../include/lce_queries.hpp"
+#include "recompression_definitions.hpp"
+#include "lce_queries.hpp"
 
 Node::Node() {
 

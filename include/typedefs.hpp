@@ -2,7 +2,8 @@
 #define TYPEDEFS_HPP
 
 #include <cstdint>
-#include "../include/types/int40.hpp"
+
+#include "types/int40.hpp"
 
 typedef int64_t c_size_t;
 typedef uint32_t uc_size_t;
