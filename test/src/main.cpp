@@ -5,7 +5,7 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    if(argc != 3) {
+    if (argc != 3) {
         cerr << "Usage: ./test input_rlslp input_slp" << endl;
         return 1;
     }
@@ -13,14 +13,13 @@ int main(int argc, char *argv[]) {
     const string& input_rlslp = string(argv[1]);
     const string& input_slp = string(argv[2]);
 
-    RecompressionRLSLP* rlslp = new RecompressionRLSLP();
+    RecompressionRLSLP *rlslp = new RecompressionRLSLP();
     rlslp->read_from_file(input_rlslp);
 
     if (!test_queries(rlslp, utils::absolute_path(input_slp))) {
         cerr << "LCE Tests Failed!" << endl;
         return 1;
-    }
-    else {
+    } else {
         cerr << "LCE Tests Passed!" << endl;
     }
 
