@@ -58,11 +58,15 @@ std::uint64_t get_hash(const key_type &) {
 template<typename type>
 std::string keyToString(const type &x) {
   fprintf(stderr, "Error: keyToString: unknown type!\n");
+  std::exit(EXIT_FAILURE);
+  return std::string();
 }
 
 template<typename type>
 std::string valToString(const type &x) {
   fprintf(stderr, "Error: ValToString: unknown type!\n");
+  std::exit(EXIT_FAILURE);
+  return std::string();
 }
 
 //=============================================================================
