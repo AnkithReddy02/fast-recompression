@@ -327,6 +327,8 @@ void start_compression(const string &input_file,
 
   // Clean up.
   delete recompression_rlslp;
+  // Clean up.
+  delete recompression_rlslp;
 
   cout << endl << "****************" << endl;
   cout << "Current RAM usage for Construction: "
